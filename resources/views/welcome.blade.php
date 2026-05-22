@@ -11,6 +11,7 @@
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <style>
         body {
@@ -107,7 +108,7 @@
                 </div>
 
                 <!-- Login Form -->
-                <form action="{{ route('login') }}" method="POST" class="space-y-6">
+                <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
                     @csrf
                     
                     <!-- Email Field -->
@@ -137,6 +138,11 @@
                             <label for="remember" class="ml-2 block text-sm text-gray-600 font-medium cursor-pointer">Remember me</label>
                         </div>
                         <a href="{{ route('password.request') }}" class="text-sm font-bold text-rose-500 hover:text-rose-600 transition-colors">Forgot password?</a>
+                    </div>
+
+                    <!-- CAPTCHA -->
+                    <div class="opacity-0 animate-fade-in-up delay-300">
+                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}" data-theme="light"></div>
                     </div>
 
                     <!-- Submit Button -->

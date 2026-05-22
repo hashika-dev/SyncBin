@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SyncBin - Forgot Password</title>
+    <title>SyncBin - MFA Verification</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -11,7 +11,6 @@
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
     <style>
         body {
@@ -53,52 +52,47 @@
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight">SyncBin</h1>
             </div>
 
-            <!-- Form Card -->
+            <!-- Verification Card -->
             <div class="bg-white/70 backdrop-blur-2xl rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-white/60">
-                <div class="mb-8">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Password Recovery</h2>
+                <div class="mb-10 text-center">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-2">Secure Verification</h2>
                     <p class="text-gray-600 text-sm leading-relaxed">
-                        Forgot your password? No problem. Enter your email and we'll send you a recovery link to get you back into your workspace.
+                        Please enter the 6-digit code from your Authenticator app to continue to your dashboard.
                     </p>
                 </div>
 
-                <!-- Session Status (Success Message) -->
-                <x-auth-session-status class="mb-6 p-4 bg-green-50 text-green-700 rounded-2xl border border-green-100 text-sm font-medium" :status="session('status')" />
-
-                <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
+                <form method="POST" class="space-y-8">
                     @csrf
-
-                    <!-- Email Address -->
+                    
                     <div class="opacity-0 animate-fade-in-up delay-100">
-                        <label for="email" class="block text-sm font-semibold text-gray-700 mb-1.5 ml-1">Email Address</label>
-                        <input type="email" id="email" name="email" :value="old('email')" placeholder="you@example.com" required autofocus
-                               class="w-full px-5 py-4 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all placeholder:text-gray-300 bg-white/50">
-                        <x-input-error :messages="$errors->get('email')" class="mt-2 ml-1" />
-                    </div>
-
-                    <!-- CAPTCHA -->
-                    <div class="opacity-0 animate-fade-in-up delay-100 mb-6">
-                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}" data-theme="light"></div>
+                        <input type="text" name="{{ $input }}" id="{{ $input }}" placeholder="000 000" required autofocus
+                               class="w-full text-center text-3xl tracking-[0.4em] font-bold px-5 py-6 border border-gray-200 rounded-3xl focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all placeholder:text-gray-200 bg-white/50">
+                        @if($errors->isNotEmpty())
+                            <div class="mt-4 text-center">
+                                @foreach ($errors->all() as $error)
+                                    <p class="text-sm font-semibold text-rose-500">{{ $error }}</p>
+                                @endforeach
+                            </div>
+                        @endif
                     </div>
 
                     <div class="opacity-0 animate-fade-in-up delay-200">
                         <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-rose-200 hover:shadow-rose-300 active:scale-[0.98]">
-                            Send Recovery Link
+                            Confirm Identity
                         </button>
                     </div>
 
                     <div class="pt-2 text-center opacity-0 animate-fade-in-up delay-200">
-                        <a href="{{ route('login') }}" class="text-sm font-bold text-rose-500 hover:text-rose-600 transition-colors inline-flex items-center gap-2 group">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="group-hover:-translate-x-1 transition-transform"><path d="m15 18-6-6 6-6"/></svg>
-                            Back to login
-                        </a>
+                        <p class="text-xs text-gray-400">
+                            Lost your device? Contact your system administrator.
+                        </p>
                     </div>
                 </form>
             </div>
 
             <!-- Security Footer -->
             <p class="text-center text-[11px] text-gray-400 uppercase tracking-widest mt-8 font-bold">
-                Secure SyncBin Gateway
+                Multi-Factor Shield Active
             </p>
         </div>
     </div>
