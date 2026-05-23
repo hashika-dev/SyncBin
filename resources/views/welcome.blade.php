@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>SyncBin - Login</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
@@ -72,8 +75,16 @@
             
             <!-- Top left: Logo -->
             <div class="flex items-center gap-2 relative z-10">
-                <div class="animate-float">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf text-rose-600"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
+                <div class="animate-float text-rose-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 8v12c0 1-1 2-2 2H7c-1 0-2-1-2-2V8"/>
+                        <path d="M3 8h18"/>
+                        <path d="M9 8V5c0-1 1-2 2-2h2c1 0 2 1 2 2v3"/>
+                        <circle cx="9" cy="13" r="1" fill="currentColor"/>
+                        <circle cx="15" cy="13" r="1" fill="currentColor"/>
+                        <path d="M5 14l-2-1"/>
+                        <path d="M19 14l2-1"/>
+                    </svg>
                 </div>
                 <span class="text-2xl font-bold tracking-tight text-rose-900">SyncBin</span>
             </div>
