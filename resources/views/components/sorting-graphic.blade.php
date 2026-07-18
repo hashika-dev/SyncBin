@@ -21,28 +21,30 @@
         }
 
         @keyframes led-yellow {
-            0%, 50% { background-color: #422006; box-shadow: none; }
-            51%, 75% { background-color: #eab308; box-shadow: 0 0 8px #eab308; }
-            76%, 100% { background-color: #422006; box-shadow: none; }
+            0%, 25% { background-color: #422006; box-shadow: none; }
+            26%, 50% { background-color: #eab308; box-shadow: 0 0 8px #eab308; }
+            51%, 100% { background-color: #422006; box-shadow: none; }
         }
 
         @keyframes led-green {
-            0%, 75% { background-color: #064e3b; box-shadow: none; }
-            76%, 95% { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
-            96%, 100% { background-color: #064e3b; box-shadow: none; }
+            0%, 50% { background-color: #064e3b; box-shadow: none; }
+            51%, 75% { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+            76%, 100% { background-color: #064e3b; box-shadow: none; }
         }
 
-        .animate-trash-1 { animation: trash-to-hole 6s infinite; }
-        .animate-trash-2 { animation: trash-to-hole 6s infinite 2s; }
-        .animate-trash-3 { animation: trash-to-hole 6s infinite 4s; }
+        .animate-trash-1 { animation: trash-to-hole 8s infinite; }
+        .animate-trash-2 { animation: trash-to-hole 8s infinite 2s; }
+        .animate-trash-3 { animation: trash-to-hole 8s infinite 4s; }
+        .animate-trash-4 { animation: trash-to-hole 8s infinite 6s; }
 
-        .appear-1 { animation: item-appear 6s infinite; }
-        .appear-2 { animation: item-appear 6s infinite 2s; }
-        .appear-3 { animation: item-appear 6s infinite 4s; }
+        .appear-1 { animation: item-appear 8s infinite; }
+        .appear-2 { animation: item-appear 8s infinite 2s; }
+        .appear-3 { animation: item-appear 8s infinite 4s; }
+        .appear-4 { animation: item-appear 8s infinite 6s; }
 
-        .led-r { animation: led-red 6s infinite; }
-        .led-y { animation: led-yellow 6s infinite; }
-        .led-g { animation: led-green 6s infinite; }
+        .led-r { animation: led-red 8s infinite; }
+        .led-y { animation: led-yellow 8s infinite; }
+        .led-g { animation: led-green 8s infinite; }
     </style>
 
     <!-- Title -->
@@ -64,9 +66,21 @@
                 <div class="flex items-center gap-4">
                     <div class="relative">
                         <div class="w-16 h-6 bg-slate-900 rounded-full shadow-inner flex items-center justify-center overflow-visible">
-                            <!-- Animated Trash Item Entering -->
+                            <!-- Animated Trash Item 1: Hazardous -->
                             <div class="absolute -top-10 -left-10 animate-trash-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
+                            </div>
+                            <!-- Animated Trash Item 2: Recyclable -->
+                            <div class="absolute -top-10 -left-10 animate-trash-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            </div>
+                            <!-- Animated Trash Item 3: Biodegradable -->
+                            <div class="absolute -top-10 -left-10 animate-trash-3">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
+                            </div>
+                            <!-- Animated Trash Item 4: Non-Biodegradable -->
+                            <div class="absolute -top-10 -left-10 animate-trash-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                             </div>
                         </div>
                         <span class="absolute -bottom-5 left-0 text-[7px] font-bold text-slate-400 uppercase tracking-tighter">Entry Hole</span>
@@ -95,43 +109,28 @@
                 </div>
             </div>
 
-            <!-- The 3 Segregation Columns -->
-            <div class="grid grid-cols-3 flex-grow divide-x divide-white/50">
-                <!-- Column 1: Bio Degradable -->
-                <div class="bg-green-50/60 flex flex-col justify-between p-4 relative group">
+            <!-- The 4 Segregation Columns -->
+            <div class="grid grid-cols-4 flex-grow divide-x divide-white/50">
+                <!-- Column 1: Hazardous -->
+                <div class="bg-red-50/60 flex flex-col justify-between p-4 relative group">
                     <div class="flex-grow flex flex-col items-center justify-center gap-2">
                         <!-- Appearing Item -->
                         <div class="appear-1 opacity-0">
-                            <div class="p-2 bg-white rounded-lg shadow-sm border border-green-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
+                            <div class="p-2 bg-white rounded-lg shadow-sm border border-red-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" class="lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center font-bold text-green-600 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
-                        Bio Degradable
+                    <div class="text-center font-bold text-red-600 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
+                        Hazardous
                     </div>
                 </div>
 
-                <!-- Column 2: Non-Bio Degradable -->
-                <div class="bg-orange-50/60 flex flex-col justify-between p-4 relative group">
-                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
-                        <!-- Appearing Item -->
-                        <div class="appear-2 opacity-0">
-                            <div class="p-2 bg-white rounded-lg shadow-sm border border-orange-100">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-center font-bold text-orange-500 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
-                        Non-Bio Degradable
-                    </div>
-                </div>
-
-                <!-- Column 3: Recyclable -->
+                <!-- Column 2: Recyclable -->
                 <div class="bg-blue-50/60 flex flex-col justify-between p-4 relative group">
                     <div class="flex-grow flex flex-col items-center justify-center gap-2">
                         <!-- Appearing Item -->
-                        <div class="appear-3 opacity-0">
+                        <div class="appear-2 opacity-0">
                             <div class="p-2 bg-white rounded-lg shadow-sm border border-blue-100">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </div>
@@ -139,6 +138,36 @@
                     </div>
                     <div class="text-center font-bold text-blue-500 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
                         Recyclable
+                    </div>
+                </div>
+
+                <!-- Column 3: Bio Degradable -->
+                <div class="bg-green-50/60 flex flex-col justify-between p-4 relative group">
+                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
+                        <!-- Appearing Item -->
+                        <div class="appear-3 opacity-0">
+                            <div class="p-2 bg-white rounded-lg shadow-sm border border-green-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center font-bold text-green-600 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
+                        Biodegradable
+                    </div>
+                </div>
+
+                <!-- Column 4: Non-Bio Degradable -->
+                <div class="bg-orange-50/60 flex flex-col justify-between p-4 relative group">
+                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
+                        <!-- Appearing Item -->
+                        <div class="appear-4 opacity-0">
+                            <div class="p-2 bg-white rounded-lg shadow-sm border border-orange-100">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center font-bold text-orange-500 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
+                        Non-Bio
                     </div>
                 </div>
             </div>

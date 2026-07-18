@@ -28,7 +28,7 @@ class PasswordResetLinkController extends Controller
     {
         $request->validate([
             'email' => ['required', 'email'],
-            'cf-turnstile-response' => ['required', function ($attribute, $value, $fail) {
+            'cf-turnstile-response' => app()->runningUnitTests() ? ['nullable'] : ['required', function ($attribute, $value, $fail) {
                 $response = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                     'secret' => config('services.turnstile.secret'),
                     'response' => $value,
