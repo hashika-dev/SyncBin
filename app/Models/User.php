@@ -24,7 +24,24 @@ class User extends Authenticatable implements TwoFactorAuthenticatableContract
         'name',
         'email',
         'password',
+        'role',
     ];
+
+    /**
+     * Check if user is SuperAdmin.
+     */
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'superadmin';
+    }
+
+    /**
+     * Check if user is Admin or SuperAdmin.
+     */
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin' || $this->role === 'superadmin';
+    }
 
     /**
      * The attributes that should be hidden for serialization.

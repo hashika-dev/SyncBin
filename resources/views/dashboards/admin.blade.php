@@ -15,10 +15,12 @@
                     Real-time waste bin monitoring
                 </p>
             </div>
+            @if(auth()->user()->isSuperAdmin())
             <a href="{{ route('dashboard.export') }}" target="_blank" class="flex items-center gap-3 px-8 py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-xl shadow-emerald-200 hover:bg-emerald-600 hover:-translate-y-1 transition-all active:scale-95">
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
                 Export Report
             </a>
+            @endif
         </header>
 
         <!-- Hero Bin Panel -->
@@ -107,45 +109,6 @@
                     </div>
                 </div>
 
-                <!-- Bio-Degradable Bin -->
-                <div class="flex flex-col items-center">
-                    <div class="relative w-full aspect-[4/5] bg-emerald-50/30 dark:bg-emerald-950/10 rounded-[3rem] border-2 border-emerald-100 dark:border-emerald-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
-                        <!-- Fill Level -->
-                        <div class="absolute bottom-0 left-0 w-full bg-emerald-400/20 transition-all duration-1000 ease-out" :style="'height: ' + bins.biodegradable.level + '%'">
-                            <div class="absolute top-0 left-0 w-full h-1.5 bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.6)]"></div>
-                        </div>
-
-                        <!-- Bin Icon & Label -->
-                        <div class="relative z-10 flex flex-col items-center gap-8">
-                            <div class="w-28 h-28 bg-white dark:bg-zinc-800 rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 border border-emerald-50 dark:border-zinc-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
-                            </div>
-                            <div class="text-center">
-                                <span class="inline-block px-5 py-2 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-rose-200 dark:shadow-none" x-show="bins.biodegradable.level >= 75">Attention Required</span>
-                                <span class="inline-block px-5 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-emerald-200 dark:shadow-none" x-show="bins.biodegradable.level < 75">Optimal</span>
-                                <h4 class="text-xl font-black text-emerald-900 dark:text-emerald-300 tracking-tight uppercase">Biodegradable</h4>
-                            </div>
-                        </div>
-
-                        <!-- Capacity Data -->
-                        <div class="absolute top-10 right-10 text-right">
-                            <span class="block text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter" x-text="bins.biodegradable.level + '%'"></span>
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500 mt-1" x-text="bins.biodegradable.status"></span>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-8 w-full space-y-4">
-                        <div class="flex justify-between items-center px-6 py-4 bg-white/50 dark:bg-zinc-800/50 rounded-3xl border border-emerald-100 dark:border-zinc-800">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500">Status Update</span>
-                            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400" x-text="bins.biodegradable.lastEmptied"></span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button @click="openModal('biodegradable')" class="py-4 bg-white dark:bg-zinc-800 border border-emerald-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-zinc-700 transition-all">Details</button>
-                            <button @click="emptyBinDirect('biodegradable')" class="py-4 bg-emerald-500 text-white rounded-2xl text-xs font-black hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 dark:shadow-none">Empty Bin</button>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Non-Bio Degradable Bin -->
                 <div class="flex flex-col items-center">
                     <div class="relative w-full aspect-[4/5] bg-orange-50/30 dark:bg-orange-950/10 rounded-[3rem] border-2 border-orange-100 dark:border-orange-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-orange-300 dark:hover:border-orange-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
@@ -181,6 +144,45 @@
                         <div class="grid grid-cols-2 gap-4">
                             <button @click="openModal('non-bio')" class="py-4 bg-white dark:bg-zinc-800 border border-orange-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-zinc-700 transition-all">Details</button>
                             <button @click="emptyBinDirect('non-bio')" class="py-4 bg-orange-400 text-white rounded-2xl text-xs font-black hover:bg-orange-500 transition-all shadow-lg shadow-orange-100 dark:shadow-none">Empty Bin</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bio-Degradable Bin -->
+                <div class="flex flex-col items-center">
+                    <div class="relative w-full aspect-[4/5] bg-emerald-50/30 dark:bg-emerald-950/10 rounded-[3rem] border-2 border-emerald-100 dark:border-emerald-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
+                        <!-- Fill Level -->
+                        <div class="absolute bottom-0 left-0 w-full bg-emerald-400/20 transition-all duration-1000 ease-out" :style="'height: ' + bins.biodegradable.level + '%'">
+                            <div class="absolute top-0 left-0 w-full h-1.5 bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.6)]"></div>
+                        </div>
+
+                        <!-- Bin Icon & Label -->
+                        <div class="relative z-10 flex flex-col items-center gap-8">
+                            <div class="w-28 h-28 bg-white dark:bg-zinc-800 rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 border border-emerald-50 dark:border-zinc-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
+                            </div>
+                            <div class="text-center">
+                                <span class="inline-block px-5 py-2 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-rose-200 dark:shadow-none" x-show="bins.biodegradable.level >= 75">Attention Required</span>
+                                <span class="inline-block px-5 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-emerald-200 dark:shadow-none" x-show="bins.biodegradable.level < 75">Optimal</span>
+                                <h4 class="text-xl font-black text-emerald-900 dark:text-emerald-300 tracking-tight uppercase">Biodegradable</h4>
+                            </div>
+                        </div>
+
+                        <!-- Capacity Data -->
+                        <div class="absolute top-10 right-10 text-right">
+                            <span class="block text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter" x-text="bins.biodegradable.level + '%'"></span>
+                            <span class="block text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500 mt-1" x-text="bins.biodegradable.status"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 w-full space-y-4">
+                        <div class="flex justify-between items-center px-6 py-4 bg-white/50 dark:bg-zinc-800/50 rounded-3xl border border-emerald-100 dark:border-zinc-800">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500">Status Update</span>
+                            <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400" x-text="bins.biodegradable.lastEmptied"></span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button @click="openModal('biodegradable')" class="py-4 bg-white dark:bg-zinc-800 border border-emerald-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-zinc-700 transition-all">Details</button>
+                            <button @click="emptyBinDirect('biodegradable')" class="py-4 bg-emerald-500 text-white rounded-2xl text-xs font-black hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 dark:shadow-none">Empty Bin</button>
                         </div>
                     </div>
                 </div>
@@ -228,19 +230,6 @@
                             <div class="h-full bg-sky-400 rounded-full transition-all duration-500" :style="'width: ' + (bins.recyclable.items.length / totalProcessed * 100 || 0) + '%'"></div>
                         </div>
                     </div>
-                    <!-- Bio -->
-                    <div class="space-y-3">
-                        <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
-                                <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Biodegradable</span>
-                            </div>
-                            <span class="text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins.biodegradable.items.length"></span> items</span>
-                        </div>
-                        <div class="h-2 w-full bg-rose-50 dark:bg-zinc-800 rounded-full overflow-hidden">
-                            <div class="h-full bg-emerald-400 rounded-full transition-all duration-500" :style="'width: ' + (bins.biodegradable.items.length / totalProcessed * 100 || 0) + '%'"></div>
-                        </div>
-                    </div>
                     <!-- Non-Bio -->
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
@@ -252,6 +241,19 @@
                         </div>
                         <div class="h-2 w-full bg-rose-50 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <div class="h-full bg-orange-400 rounded-full transition-all duration-500" :style="'width: ' + (bins['non-bio'].items.length / totalProcessed * 100 || 0) + '%'"></div>
+                        </div>
+                    </div>
+                    <!-- Bio -->
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
+                                <span class="text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Biodegradable</span>
+                            </div>
+                            <span class="text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins.biodegradable.items.length"></span> items</span>
+                        </div>
+                        <div class="h-2 w-full bg-rose-50 dark:bg-zinc-800 rounded-full overflow-hidden">
+                            <div class="h-full bg-emerald-400 rounded-full transition-all duration-500" :style="'width: ' + (bins.biodegradable.items.length / totalProcessed * 100 || 0) + '%'"></div>
                         </div>
                     </div>
                 </div>

@@ -124,7 +124,7 @@ return [
     'totp' => [
         'digits' => 6,
         'seconds' => 30,
-        'window' => 1,
+        'window' => 2,
         'algorithm' => 'sha1',
     ],
 

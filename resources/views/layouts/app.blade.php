@@ -26,8 +26,8 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased">
-        <div class="min-h-screen bg-gray-100">
+    <body class="font-sans antialiased text-gray-900 dark:text-zinc-100 bg-gray-100 dark:bg-zinc-950 transition-colors duration-300">
+        <div class="min-h-screen bg-gray-100 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300">
             @unless(isset($hideNav))
                 @include('layouts.navigation')
 

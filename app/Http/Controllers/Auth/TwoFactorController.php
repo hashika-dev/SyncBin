@@ -15,15 +15,15 @@ class TwoFactorController extends Controller
     {
         $user = Auth::user();
 
-        if ($user->twoFactorAuth()->exists()) {
+        if ($user->hasTwoFactorEnabled()) {
             return redirect()->route('dashboard')->with('status', 'Two-Factor Authentication is already enabled.');
         }
 
-        // Generate the 2FA secret and QR Code
-        $twoFactor = $user->twoFactorAuth()->create();
+        // Reuse unconfirmed 2FA secret so the QR code stays constant during verification
+        $twoFactor = $user->twoFactorAuth()->first() ?? $user->createTwoFactorAuth();
 
         return view('auth.two-factor-setup', [
-            'qrCode' => $twoFactor->toQrCode(),
+            'qrCode' => $twoFactor->toQr(),
             'secret' => $twoFactor->shared_secret,
         ]);
     }
@@ -33,21 +33,20 @@ class TwoFactorController extends Controller
      */
     public function enable(Request $request)
     {
-        $request->validate([
-            'code' => 'required|string|min:6|max:6',
-        ]);
+        // Strip all spaces, dashes, and non-numeric characters from the input code
+        $code = preg_replace('/[^0-9]/', '', (string) $request->input('code', ''));
 
-        $user = Auth::user();
-        $twoFactor = $user->twoFactorAuth()->first();
-
-        if ($twoFactor->validate($request->code)) {
-            $twoFactor->enabled_at = now();
-            $twoFactor->save();
-
-            return redirect()->route('dashboard')->with('status', 'Two-Factor Authentication has been enabled!');
+        if (strlen($code) !== 6) {
+            return back()->withErrors(['code' => 'Please enter a valid 6-digit code from your authenticator app.']);
         }
 
-        return back()->withErrors(['code' => 'The provided code is invalid.']);
+        $user = Auth::user();
+
+        if ($user->confirmTwoFactorAuth($code)) {
+            return redirect()->route('dashboard')->with('status', 'Two-Factor Authentication has been successfully enabled!');
+        }
+
+        return back()->withErrors(['code' => 'The provided 6-digit code is invalid. Please check your authenticator app and try again.']);
     }
 
     /**
@@ -55,8 +54,22 @@ class TwoFactorController extends Controller
      */
     public function disable()
     {
-        Auth::user()->twoFactorAuth()->delete();
+        if (Auth::user()->hasTwoFactorEnabled()) {
+            Auth::user()->disableTwoFactorAuth();
+        }
 
         return redirect()->route('dashboard')->with('status', 'Two-Factor Authentication has been disabled.');
+    }
+
+    /**
+     * Reset and regenerate a fresh 2FA secret for setup.
+     */
+    public function resetSetup()
+    {
+        $user = Auth::user();
+        if (!$user->hasTwoFactorEnabled()) {
+            $user->createTwoFactorAuth();
+        }
+        return redirect()->route('2fa.setup')->with('status', 'Generated a fresh QR Code!');
     }
 }

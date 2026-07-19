@@ -43,73 +43,79 @@
         <div class="fixed top-0 right-0 w-96 h-96 bg-rose-200/20 blur-[100px] rounded-full -mr-48 -mt-48 pointer-events-none"></div>
         <div class="fixed bottom-0 left-0 w-96 h-96 bg-orange-200/20 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none"></div>
 
-        <div class="w-full max-w-xl opacity-0 animate-fade-in-up">
-            <!-- Brand Logo -->
+        <div class="w-full max-w-3xl opacity-0 animate-fade-in-up">
+            <!-- Brand Logo (Strict AGENT_RULES.md Compliance: asset('favicon.svg')) -->
             <div class="flex flex-col items-center mb-8">
-                <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm border border-rose-100 mb-4 transition-transform hover:scale-105 duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf text-rose-500"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
+                <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-md border border-rose-100 mb-3 transition-transform hover:scale-105 duration-300">
+                    <img src="{{ asset('favicon.svg') }}" alt="SyncBin Logo" class="w-10 h-10 object-contain">
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">SyncBin</h1>
+                <h1 class="text-3xl font-black text-rose-950 tracking-tight">SyncBin</h1>
             </div>
 
             <!-- Setup Card -->
-            <div class="bg-white/70 backdrop-blur-2xl rounded-[2.5rem] p-8 sm:p-12 shadow-2xl border border-white/60">
+            <div class="bg-white/80 backdrop-blur-2xl rounded-[2.5rem] p-8 sm:p-12 shadow-2xl border border-white/60">
                 <div class="mb-10 text-center">
-                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Secure your account</h2>
-                    <p class="text-gray-600 text-sm leading-relaxed max-w-sm mx-auto">
-                        Two-factor authentication adds an extra layer of security to your SyncBin workspace.
+                    <h2 class="text-3xl font-black text-rose-950 mb-2">Two-Factor Authentication Setup</h2>
+                    <p class="text-rose-600/80 text-sm font-bold leading-relaxed max-w-md mx-auto">
+                        Protect your SyncBin account with Google Authenticator or any TOTP app.
                     </p>
                 </div>
 
-                <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-center">
                     <!-- Step 1: QR Code -->
-                    <div class="flex flex-col items-center gap-6">
-                        <div class="p-4 bg-white rounded-3xl shadow-lg border-4 border-rose-50">
+                    <div class="flex flex-col items-center gap-4 bg-rose-50/50 p-6 rounded-3xl border border-rose-100">
+                        <div class="p-3 bg-white rounded-2xl shadow-md border border-rose-100 w-48 h-48 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full overflow-hidden">
                             {!! $qrCode !!}
                         </div>
-                        <div class="text-center">
-                            <span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest block mb-1">Step 1</span>
-                            <p class="text-sm font-semibold text-gray-700">Scan this QR code with your Authenticator app.</p>
+                        <div class="text-center space-y-1">
+                            <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest block">Step 1</span>
+                            <p class="text-xs font-bold text-gray-700">Scan this QR code with Google Authenticator.</p>
                         </div>
                     </div>
 
-                    <!-- Step 2: Verification -->
-                    <div class="space-y-8">
+                    <!-- Step 2: Verification Form -->
+                    <div class="space-y-6">
                         <div class="text-center md:text-left">
-                            <span class="text-[10px] font-bold text-rose-400 uppercase tracking-widest block mb-1">Step 2</span>
-                            <p class="text-sm font-semibold text-gray-700">Enter the 6-digit code from your app below.</p>
+                            <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest block mb-1">Step 2</span>
+                            <p class="text-sm font-bold text-gray-800">Enter the 6-digit verification code:</p>
                         </div>
 
-                        <form method="POST" action="{{ route('2fa.enable') }}" class="space-y-6">
+                        <form method="POST" action="{{ route('2fa.enable') }}" class="space-y-5">
                             @csrf
                             
-                            <div class="opacity-0 animate-fade-in-up delay-100">
-                                <input type="text" name="code" placeholder="123 456" required autofocus
-                                       class="w-full text-center text-2xl tracking-[0.5em] font-bold px-5 py-5 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all placeholder:text-gray-200 bg-white/50">
+                            <div>
+                                <input type="text" name="code" placeholder="123456" maxlength="6" required autofocus
+                                       class="w-full text-center text-3xl font-mono tracking-[0.4em] font-black px-4 py-4 border border-rose-200 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-500 outline-none transition-all placeholder:text-gray-300 bg-white/70">
                                 <x-input-error :messages="$errors->get('code')" class="mt-2 text-center" />
                             </div>
 
-                            <div class="opacity-0 animate-fade-in-up delay-200">
-                                <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-rose-200 hover:shadow-rose-300 active:scale-[0.98]">
-                                    Enable MFA
+                            <div>
+                                <button type="submit" class="w-full bg-rose-950 hover:bg-rose-900 text-white font-black py-4 rounded-2xl transition-all shadow-lg hover:-translate-y-0.5 active:translate-y-0">
+                                    Verify & Enable MFA
                                 </button>
                             </div>
                         </form>
 
-                        <div class="pt-4 text-center md:text-left">
-                            <p class="text-xs text-gray-400 leading-relaxed">
-                                Can't scan the code? <br>
-                                <span class="font-mono text-gray-600 font-bold uppercase tracking-wider">{{ $secret }}</span>
+                        <div class="pt-2 text-center md:text-left border-t border-rose-100 space-y-2">
+                            <p class="text-[11px] text-gray-500 leading-relaxed font-semibold">
+                                Can't scan? Manual setup secret key:<br>
+                                <span class="font-mono text-rose-950 font-black text-xs uppercase tracking-wider select-all font-bold">{{ $secret }}</span>
                             </p>
+                            <form method="POST" action="{{ route('2fa.reset') }}">
+                                @csrf
+                                <button type="submit" class="text-[10px] font-bold text-rose-500 hover:text-rose-700 underline uppercase tracking-wider">
+                                    🔄 Generate Fresh QR Code
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
 
             <!-- Cancel -->
-            <div class="text-center mt-8">
-                <a href="{{ route('dashboard') }}" class="text-sm font-bold text-gray-400 hover:text-gray-600 transition-colors">
-                    Maybe later
+            <div class="text-center mt-6">
+                <a href="{{ route('dashboard') }}" class="text-xs font-bold text-rose-400 hover:text-rose-600 transition-colors uppercase tracking-widest">
+                    ← Back to Dashboard
                 </a>
             </div>
         </div>

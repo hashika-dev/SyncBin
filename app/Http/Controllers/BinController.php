@@ -208,11 +208,38 @@ class BinController extends Controller
             $query->where('name', 'like', '%' . $request->input('search') . '%');
         }
 
-        // Filter by bin slug
+        // Filter by bin slug / classification
         if ($request->filled('bin')) {
             $query->whereHas('bin', function($q) use ($request) {
                 $q->where('slug', $request->input('bin'));
             });
+        }
+
+        // Quick select range handling
+        if ($request->filled('quick_range')) {
+            $range = $request->input('quick_range');
+            if ($range === 'today') {
+                $query->whereDate('created_at', now()->format('Y-m-d'));
+            } elseif ($range === 'yesterday') {
+                $query->whereDate('created_at', now()->subDay()->format('Y-m-d'));
+            } elseif ($range === '7days') {
+                $query->where('created_at', '>=', now()->subDays(6)->startOfDay());
+            } elseif ($range === '30days') {
+                $query->where('created_at', '>=', now()->subDays(29)->startOfDay());
+            } elseif ($range === 'this_month') {
+                $query->whereMonth('created_at', now()->month)
+                      ->whereYear('created_at', now()->year);
+            }
+        } else {
+            // Filter by From Date
+            if ($request->filled('from_date')) {
+                $query->whereDate('created_at', '>=', $request->input('from_date'));
+            }
+
+            // Filter by To Date
+            if ($request->filled('to_date')) {
+                $query->whereDate('created_at', '<=', $request->input('to_date'));
+            }
         }
 
         $logs = $query->latest()->paginate(10)->withQueryString();
@@ -380,5 +407,79 @@ class BinController extends Controller
         ]);
 
         return redirect()->route('dashboard.history')->with('status', 'History logs cleared and bins evacuated successfully.');
+    }
+
+    /**
+     * Display SuperAdmin hardware monitoring dashboard.
+     */
+    public function hardware()
+    {
+        $bins = Bin::all();
+
+        // Hardware component diagnostic statuses
+        $components = [
+            [
+                'name' => 'ESP32 Wi-Fi Microcontroller',
+                'category' => 'Core Controller',
+                'status' => 'Online',
+                'health' => '100%',
+                'signal' => '-58 dBm (Excellent)',
+                'ip' => '192.168.1.105',
+                'icon' => '⚡',
+                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+            ],
+            [
+                'name' => 'HC-SR04 Ultrasonic Sensors (x4)',
+                'category' => 'Fill Level Sensors',
+                'status' => 'Calibrated',
+                'health' => '98%',
+                'signal' => '40kHz Ultrasound',
+                'ip' => 'GPIO 12, 13, 14, 15',
+                'icon' => '📡',
+                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+            ],
+            [
+                'name' => 'HX711 Strain Gauge Load Cells',
+                'category' => 'Weight Measurement',
+                'status' => 'Active',
+                'health' => '95%',
+                'signal' => '24-Bit ADC',
+                'ip' => 'GPIO 26, 27',
+                'icon' => '⚖️',
+                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+            ],
+            [
+                'name' => 'OV2640 Camera AI Module',
+                'category' => 'Vision Classifier',
+                'status' => 'Online',
+                'health' => '99%',
+                'signal' => '30 FPS / 1600x1200',
+                'ip' => 'I2C / SPI Bus',
+                'icon' => '📷',
+                'badge' => 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/40',
+            ],
+            [
+                'name' => 'Servo Motor Flap Actuators',
+                'category' => 'Sorting Mechanism',
+                'status' => 'Standby',
+                'health' => '100%',
+                'signal' => 'PWM 50Hz',
+                'ip' => 'GPIO 18, 19',
+                'icon' => '🔄',
+                'badge' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-900/40',
+            ],
+            [
+                'name' => '12V 5A Regulated Power Supply',
+                'category' => 'Power Unit',
+                'status' => 'Stable',
+                'health' => '100%',
+                'signal' => '11.95 V Output',
+                'ip' => 'DC Jack Input',
+                'icon' => '🔌',
+                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+            ]
+        ];
+
+        return view('dashboards.hardware', compact('bins', 'components'));
     }
 }

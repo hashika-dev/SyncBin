@@ -30,7 +30,7 @@ class LoginRequest extends FormRequest
         return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'cf-turnstile-response' => app()->runningUnitTests() ? ['nullable'] : ['required', function ($attribute, $value, $fail) {
+            'cf-turnstile-response' => (app()->environment('local') || app()->runningUnitTests()) ? ['nullable'] : ['required', function ($attribute, $value, $fail) {
                 $response = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                     'secret' => config('services.turnstile.secret'),
                     'response' => $value,

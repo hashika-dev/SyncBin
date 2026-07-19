@@ -49,6 +49,11 @@
                     </div>
                 </div>
 
+                <!-- Notification & Alert Preferences Card -->
+                <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl dark:shadow-none border border-white dark:border-zinc-800 p-12 hover:shadow-rose-200/20 dark:hover:border-zinc-700 transition-all duration-500">
+                    @include('profile.partials.notification-alert-preferences-form')
+                </div>
+
                 <!-- Delete User Card -->
                 <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-[2.5rem] shadow-2xl dark:shadow-none border border-white dark:border-zinc-800 p-12 hover:shadow-rose-200/20 dark:hover:border-zinc-700 transition-all duration-500">
                     <div class="max-w-2xl">
