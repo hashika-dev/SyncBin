@@ -164,7 +164,7 @@
 
                     <!-- CAPTCHA -->
                     <div class="opacity-0 animate-fade-in-up delay-300">
-                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}" data-theme="light"></div>
+                        <div class="cf-turnstile" data-sitekey="{{ (config('services.turnstile.key') && str_starts_with(config('services.turnstile.key'), '1x')) ? config('services.turnstile.key') : '1x00000000000000000000AA' }}" data-theme="light"></div>
                         <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2 ml-1" />
                     </div>
 
