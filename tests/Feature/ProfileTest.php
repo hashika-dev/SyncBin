@@ -34,13 +34,27 @@ class ProfileTest extends TestCase
 
         $response
             ->assertSessionHasNoErrors()
+            ->assertRedirect('/profile/verify-email-change');
+
+        $pending = session('pending_email_change');
+        $this->assertNotNull($pending);
+        $this->assertSame('test@example.com', $pending['email']);
+
+        $confirmResponse = $this
+            ->actingAs($user)
+            ->post('/profile/confirm-email-change', [
+                'code' => $pending['code'],
+            ]);
+
+        $confirmResponse
+            ->assertSessionHasNoErrors()
             ->assertRedirect('/profile');
 
         $user->refresh();
 
         $this->assertSame('Test User', $user->name);
         $this->assertSame('test@example.com', $user->email);
-        $this->assertNull($user->email_verified_at);
+        $this->assertNotNull($user->email_verified_at);
     }
 
     public function test_email_verification_status_is_unchanged_when_the_email_address_is_unchanged(): void

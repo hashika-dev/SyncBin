@@ -68,8 +68,48 @@ class TwoFactorController extends Controller
     {
         $user = Auth::user();
         if (!$user->hasTwoFactorEnabled()) {
+            $user->disableTwoFactorAuth();
+            $user->unsetRelation('twoFactorAuth');
             $user->createTwoFactorAuth();
         }
         return redirect()->route('2fa.setup')->with('status', 'Generated a fresh QR Code!');
+    }
+
+    /**
+     * Show the 2FA confirmation prompt.
+     */
+    public function showConfirm()
+    {
+        $user = Auth::user();
+
+        if (!$user || !$user->hasTwoFactorEnabled()) {
+            return redirect()->route('dashboard');
+        }
+
+        return view('auth.two-factor-confirm');
+    }
+
+    /**
+     * Confirm the 2FA code during login/access challenge.
+     */
+    public function confirm(Request $request)
+    {
+        $code = preg_replace('/[^0-9]/', '', (string) $request->input('code', ''));
+
+        if (strlen($code) !== 6) {
+            return back()->withErrors(['code' => 'Please enter a valid 6-digit code.']);
+        }
+
+        $user = Auth::user();
+
+        if ($user->validateTwoFactorCode($code)) {
+            $key = config('two-factor.confirm.key', '_2fa');
+            $time = config('two-factor.confirm.time', 180);
+            $request->session()->put("{$key}.confirm.expires_at", now()->addMinutes($time)->getTimestamp());
+
+            return redirect()->intended(route('dashboard'));
+        }
+
+        return back()->withErrors(['code' => 'The provided 6-digit code is invalid. Please try again.']);
     }
 }

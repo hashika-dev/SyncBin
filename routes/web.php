@@ -23,12 +23,16 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::get('/profile/verify-email-change', [ProfileController::class, 'showVerifyEmailChange'])->name('profile.verify-email-change');
+    Route::post('/profile/confirm-email-change', [ProfileController::class, 'confirmEmailChange'])->name('profile.confirm-email-change');
 
     // 2FA Routes
     Route::get('/2fa/setup', [TwoFactorController::class, 'showSetup'])->name('2fa.setup');
     Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
     Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
     Route::post('/2fa/reset', [TwoFactorController::class, 'resetSetup'])->name('2fa.reset');
+    Route::get('/2fa/confirm', [TwoFactorController::class, 'showConfirm'])->name('2fa.confirm');
+    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
 
     // Common Operational Routes (Admin & SuperAdmin) with Rate Limiting (max 60 req/min)
     Route::middleware('throttle:60,1')->group(function () {
