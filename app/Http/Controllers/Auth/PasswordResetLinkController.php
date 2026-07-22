@@ -28,11 +28,15 @@ class PasswordResetLinkController extends Controller
     {
         $siteKey = config('services.turnstile.key');
         $secretKey = config('services.turnstile.secret');
-        $isDummyKey = !$siteKey || $siteKey === '1x00000000000000000000AA' || !$secretKey || $secretKey === '1x0000000000000000000000000000000AA';
+        $hasRealKeys = $siteKey && $siteKey !== '1x00000000000000000000AA' && $secretKey && $secretKey !== '1x0000000000000000000000000000000AA';
 
-        $request->validate([
+        $rules = [
             'email' => ['required', 'email'],
-            'cf-turnstile-response' => (app()->environment('local') || app()->runningUnitTests() || $isDummyKey) ? ['nullable'] : ['required', function ($attribute, $value, $fail) use ($secretKey) {
+        ];
+
+        if ($hasRealKeys && !app()->environment('local') && !app()->runningUnitTests()) {
+            $rules['cf-turnstile-response'] = ['nullable', function ($attribute, $value, $fail) use ($secretKey) {
+                if (!$value) return;
                 try {
                     $response = \Illuminate\Support\Facades\Http::timeout(3)->asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                         'secret' => $secretKey,
@@ -40,14 +44,18 @@ class PasswordResetLinkController extends Controller
                         'remoteip' => request()->ip(),
                     ]);
 
-                    if (! $response->json('success')) {
-                        $fail('The CAPTCHA verification failed. Please try again.');
+                    if ($response->successful() && $response->json('success') === false) {
+                        \Illuminate\Support\Facades\Log::warning('Turnstile reset link rejected token: ' . json_encode($response->json()));
                     }
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('Turnstile reset link verification skipped due to error: ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::warning('Turnstile reset link error: ' . $e->getMessage());
                 }
-            }],
-        ]);
+            }];
+        } else {
+            $rules['cf-turnstile-response'] = ['nullable'];
+        }
+
+        $request->validate($rules);
 
         // We will send the password reset link to this user. Once we have attempted
         // to send the link, we will examine the response then see the message we

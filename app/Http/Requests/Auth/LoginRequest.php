@@ -29,12 +29,16 @@ class LoginRequest extends FormRequest
     {
         $siteKey = config('services.turnstile.key');
         $secretKey = config('services.turnstile.secret');
-        $isDummyKey = !$siteKey || $siteKey === '1x00000000000000000000AA' || !$secretKey || $secretKey === '1x0000000000000000000000000000000AA';
+        $hasRealKeys = $siteKey && $siteKey !== '1x00000000000000000000AA' && $secretKey && $secretKey !== '1x0000000000000000000000000000000AA';
 
-        return [
+        $rules = [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'cf-turnstile-response' => (app()->environment('local') || app()->runningUnitTests() || $isDummyKey) ? ['nullable'] : ['required', function ($attribute, $value, $fail) use ($secretKey) {
+        ];
+
+        if ($hasRealKeys && !app()->environment('local') && !app()->runningUnitTests()) {
+            $rules['cf-turnstile-response'] = ['nullable', function ($attribute, $value, $fail) use ($secretKey) {
+                if (!$value) return;
                 try {
                     $response = \Illuminate\Support\Facades\Http::timeout(3)->asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
                         'secret' => $secretKey,
@@ -42,14 +46,18 @@ class LoginRequest extends FormRequest
                         'remoteip' => request()->ip(),
                     ]);
 
-                    if (! $response->json('success')) {
-                        $fail('The CAPTCHA verification failed. Please try again.');
+                    if ($response->successful() && $response->json('success') === false) {
+                        \Illuminate\Support\Facades\Log::warning('Turnstile rejected token: ' . json_encode($response->json()));
                     }
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('Turnstile verification skipped due to error: ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::warning('Turnstile verification error: ' . $e->getMessage());
                 }
-            }],
-        ];
+            }];
+        } else {
+            $rules['cf-turnstile-response'] = ['nullable'];
+        }
+
+        return $rules;
     }
 
     /**
