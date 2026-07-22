@@ -8,6 +8,9 @@
 * **Database & Migrations:** Always structure schema changes through clear, reversible database migrations using appropriate column types, indexes, and foreign key constraints.
 * **Code Formatting:** Maintain high code readability adhering to PSR-12 coding standards. Avoid redundant or unorganized inline code, leveraging reusable Laravel components and Vite assets.
 
+### Communication & Execution Policy
+* **Pre-Execution Disclosure:** Always explain clearly and concisely what actions, code edits, or terminal commands you are about to perform on the system BEFORE asking for permission or executing system modifications.
+
 ### Self-Improvement & Evolution Policy
 * **Self-Improvement:** Continuously learn and adapt from feedback, past interactions, and execution results to improve code quality, accuracy, and performance over time.
 * **Self-Evolution:** Proactively evaluate and upgrade system processes, documentation, and agent rules to evolve alongside evolving project requirements and best practices.
