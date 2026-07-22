@@ -23,7 +23,11 @@
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @if(config('services.turnstile.key') && config('services.turnstile.key') !== '1x00000000000000000000AA')
+        <link rel="preconnect" href="https://challenges.cloudflare.com" crossorigin>
+        <link rel="dns-prefetch" href="https://challenges.cloudflare.com">
+        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
 
     <style>
         body {
