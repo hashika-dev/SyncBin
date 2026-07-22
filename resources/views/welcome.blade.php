@@ -83,18 +83,8 @@
             <div class="absolute bottom-40 right-10 w-40 h-40 bg-orange-300/20 blur-3xl rounded-full animate-float-slow delay-500"></div>
             
             <!-- Top left: Logo -->
-            <div class="flex items-center gap-2 relative z-10">
-                <div class="animate-float text-rose-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M19 8v12c0 1-1 2-2 2H7c-1 0-2-1-2-2V8"/>
-                        <path d="M3 8h18"/>
-                        <path d="M9 8V5c0-1 1-2 2-2h2c1 0 2 1 2 2v3"/>
-                        <circle cx="9" cy="13" r="1" fill="currentColor"/>
-                        <circle cx="15" cy="13" r="1" fill="currentColor"/>
-                        <path d="M5 14l-2-1"/>
-                        <path d="M19 14l2-1"/>
-                    </svg>
-                </div>
+            <div class="flex items-center gap-3 relative z-10">
+                <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-8 h-8 object-contain animate-float">
                 <span class="text-2xl font-bold tracking-tight text-rose-900 dark:text-zinc-50">SyncBin</span>
             </div>
 
@@ -123,13 +113,7 @@
             <div class="w-full max-w-md opacity-0 animate-fade-in-up">
                 <!-- Mobile Branding Header (Visible < lg) -->
                 <div class="flex lg:hidden items-center gap-3 mb-8">
-                    <div class="animate-float text-rose-600">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M19 8v12c0 1-1 2-2 2H7c-1 0-2-1-2-2V8"/>
-                            <path d="M3 8h18"/>
-                            <path d="M9 8V5c0-1 1-2 2-2h2c1 0 2 1 2 2v3"/>
-                        </svg>
-                    </div>
+                    <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-8 h-8 object-contain animate-float">
                     <span class="text-2xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
                 </div>
 

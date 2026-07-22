@@ -9,13 +9,7 @@
             </svg>
         </button>
         <a href="{{ route('dashboard') }}" class="flex items-center gap-2.5">
-            <div class="text-rose-500 animate-float">
-                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 8v12c0 1-1 2-2 2H7c-1 0-2-1-2-2V8"/>
-                    <path d="M3 8h18"/>
-                    <path d="M9 8V5c0-1 1-2 2-2h2c1 0 2 1 2 2v3"/>
-                </svg>
-            </div>
+            <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-7 h-7 object-contain animate-float">
             <span class="text-xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
         </a>
     </div>
@@ -44,13 +38,7 @@
     <!-- Brand / Navigation Logo -->
     <div class="px-8 pt-8 pb-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
-            <div class="text-rose-500 animate-float">
-                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M19 8v12c0 1-1 2-2 2H7c-1 0-2-1-2-2V8"/>
-                    <path d="M3 8h18"/>
-                    <path d="M9 8V5c0-1 1-2 2-2h2c1 0 2 1 2 2v3"/>
-                </svg>
-            </div>
+            <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-8 h-8 object-contain animate-float">
             <span class="text-2xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
         </div>
         <!-- Close button on mobile -->

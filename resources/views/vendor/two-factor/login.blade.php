@@ -47,7 +47,7 @@
             <!-- Brand Logo -->
             <div class="flex flex-col items-center mb-8">
                 <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm border border-rose-100 mb-4 transition-transform hover:scale-105 duration-300">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-leaf text-rose-500"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
+                    <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-10 h-10 object-contain">
                 </div>
                 <h1 class="text-3xl font-bold text-gray-900 tracking-tight">SyncBin</h1>
             </div>
