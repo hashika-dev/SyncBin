@@ -1,6 +1,6 @@
-<div class="flex min-h-screen -mt-[65px] -ml-[32px] -mr-[32px]">
+<div class="flex min-h-screen">
     <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 w-72 bg-[#9B1C1C] text-white flex flex-col z-50 shadow-2xl">
+    <aside class="hidden lg:flex fixed inset-y-0 left-0 w-72 bg-[#9B1C1C] text-white flex-col z-50 shadow-2xl">
         <!-- Top Logo -->
         <div class="p-6 flex items-center gap-3">
             <div class="bg-white/10 p-2 rounded-lg">
@@ -52,7 +52,7 @@
     </aside>
 
     <!-- Main Content -->
-    <main class="flex-1 ml-72 p-12 bg-gray-50 min-h-screen">
+    <main class="flex-1 ml-0 lg:ml-72 p-4 sm:p-8 lg:p-12 bg-gray-50 min-h-screen">
         <!-- Header -->
         <header class="flex items-center justify-between mb-12">
             <div>

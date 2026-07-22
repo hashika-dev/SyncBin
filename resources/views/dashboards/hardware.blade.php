@@ -3,8 +3,9 @@
         true
     @endslot
 
-    <div class="flex min-h-screen w-full bg-slate-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300" 
+    <div class="flex flex-col lg:flex-row min-h-screen w-full bg-slate-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300" 
          x-data="{ 
+            sidebarOpen: false,
             activeTab: 'all',
             lastRefresh: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
             isRefreshing: false,
@@ -41,7 +42,7 @@
         @include('layouts.sidebar', ['active' => 'hardware'])
 
         <!-- Main Content Container -->
-        <main class="flex-1 ml-72 p-8 lg:p-12 bg-slate-50 dark:bg-zinc-950 min-h-screen">
+        <main class="flex-1 w-full min-w-0 ml-0 lg:ml-72 p-4 sm:p-6 lg:p-12 bg-slate-50 dark:bg-zinc-950 min-h-screen">
             <div class="max-w-7xl mx-auto space-y-10">
                 
                 <!-- 1. Page Header -->

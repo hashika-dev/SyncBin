@@ -17,16 +17,16 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
+    <body class="font-sans text-gray-900 dark:text-zinc-100 antialiased bg-gray-100 dark:bg-zinc-950 transition-colors duration-300">
+        <div class="min-h-screen flex flex-col sm:justify-center items-center p-4 sm:p-6 pt-8 sm:pt-0 bg-gradient-to-br from-rose-50 via-white to-orange-50/50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
             <div class="flex flex-col items-center">
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
+                <a href="/" class="flex items-center gap-3">
+                    <img src="{{ asset('favicon.svg') }}" alt="SyncBin Logo" class="w-12 h-12">
+                    <span class="text-3xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">SyncBin</span>
                 </a>
-                <h1 class="mt-4 text-3xl font-bold text-gray-800 tracking-tight">SyncBin</h1>
             </div>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+            <div class="w-full sm:max-w-md mt-6 px-6 py-8 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl shadow-xl dark:shadow-none border border-white dark:border-zinc-800 rounded-3xl">
                 {{ $slot }}
             </div>
         </div>

@@ -75,7 +75,7 @@
     </style>
 </head>
 <body class="antialiased bg-white dark:bg-zinc-950 selection:bg-rose-200 selection:text-rose-900 transition-colors duration-300">
-    <div class="flex h-screen w-full overflow-hidden">
+    <div class="flex flex-col lg:flex-row min-h-screen w-full">
         <!-- Left Panel -->
         <div class="hidden lg:flex lg:w-1/3 bg-gradient-to-br from-rose-100 via-pink-50 to-orange-50 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 text-rose-950 dark:text-zinc-50 p-12 flex-col justify-between relative border-r border-rose-100 dark:border-zinc-800 transition-colors duration-300">
             <!-- Decorative Floating Elements -->
@@ -119,12 +119,24 @@
         </div>
 
         <!-- Right Panel (Form) -->
-        <div class="w-full lg:w-2/3 bg-white dark:bg-zinc-900 flex items-center justify-center p-8 sm:p-16 transition-colors duration-300">
+        <div class="w-full lg:w-2/3 bg-white dark:bg-zinc-900 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 transition-colors duration-300 min-h-screen">
             <div class="w-full max-w-md opacity-0 animate-fade-in-up">
+                <!-- Mobile Branding Header (Visible < lg) -->
+                <div class="flex lg:hidden items-center gap-3 mb-8">
+                    <div class="animate-float text-rose-600">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M19 8v12c0 1-1 2-2 2H7c-1 0-2-1-2-2V8"/>
+                            <path d="M3 8h18"/>
+                            <path d="M9 8V5c0-1 1-2 2-2h2c1 0 2 1 2 2v3"/>
+                        </svg>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
+                </div>
+
                 <!-- Form Header -->
-                <div class="mb-10">
-                    <h2 class="text-4xl font-bold text-gray-900 dark:text-zinc-50">Welcome back</h2>
-                    <p class="text-rose-600 dark:text-rose-400 font-semibold mt-2">Sign in to your SyncBin account to continue.</p>
+                <div class="mb-8 sm:mb-10">
+                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-zinc-50">Welcome back</h2>
+                    <p class="text-rose-600 dark:text-rose-400 font-semibold mt-2 text-sm sm:text-base">Sign in to your SyncBin account to continue.</p>
                 </div>
 
                 <!-- Login Form -->

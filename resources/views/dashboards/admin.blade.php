@@ -1,188 +1,188 @@
-<div x-data="binModal()" class="flex min-h-screen bg-gradient-to-br from-rose-50 via-white to-orange-50/50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300">
+<div x-data="binModal()" class="flex flex-col lg:flex-row min-h-screen w-full bg-gradient-to-br from-rose-50 via-white to-orange-50/50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300">
     <style>[x-cloak] { display: none !important; }</style>
     <!-- Sidebar -->
     @include('layouts.sidebar', ['active' => 'dashboard'])
 
     <!-- Main Content -->
-    <main class="flex-1 ml-72 p-16">
+    <main class="flex-1 w-full min-w-0 ml-0 lg:ml-72 p-4 sm:p-6 lg:p-10 xl:p-12">
         <!-- Header -->
-        <header class="flex items-center justify-between mb-16">
+        <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-12">
             <div>
-                <h1 class="text-5xl font-black text-rose-950 dark:text-zinc-100 tracking-tighter">Admin Dashboard</h1>
-                <p class="text-rose-600 dark:text-rose-400 mt-3 font-bold text-xl opacity-80">
-                    Welcome back, <span class="font-black">admin@wastesync.com</span> 
-                    <span class="mx-3 opacity-30">|</span> 
-                    Real-time waste bin monitoring
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-rose-950 dark:text-zinc-100 tracking-tighter">Admin Dashboard</h1>
+                <p class="text-rose-600 dark:text-rose-400 mt-2 font-bold text-sm sm:text-base lg:text-lg opacity-80">
+                    Welcome back, <span class="font-black">{{ Auth::user()->email }}</span> 
+                    <span class="hidden sm:inline mx-2 opacity-30">|</span> 
+                    <span class="block sm:inline">Real-time waste bin monitoring</span>
                 </p>
             </div>
             @if(auth()->user()->isSuperAdmin())
-            <a href="{{ route('dashboard.export') }}" target="_blank" class="flex items-center gap-3 px-8 py-4 bg-emerald-500 text-white rounded-2xl font-black shadow-xl shadow-emerald-200 hover:bg-emerald-600 hover:-translate-y-1 transition-all active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+            <a href="{{ route('dashboard.export') }}" target="_blank" class="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-emerald-500 text-white rounded-2xl font-black shadow-lg shadow-emerald-200 dark:shadow-none hover:bg-emerald-600 hover:-translate-y-0.5 transition-all active:scale-95 text-sm shrink-0">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
                 Export Report
             </a>
             @endif
         </header>
 
         <!-- Hero Bin Panel -->
-        <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-[4rem] shadow-2xl dark:shadow-none border border-white dark:border-zinc-800 p-16 mb-12 transition-colors duration-300">
-            <div class="text-center mb-20">
-                <h3 class="text-xs font-black uppercase tracking-[0.5em] text-rose-300 dark:text-zinc-500 mb-3">Live Status Overview</h3>
-                <h2 class="text-4xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">System Bin Management</h2>
+        <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3.5rem] shadow-xl dark:shadow-none border border-white dark:border-zinc-800 p-5 sm:p-8 lg:p-12 mb-8 sm:mb-12 transition-colors duration-300">
+            <div class="text-center mb-8 sm:mb-14">
+                <h3 class="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] sm:tracking-[0.5em] text-rose-400 dark:text-zinc-500 mb-2">Live Status Overview</h3>
+                <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">System Bin Management</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                 <!-- Hazardous Bin -->
                 <div class="flex flex-col items-center">
-                    <div class="relative w-full aspect-[4/5] bg-red-50/30 dark:bg-red-950/10 rounded-[3rem] border-2 border-red-100 dark:border-red-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-red-300 dark:hover:border-red-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
+                    <div class="relative w-full aspect-[4/5] min-h-[280px] bg-red-50/30 dark:bg-red-950/10 rounded-3xl lg:rounded-[2.5rem] border-2 border-red-100 dark:border-red-900/30 p-6 sm:p-8 flex flex-col justify-end overflow-hidden group hover:border-red-300 dark:hover:border-red-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
                         <!-- Fill Level -->
                         <div class="absolute bottom-0 left-0 w-full bg-red-400/20 transition-all duration-1000 ease-out" :style="'height: ' + bins.hazardous.level + '%'">
                             <div class="absolute top-0 left-0 w-full h-1.5 bg-red-400 shadow-[0_0_20px_rgba(239,68,68,0.6)]"></div>
                         </div>
 
                         <!-- Bin Icon & Label -->
-                        <div class="relative z-10 flex flex-col items-center gap-8">
-                            <div class="w-28 h-28 bg-white dark:bg-zinc-800 rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-red-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 border border-red-50 dark:border-zinc-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
+                        <div class="relative z-10 flex flex-col items-center gap-4 sm:gap-6">
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-white dark:bg-zinc-800 rounded-2xl lg:rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-red-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 border border-red-50 dark:border-zinc-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:w-14 sm:h-14 lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
                             </div>
                             <div class="text-center">
-                                <span class="inline-block px-5 py-2 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-rose-200 dark:shadow-none" x-show="bins.hazardous.level >= 75">Attention Required</span>
-                                <span class="inline-block px-5 py-2 bg-red-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-red-200 dark:shadow-none" x-show="bins.hazardous.level < 75">Optimal</span>
-                                <h4 class="text-xl font-black text-red-900 dark:text-red-300 tracking-tight uppercase">Hazardous</h4>
+                                <span class="inline-block px-4 py-1.5 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-rose-200 dark:shadow-none" x-show="bins.hazardous.level >= 75">Attention Required</span>
+                                <span class="inline-block px-4 py-1.5 bg-red-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-red-200 dark:shadow-none" x-show="bins.hazardous.level < 75">Optimal</span>
+                                <h4 class="text-lg sm:text-xl font-black text-red-900 dark:text-red-300 tracking-tight uppercase">Hazardous</h4>
                             </div>
                         </div>
 
                         <!-- Capacity Data -->
-                        <div class="absolute top-10 right-10 text-right">
-                            <span class="block text-5xl font-black text-red-600 dark:text-red-400 tracking-tighter" x-text="bins.hazardous.level + '%'"></span>
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-red-400 dark:text-red-500 mt-1" x-text="bins.hazardous.status"></span>
+                        <div class="absolute top-6 right-6 sm:top-8 sm:right-8 text-right">
+                            <span class="block text-3xl sm:text-4xl lg:text-5xl font-black text-red-600 dark:text-red-400 tracking-tighter" x-text="bins.hazardous.level + '%'"></span>
+                            <span class="block text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-red-400 dark:text-red-500 mt-0.5" x-text="bins.hazardous.status"></span>
                         </div>
                     </div>
                     
-                    <div class="mt-8 w-full space-y-4">
-                        <div class="flex justify-between items-center px-6 py-4 bg-white/50 dark:bg-zinc-800/50 rounded-3xl border border-red-100 dark:border-zinc-800">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-red-400 dark:text-red-500">Status Update</span>
+                    <div class="mt-6 w-full space-y-3">
+                        <div class="flex justify-between items-center px-5 py-3 bg-white/50 dark:bg-zinc-800/50 rounded-2xl border border-red-100 dark:border-zinc-800">
+                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-red-400 dark:text-red-500">Status Update</span>
                             <span class="text-xs font-bold text-red-700 dark:text-red-400" x-text="bins.hazardous.lastEmptied"></span>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button @click="openModal('hazardous')" class="py-4 bg-white dark:bg-zinc-800 border border-red-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-zinc-700 transition-all">Details</button>
-                            <button @click="emptyBinDirect('hazardous')" class="py-4 bg-red-500 text-white rounded-2xl text-xs font-black hover:bg-red-600 transition-all shadow-lg shadow-red-100 dark:shadow-none">Empty Bin</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="openModal('hazardous')" class="py-3 bg-white dark:bg-zinc-800 border border-red-100 dark:border-zinc-700 rounded-xl text-xs font-black text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-zinc-700 transition-all">Details</button>
+                            <button @click="emptyBinDirect('hazardous')" class="py-3 bg-red-500 text-white rounded-xl text-xs font-black hover:bg-red-600 transition-all shadow-md shadow-red-100 dark:shadow-none">Empty Bin</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Recyclable Bin -->
                 <div class="flex flex-col items-center">
-                    <div class="relative w-full aspect-[4/5] bg-sky-50/30 dark:bg-sky-950/10 rounded-[3rem] border-2 border-sky-100 dark:border-sky-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-sky-300 dark:hover:border-sky-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
+                    <div class="relative w-full aspect-[4/5] min-h-[280px] bg-sky-50/30 dark:bg-sky-950/10 rounded-3xl lg:rounded-[2.5rem] border-2 border-sky-100 dark:border-sky-900/30 p-6 sm:p-8 flex flex-col justify-end overflow-hidden group hover:border-sky-300 dark:hover:border-sky-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
                         <!-- Fill Level -->
                         <div class="absolute bottom-0 left-0 w-full bg-sky-400/20 transition-all duration-1000 ease-out" :style="'height: ' + bins.recyclable.level + '%'">
                             <div class="absolute top-0 left-0 w-full h-1.5 bg-sky-400 shadow-[0_0_20px_rgba(56,189,248,0.6)]"></div>
                         </div>
 
                         <!-- Bin Icon & Label -->
-                        <div class="relative z-10 flex flex-col items-center gap-8">
-                            <div class="w-28 h-28 bg-white dark:bg-zinc-800 rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-sky-500 group-hover:scale-110 transition-all duration-700 border border-sky-50 dark:border-zinc-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
+                        <div class="relative z-10 flex flex-col items-center gap-4 sm:gap-6">
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-white dark:bg-zinc-800 rounded-2xl lg:rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-sky-500 group-hover:scale-110 transition-all duration-700 border border-sky-50 dark:border-zinc-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="sm:w-14 sm:h-14"><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/><path d="M16 16h5v5"/></svg>
                             </div>
                             <div class="text-center">
-                                <span class="inline-block px-5 py-2 bg-rose-600 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-rose-200 dark:shadow-none" x-show="bins.recyclable.level >= 85">Critical Full</span>
-                                <span class="inline-block px-5 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-emerald-200 dark:shadow-none" x-show="bins.recyclable.level < 85">Optimal</span>
-                                <h4 class="text-xl font-black text-sky-900 dark:text-sky-300 tracking-tight uppercase">Recyclable</h4>
+                                <span class="inline-block px-4 py-1.5 bg-rose-600 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-rose-200 dark:shadow-none" x-show="bins.recyclable.level >= 85">Critical Full</span>
+                                <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-emerald-200 dark:shadow-none" x-show="bins.recyclable.level < 85">Optimal</span>
+                                <h4 class="text-lg sm:text-xl font-black text-sky-900 dark:text-sky-300 tracking-tight uppercase">Recyclable</h4>
                             </div>
                         </div>
 
                         <!-- Capacity Data -->
-                        <div class="absolute top-10 right-10 text-right">
-                            <span class="block text-5xl font-black text-sky-600 dark:text-sky-400 tracking-tighter" x-text="bins.recyclable.level + '%'"></span>
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-sky-500 mt-1" x-text="bins.recyclable.status"></span>
+                        <div class="absolute top-6 right-6 sm:top-8 sm:right-8 text-right">
+                            <span class="block text-3xl sm:text-4xl lg:text-5xl font-black text-sky-600 dark:text-sky-400 tracking-tighter" x-text="bins.recyclable.level + '%'"></span>
+                            <span class="block text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-sky-500 mt-0.5" x-text="bins.recyclable.status"></span>
                         </div>
                     </div>
                     
-                    <div class="mt-8 w-full space-y-4">
-                        <div class="flex justify-between items-center px-6 py-4 bg-white/50 dark:bg-zinc-800/50 rounded-3xl border border-sky-100 dark:border-zinc-800">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-sky-500">Status Update</span>
+                    <div class="mt-6 w-full space-y-3">
+                        <div class="flex justify-between items-center px-5 py-3 bg-white/50 dark:bg-zinc-800/50 rounded-2xl border border-sky-100 dark:border-zinc-800">
+                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-sky-400 dark:text-sky-500">Status Update</span>
                             <span class="text-xs font-bold text-sky-700 dark:text-sky-400" x-text="bins.recyclable.lastEmptied"></span>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button @click="openModal('recyclable')" class="py-4 bg-white dark:bg-zinc-800 border border-sky-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-zinc-700 transition-all">Details</button>
-                            <button @click="emptyBinDirect('recyclable')" class="py-4 bg-sky-500 text-white rounded-2xl text-xs font-black hover:bg-sky-600 transition-all shadow-lg shadow-sky-100 dark:shadow-none">Empty Bin</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="openModal('recyclable')" class="py-3 bg-white dark:bg-zinc-800 border border-sky-100 dark:border-zinc-700 rounded-xl text-xs font-black text-sky-600 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-zinc-700 transition-all">Details</button>
+                            <button @click="emptyBinDirect('recyclable')" class="py-3 bg-sky-500 text-white rounded-xl text-xs font-black hover:bg-sky-600 transition-all shadow-md shadow-sky-100 dark:shadow-none">Empty Bin</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Non-Bio Degradable Bin -->
                 <div class="flex flex-col items-center">
-                    <div class="relative w-full aspect-[4/5] bg-orange-50/30 dark:bg-orange-950/10 rounded-[3rem] border-2 border-orange-100 dark:border-orange-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-orange-300 dark:hover:border-orange-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
+                    <div class="relative w-full aspect-[4/5] min-h-[280px] bg-orange-50/30 dark:bg-orange-950/10 rounded-3xl lg:rounded-[2.5rem] border-2 border-orange-100 dark:border-orange-900/30 p-6 sm:p-8 flex flex-col justify-end overflow-hidden group hover:border-orange-300 dark:hover:border-orange-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
                         <!-- Fill Level -->
                         <div class="absolute bottom-0 left-0 w-full bg-orange-400/20 transition-all duration-1000 ease-out" :style="'height: ' + bins['non-bio'].level + '%'">
                             <div class="absolute top-0 left-0 w-full h-1.5 bg-orange-400 shadow-[0_0_20px_rgba(251,146,60,0.6)]"></div>
                         </div>
 
                         <!-- Bin Icon & Label -->
-                        <div class="relative z-10 flex flex-col items-center gap-8">
-                            <div class="w-28 h-28 bg-white dark:bg-zinc-800 rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-orange-500 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 border border-orange-50 dark:border-zinc-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        <div class="relative z-10 flex flex-col items-center gap-4 sm:gap-6">
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-white dark:bg-zinc-800 rounded-2xl lg:rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-orange-500 group-hover:scale-110 group-hover:-rotate-3 transition-all duration-700 border border-orange-50 dark:border-zinc-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:w-14 sm:h-14"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
                             </div>
                             <div class="text-center">
-                                <span class="inline-block px-5 py-2 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-rose-200 dark:shadow-none" x-show="bins['non-bio'].level >= 75">Attention Required</span>
-                                <span class="inline-block px-5 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-emerald-200 dark:shadow-none" x-show="bins['non-bio'].level < 75">Optimal</span>
-                                <h4 class="text-xl font-black text-orange-900 dark:text-orange-300 tracking-tight uppercase">Non-Bio</h4>
+                                <span class="inline-block px-4 py-1.5 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-rose-200 dark:shadow-none" x-show="bins['non-bio'].level >= 75">Attention Required</span>
+                                <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-emerald-200 dark:shadow-none" x-show="bins['non-bio'].level < 75">Optimal</span>
+                                <h4 class="text-lg sm:text-xl font-black text-orange-900 dark:text-orange-300 tracking-tight uppercase">Non-Bio</h4>
                             </div>
                         </div>
 
                         <!-- Capacity Data -->
-                        <div class="absolute top-10 right-10 text-right">
-                            <span class="block text-5xl font-black text-orange-600 dark:text-orange-400 tracking-tighter" x-text="bins['non-bio'].level + '%'"></span>
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-orange-400 dark:text-orange-500 mt-1" x-text="bins['non-bio'].status"></span>
+                        <div class="absolute top-6 right-6 sm:top-8 sm:right-8 text-right">
+                            <span class="block text-3xl sm:text-4xl lg:text-5xl font-black text-orange-600 dark:text-orange-400 tracking-tighter" x-text="bins['non-bio'].level + '%'"></span>
+                            <span class="block text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-orange-400 dark:text-orange-500 mt-0.5" x-text="bins['non-bio'].status"></span>
                         </div>
                     </div>
                     
-                    <div class="mt-8 w-full space-y-4">
-                        <div class="flex justify-between items-center px-6 py-4 bg-white/50 dark:bg-zinc-800/50 rounded-3xl border border-orange-100 dark:border-zinc-800">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-orange-400 dark:text-orange-500">Status Update</span>
+                    <div class="mt-6 w-full space-y-3">
+                        <div class="flex justify-between items-center px-5 py-3 bg-white/50 dark:bg-zinc-800/50 rounded-2xl border border-orange-100 dark:border-zinc-800">
+                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-orange-400 dark:text-orange-500">Status Update</span>
                             <span class="text-xs font-bold text-orange-700 dark:text-orange-400" x-text="bins['non-bio'].lastEmptied"></span>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button @click="openModal('non-bio')" class="py-4 bg-white dark:bg-zinc-800 border border-orange-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-zinc-700 transition-all">Details</button>
-                            <button @click="emptyBinDirect('non-bio')" class="py-4 bg-orange-400 text-white rounded-2xl text-xs font-black hover:bg-orange-500 transition-all shadow-lg shadow-orange-100 dark:shadow-none">Empty Bin</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="openModal('non-bio')" class="py-3 bg-white dark:bg-zinc-800 border border-orange-100 dark:border-zinc-700 rounded-xl text-xs font-black text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-zinc-700 transition-all">Details</button>
+                            <button @click="emptyBinDirect('non-bio')" class="py-3 bg-orange-400 text-white rounded-xl text-xs font-black hover:bg-orange-500 transition-all shadow-md shadow-orange-100 dark:shadow-none">Empty Bin</button>
                         </div>
                     </div>
                 </div>
 
                 <!-- Bio-Degradable Bin -->
                 <div class="flex flex-col items-center">
-                    <div class="relative w-full aspect-[4/5] bg-emerald-50/30 dark:bg-emerald-950/10 rounded-[3rem] border-2 border-emerald-100 dark:border-emerald-900/30 p-10 flex flex-col justify-end overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
+                    <div class="relative w-full aspect-[4/5] min-h-[280px] bg-emerald-50/30 dark:bg-emerald-950/10 rounded-3xl lg:rounded-[2.5rem] border-2 border-emerald-100 dark:border-emerald-900/30 p-6 sm:p-8 flex flex-col justify-end overflow-hidden group hover:border-emerald-300 dark:hover:border-emerald-800 transition-all duration-700 shadow-sm hover:shadow-2xl">
                         <!-- Fill Level -->
                         <div class="absolute bottom-0 left-0 w-full bg-emerald-400/20 transition-all duration-1000 ease-out" :style="'height: ' + bins.biodegradable.level + '%'">
                             <div class="absolute top-0 left-0 w-full h-1.5 bg-emerald-400 shadow-[0_0_20px_rgba(52,211,153,0.6)]"></div>
                         </div>
 
                         <!-- Bin Icon & Label -->
-                        <div class="relative z-10 flex flex-col items-center gap-8">
-                            <div class="w-28 h-28 bg-white dark:bg-zinc-800 rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 border border-emerald-50 dark:border-zinc-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
+                        <div class="relative z-10 flex flex-col items-center gap-4 sm:gap-6">
+                            <div class="w-20 h-20 sm:w-24 sm:h-24 lg:w-28 lg:h-28 bg-white dark:bg-zinc-800 rounded-2xl lg:rounded-[2rem] shadow-xl dark:shadow-none flex items-center justify-center text-emerald-500 group-hover:scale-110 group-hover:rotate-3 transition-all duration-700 border border-emerald-50 dark:border-zinc-700">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="sm:w-14 sm:h-14"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C10.9 14.36 12 15 12 15"/></svg>
                             </div>
                             <div class="text-center">
-                                <span class="inline-block px-5 py-2 bg-rose-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-rose-200 dark:shadow-none" x-show="bins.biodegradable.level >= 75">Attention Required</span>
-                                <span class="inline-block px-5 py-2 bg-emerald-500 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-5 shadow-lg shadow-emerald-200 dark:shadow-none" x-show="bins.biodegradable.level < 75">Optimal</span>
-                                <h4 class="text-xl font-black text-emerald-900 dark:text-emerald-300 tracking-tight uppercase">Biodegradable</h4>
+                                <span class="inline-block px-4 py-1.5 bg-rose-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-rose-200 dark:shadow-none" x-show="bins.biodegradable.level >= 75">Attention Required</span>
+                                <span class="inline-block px-4 py-1.5 bg-emerald-500 text-white text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] rounded-full mb-3 shadow-md shadow-emerald-200 dark:shadow-none" x-show="bins.biodegradable.level < 75">Optimal</span>
+                                <h4 class="text-lg sm:text-xl font-black text-emerald-900 dark:text-emerald-300 tracking-tight uppercase">Biodegradable</h4>
                             </div>
                         </div>
 
                         <!-- Capacity Data -->
-                        <div class="absolute top-10 right-10 text-right">
-                            <span class="block text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter" x-text="bins.biodegradable.level + '%'"></span>
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500 mt-1" x-text="bins.biodegradable.status"></span>
+                        <div class="absolute top-6 right-6 sm:top-8 sm:right-8 text-right">
+                            <span class="block text-3xl sm:text-4xl lg:text-5xl font-black text-emerald-600 dark:text-emerald-400 tracking-tighter" x-text="bins.biodegradable.level + '%'"></span>
+                            <span class="block text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500 mt-0.5" x-text="bins.biodegradable.status"></span>
                         </div>
                     </div>
                     
-                    <div class="mt-8 w-full space-y-4">
-                        <div class="flex justify-between items-center px-6 py-4 bg-white/50 dark:bg-zinc-800/50 rounded-3xl border border-emerald-100 dark:border-zinc-800">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500">Status Update</span>
+                    <div class="mt-6 w-full space-y-3">
+                        <div class="flex justify-between items-center px-5 py-3 bg-white/50 dark:bg-zinc-800/50 rounded-2xl border border-emerald-100 dark:border-zinc-800">
+                            <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-emerald-400 dark:text-emerald-500">Status Update</span>
                             <span class="text-xs font-bold text-emerald-700 dark:text-emerald-400" x-text="bins.biodegradable.lastEmptied"></span>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <button @click="openModal('biodegradable')" class="py-4 bg-white dark:bg-zinc-800 border border-emerald-100 dark:border-zinc-700 rounded-2xl text-xs font-black text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-zinc-700 transition-all">Details</button>
-                            <button @click="emptyBinDirect('biodegradable')" class="py-4 bg-emerald-500 text-white rounded-2xl text-xs font-black hover:bg-emerald-600 transition-all shadow-lg shadow-emerald-100 dark:shadow-none">Empty Bin</button>
+                        <div class="grid grid-cols-2 gap-3">
+                            <button @click="openModal('biodegradable')" class="py-3 bg-white dark:bg-zinc-800 border border-emerald-100 dark:border-zinc-700 rounded-xl text-xs font-black text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-zinc-700 transition-all">Details</button>
+                            <button @click="emptyBinDirect('biodegradable')" class="py-3 bg-emerald-500 text-white rounded-xl text-xs font-black hover:bg-emerald-600 transition-all shadow-md shadow-emerald-100 dark:shadow-none">Empty Bin</button>
                         </div>
                     </div>
                 </div>
@@ -190,63 +190,63 @@
         </div>
 
         <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-12 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 pb-16 sm:pb-20">
             <!-- Card 1: AI Sorting Data -->
-            <div class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-[3rem] shadow-xl shadow-rose-200/10 dark:shadow-none border border-white dark:border-zinc-800 p-10 flex flex-col transition-colors duration-300">
-                <div class="mb-10">
-                    <h3 class="text-2xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">AI Analytics</h3>
-                    <p class="text-[10px] font-black text-rose-300 dark:text-rose-400 uppercase tracking-[0.3em] mt-2">Daily Performance</p>
+            <div class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl lg:rounded-[2.5rem] shadow-xl shadow-rose-200/10 dark:shadow-none border border-white dark:border-zinc-800 p-6 sm:p-8 flex flex-col transition-colors duration-300">
+                <div class="mb-6 sm:mb-8">
+                    <h3 class="text-xl sm:text-2xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">AI Analytics</h3>
+                    <p class="text-[9px] sm:text-[10px] font-black text-rose-400 dark:text-rose-400 uppercase tracking-[0.3em] mt-1">Daily Performance</p>
                 </div>
 
-                <div class="bg-rose-50/50 dark:bg-zinc-800/50 rounded-[2.5rem] p-8 text-center border border-rose-100 dark:border-zinc-700 mb-10 transition-colors duration-300">
-                    <span class="block text-6xl font-black text-rose-600 dark:text-rose-400 tracking-tighter" x-text="totalProcessed"></span>
-                    <span class="block text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 dark:text-zinc-500 mt-3">Items Processed Today</span>
+                <div class="bg-rose-50/50 dark:bg-zinc-800/50 rounded-2xl lg:rounded-[2rem] p-6 text-center border border-rose-100 dark:border-zinc-700 mb-6 sm:mb-8 transition-colors duration-300">
+                    <span class="block text-4xl sm:text-5xl lg:text-6xl font-black text-rose-600 dark:text-rose-400 tracking-tighter" x-text="totalProcessed"></span>
+                    <span class="block text-[9px] sm:text-[10px] font-black uppercase tracking-[0.2em] text-rose-400 dark:text-zinc-500 mt-2">Items Processed Today</span>
                 </div>
 
-                <div class="space-y-8 flex-1">
+                <div class="space-y-6 flex-1">
                     <!-- Hazard -->
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
                                 <div class="w-2 h-2 rounded-full bg-red-400"></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Hazardous</span>
+                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Hazardous</span>
                             </div>
-                            <span class="text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins.hazardous.items.length"></span> items</span>
+                            <span class="text-xs sm:text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins.hazardous.items.length"></span> items</span>
                         </div>
                         <div class="h-2 w-full bg-rose-50 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <div class="h-full bg-red-400 rounded-full transition-all duration-500" :style="'width: ' + (bins.hazardous.items.length / totalProcessed * 100 || 0) + '%'"></div>
                         </div>
                     </div>
                     <!-- Recyclable -->
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
                                 <div class="w-2 h-2 rounded-full bg-sky-400"></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Recyclable</span>
+                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Recyclable</span>
                             </div>
-                            <span class="text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins.recyclable.items.length"></span> items</span>
+                            <span class="text-xs sm:text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins.recyclable.items.length"></span> items</span>
                         </div>
                         <div class="h-2 w-full bg-rose-50 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <div class="h-full bg-sky-400 rounded-full transition-all duration-500" :style="'width: ' + (bins.recyclable.items.length / totalProcessed * 100 || 0) + '%'"></div>
                         </div>
                     </div>
                     <!-- Non-Bio -->
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
                                 <div class="w-2 h-2 rounded-full bg-orange-400"></div>
-                                <span class="text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Non-Bio</span>
+                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Non-Bio</span>
                             </div>
-                            <span class="text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins['non-bio'].items.length"></span> items</span>
+                            <span class="text-xs sm:text-sm font-black text-rose-950 dark:text-zinc-300"><span x-text="bins['non-bio'].items.length"></span> items</span>
                         </div>
                         <div class="h-2 w-full bg-rose-50 dark:bg-zinc-800 rounded-full overflow-hidden">
                             <div class="h-full bg-orange-400 rounded-full transition-all duration-500" :style="'width: ' + (bins['non-bio'].items.length / totalProcessed * 100 || 0) + '%'"></div>
                         </div>
                     </div>
                     <!-- Bio -->
-                    <div class="space-y-3">
+                    <div class="space-y-2">
                         <div class="flex justify-between items-center">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
                                 <div class="w-2 h-2 rounded-full bg-emerald-400"></div>
                                 <span class="text-[10px] font-black uppercase tracking-widest text-rose-900/60 dark:text-zinc-400">Biodegradable</span>
                             </div>
@@ -463,6 +463,7 @@
     <script>
         function binModal() {
             return {
+                sidebarOpen: false,
                 isOpen: false,
                 activeKey: '',
                 activeBin: {
