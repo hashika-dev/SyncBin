@@ -26,17 +26,25 @@ class PasswordResetLinkController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        $siteKey = config('services.turnstile.key');
+        $secretKey = config('services.turnstile.secret');
+        $isDummyKey = !$siteKey || $siteKey === '1x00000000000000000000AA' || !$secretKey || $secretKey === '1x0000000000000000000000000000000AA';
+
         $request->validate([
             'email' => ['required', 'email'],
-            'cf-turnstile-response' => app()->runningUnitTests() ? ['nullable'] : ['required', function ($attribute, $value, $fail) {
-                $response = \Illuminate\Support\Facades\Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-                    'secret' => config('services.turnstile.secret'),
-                    'response' => $value,
-                    'remoteip' => request()->ip(),
-                ]);
+            'cf-turnstile-response' => (app()->environment('local') || app()->runningUnitTests() || $isDummyKey) ? ['nullable'] : ['required', function ($attribute, $value, $fail) use ($secretKey) {
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(3)->asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                        'secret' => $secretKey,
+                        'response' => $value,
+                        'remoteip' => request()->ip(),
+                    ]);
 
-                if (! $response->json('success')) {
-                    $fail('The CAPTCHA verification failed. Please try again.');
+                    if (! $response->json('success')) {
+                        $fail('The CAPTCHA verification failed. Please try again.');
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::warning('Turnstile reset link verification skipped due to error: ' . $e->getMessage());
                 }
             }],
         ]);
