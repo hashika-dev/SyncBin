@@ -360,6 +360,8 @@ class BinController extends Controller
             }
         }
 
+        $logs = $query->latest()->paginate(10)->withQueryString();
+        $bins = Bin::all();
         $clearanceLogs = \App\Models\BinClearanceLog::with('bin')->latest()->paginate(10, ['*'], 'clearance_page');
         $avgResponseTimeMinutes = round(\App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes') ?? 0, 1);
 
