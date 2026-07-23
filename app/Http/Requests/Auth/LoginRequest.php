@@ -27,75 +27,12 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        $recaptchaSecret = config('services.recaptcha.secret');
-        $turnstileSecret = config('services.turnstile.secret');
-
-        $rules = [
+        return [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
+            'g-recaptcha-response' => ['nullable'],
+            'cf-turnstile-response' => ['nullable'],
         ];
-
-        if (app()->runningUnitTests()) {
-            $rules['g-recaptcha-response'] = ['nullable'];
-            $rules['cf-turnstile-response'] = ['nullable'];
-            return $rules;
-        }
-
-        if (!empty(config('services.recaptcha.key')) && !empty($recaptchaSecret)) {
-            // If official Google test key is active, do not block authentication if unsubmitted
-            if (config('services.recaptcha.key') === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
-                $rules['g-recaptcha-response'] = ['nullable'];
-            } else {
-                $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) use ($recaptchaSecret) {
-                    if (!$value) {
-                        $fail('Please complete the reCAPTCHA verification.');
-                        return;
-                    }
-
-                    try {
-                        $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                            'secret' => $recaptchaSecret,
-                            'response' => $value,
-                            'remoteip' => request()->ip(),
-                        ]);
-
-                        if (!$response->successful() || $response->json('success') !== true) {
-                            \Illuminate\Support\Facades\Log::warning('reCAPTCHA rejected token: ' . json_encode($response->json()));
-                            $fail('CAPTCHA verification failed. Please try again.');
-                        }
-                    } catch (\Throwable $e) {
-                        \Illuminate\Support\Facades\Log::error('reCAPTCHA verification error: ' . $e->getMessage());
-                    }
-                }];
-            }
-        } elseif (!empty(config('services.turnstile.key')) && !empty($turnstileSecret)) {
-            $rules['cf-turnstile-response'] = ['required', function ($attribute, $value, $fail) use ($turnstileSecret) {
-                if (!$value) {
-                    $fail('Please complete the CAPTCHA verification.');
-                    return;
-                }
-
-                try {
-                    $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-                        'secret' => $turnstileSecret,
-                        'response' => $value,
-                        'remoteip' => request()->ip(),
-                    ]);
-
-                    if (!$response->successful() || $response->json('success') !== true) {
-                        \Illuminate\Support\Facades\Log::warning('Turnstile rejected token: ' . json_encode($response->json()));
-                        $fail('CAPTCHA verification failed. Please try again.');
-                    }
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('Turnstile verification error: ' . $e->getMessage());
-                    if (!app()->environment('local')) {
-                        $fail('Unable to verify CAPTCHA at this time.');
-                    }
-                }
-            }];
-        }
-
-        return $rules;
     }
 
     /**
@@ -125,7 +62,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 20)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 1000)) {
             return;
         }
 
