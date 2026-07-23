@@ -507,6 +507,8 @@ class BinController extends Controller
             else $bin->status = 'Critical';
             
             $bin->save();
+        }
+
         // Seed realistic evacuation audit logs
         \App\Models\BinClearanceLog::query()->delete();
         $sampleEmails = ['admin@wastesync.com', 'staff.mendoza@wastesync.com', 'superadmin@wastesync.com'];
