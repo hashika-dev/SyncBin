@@ -42,34 +42,32 @@ class LoginRequest extends FormRequest
         }
 
         if (!empty(config('services.recaptcha.key')) && !empty($recaptchaSecret)) {
-            $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) use ($recaptchaSecret) {
-                if (!$value) {
-                    $fail('Please complete the reCAPTCHA verification.');
-                    return;
-                }
+            // If official Google test key is active, do not block authentication if unsubmitted
+            if (config('services.recaptcha.key') === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
+                $rules['g-recaptcha-response'] = ['nullable'];
+            } else {
+                $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) use ($recaptchaSecret) {
+                    if (!$value) {
+                        $fail('Please complete the reCAPTCHA verification.');
+                        return;
+                    }
 
-                // If using official Google test sitekey, valid non-empty response passes
-                if (config('services.recaptcha.key') === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
-                    return;
-                }
+                    try {
+                        $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                            'secret' => $recaptchaSecret,
+                            'response' => $value,
+                            'remoteip' => request()->ip(),
+                        ]);
 
-                try {
-                    $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
-                        'secret' => $recaptchaSecret,
-                        'response' => $value,
-                        'remoteip' => request()->ip(),
-                    ]);
-
-                    if (!$response->successful() || $response->json('success') !== true) {
-                        \Illuminate\Support\Facades\Log::warning('reCAPTCHA rejected token: ' . json_encode($response->json()));
-                        if ($recaptchaSecret !== '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe') {
+                        if (!$response->successful() || $response->json('success') !== true) {
+                            \Illuminate\Support\Facades\Log::warning('reCAPTCHA rejected token: ' . json_encode($response->json()));
                             $fail('CAPTCHA verification failed. Please try again.');
                         }
+                    } catch (\Throwable $e) {
+                        \Illuminate\Support\Facades\Log::error('reCAPTCHA verification error: ' . $e->getMessage());
                     }
-                } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::error('reCAPTCHA verification error: ' . $e->getMessage());
-                }
-            }];
+                }];
+            }
         } elseif (!empty(config('services.turnstile.key')) && !empty($turnstileSecret)) {
             $rules['cf-turnstile-response'] = ['required', function ($attribute, $value, $fail) use ($turnstileSecret) {
                 if (!$value) {
@@ -127,7 +125,7 @@ class LoginRequest extends FormRequest
      */
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 20)) {
             return;
         }
 
