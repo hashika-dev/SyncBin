@@ -27,34 +27,70 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        $siteKey = config('services.turnstile.key');
-        $secretKey = config('services.turnstile.secret');
-        $hasRealKeys = $siteKey && $siteKey !== '1x00000000000000000000AA' && $secretKey && $secretKey !== '1x0000000000000000000000000000000AA';
+        $recaptchaSecret = config('services.recaptcha.secret');
+        $turnstileSecret = config('services.turnstile.secret');
 
         $rules = [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
         ];
 
-        if ($hasRealKeys && !app()->environment('local') && !app()->runningUnitTests()) {
-            $rules['cf-turnstile-response'] = ['nullable', function ($attribute, $value, $fail) use ($secretKey) {
-                if (!$value) return;
+        if (app()->runningUnitTests()) {
+            $rules['g-recaptcha-response'] = ['nullable'];
+            $rules['cf-turnstile-response'] = ['nullable'];
+            return $rules;
+        }
+
+        if (!empty(config('services.recaptcha.key')) && !empty($recaptchaSecret)) {
+            $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) use ($recaptchaSecret) {
+                if (!$value) {
+                    $fail('Please complete the reCAPTCHA verification.');
+                    return;
+                }
+
                 try {
-                    $response = \Illuminate\Support\Facades\Http::timeout(3)->asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-                        'secret' => $secretKey,
+                    $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                        'secret' => $recaptchaSecret,
                         'response' => $value,
                         'remoteip' => request()->ip(),
                     ]);
 
-                    if ($response->successful() && $response->json('success') === false) {
-                        \Illuminate\Support\Facades\Log::warning('Turnstile rejected token: ' . json_encode($response->json()));
+                    if (!$response->successful() || $response->json('success') !== true) {
+                        \Illuminate\Support\Facades\Log::warning('reCAPTCHA rejected token: ' . json_encode($response->json()));
+                        $fail('CAPTCHA verification failed. Please try again.');
                     }
                 } catch (\Throwable $e) {
-                    \Illuminate\Support\Facades\Log::warning('Turnstile verification error: ' . $e->getMessage());
+                    \Illuminate\Support\Facades\Log::error('reCAPTCHA verification error: ' . $e->getMessage());
+                    if (!app()->environment('local')) {
+                        $fail('Unable to verify CAPTCHA at this time.');
+                    }
                 }
             }];
-        } else {
-            $rules['cf-turnstile-response'] = ['nullable'];
+        } elseif (!empty(config('services.turnstile.key')) && !empty($turnstileSecret)) {
+            $rules['cf-turnstile-response'] = ['required', function ($attribute, $value, $fail) use ($turnstileSecret) {
+                if (!$value) {
+                    $fail('Please complete the CAPTCHA verification.');
+                    return;
+                }
+
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                        'secret' => $turnstileSecret,
+                        'response' => $value,
+                        'remoteip' => request()->ip(),
+                    ]);
+
+                    if (!$response->successful() || $response->json('success') !== true) {
+                        \Illuminate\Support\Facades\Log::warning('Turnstile rejected token: ' . json_encode($response->json()));
+                        $fail('CAPTCHA verification failed. Please try again.');
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('Turnstile verification error: ' . $e->getMessage());
+                    if (!app()->environment('local')) {
+                        $fail('Unable to verify CAPTCHA at this time.');
+                    }
+                }
+            }];
         }
 
         return $rules;

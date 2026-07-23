@@ -23,7 +23,9 @@
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @if(config('services.turnstile.key') && config('services.turnstile.key') !== '1x00000000000000000000AA')
+    @if(config('services.recaptcha.key'))
+        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    @elseif(config('services.turnstile.key'))
         <link rel="preconnect" href="https://challenges.cloudflare.com" crossorigin>
         <link rel="dns-prefetch" href="https://challenges.cloudflare.com">
         <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
@@ -163,7 +165,12 @@
                     </div>
 
                     <!-- CAPTCHA -->
-                    @if(config('services.turnstile.key') && config('services.turnstile.key') !== '1x00000000000000000000AA')
+                    @if(config('services.recaptcha.key'))
+                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center sm:items-start overflow-hidden py-1">
+                            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.key') }}"></div>
+                            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-2 ml-1" />
+                        </div>
+                    @elseif(config('services.turnstile.key'))
                         <div class="opacity-0 animate-fade-in-up delay-300">
                             <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}" data-theme="light"></div>
                             <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2 ml-1" />

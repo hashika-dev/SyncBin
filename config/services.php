@@ -40,4 +40,9 @@ return [
         'secret' => env('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA'),
     ],
 
+    'recaptcha' => [
+        'key' => env('RECAPTCHA_SITE_KEY', '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI'),
+        'secret' => env('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'),
+    ],
+
 ];

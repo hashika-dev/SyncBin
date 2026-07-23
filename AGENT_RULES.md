@@ -1,6 +1,10 @@
 ### UI Asset & Icon Policy
 * **Primary System Logo:** Whenever a prompt asks to generate a header, navigation bar, dashboard card, or any component that requires the main application logo or icon, you MUST strictly use the existing file located at `public/favicon.svg`. 
-* **Laravel Syntax:** When embedding this logo in Blade (`.blade.php`) files, always use the correct asset helper: `<img src="{{ asset('favicon.svg') }}" alt="System Logo">`. Do not use external placeholder image links.
+* **Laravel Syntax:** When embedding this logo in Blade (`.blade.php`) files, always use the correct asset helper:
+  ```blade
+  <img src="{{ asset('favicon.svg') }}" alt="System Logo">
+  ```
+  Do not use external placeholder image links.
 
 ### Development Standards & Code Consistency
 * **Architecture & Conventions:** Follow standard Laravel conventions (RESTful Controller methods, Form Request validation classes, Eloquent relationships, and explicit named routes in `routes/web.php`).
