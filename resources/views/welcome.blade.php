@@ -118,12 +118,12 @@
         <div class="w-full lg:w-2/3 bg-white dark:bg-zinc-900 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 transition-colors duration-300 min-h-screen">
             <div class="w-full max-w-md opacity-0 animate-fade-in-up">
                 <!-- Mobile Branding Header (Visible < lg) -->
-                <div class="flex lg:hidden flex-col items-center gap-4 mb-8 text-center">
+                <div class="flex lg:hidden flex-col items-center gap-6 mb-10 text-center pt-2">
                     <div class="flex items-center gap-3">
-                        <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-8 h-8 object-contain animate-float">
-                        <span class="text-2xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
+                        <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-9 h-9 object-contain animate-float">
+                        <span class="text-3xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
                     </div>
-                    <div class="w-full">
+                    <div class="w-full my-2">
                         <x-sorting-graphic />
                     </div>
                 </div>
@@ -131,7 +131,7 @@
                 <!-- Form Header -->
                 <div class="mb-8 sm:mb-10">
                     <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-zinc-50">Welcome back</h2>
-                    <p class="text-rose-600 dark:text-rose-400 font-semibold mt-2 text-sm sm:text-base">Sign in to your SyncBin account to continue.</p>
+                    <p class="text-rose-600 dark:text-rose-400 font-semibold mt-2.5 text-sm sm:text-base">Sign in to your SyncBin account to continue.</p>
                 </div>
 
                 <!-- Login Form -->

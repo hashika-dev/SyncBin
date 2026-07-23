@@ -1,4 +1,4 @@
-<div class="relative w-full p-6 sm:p-8 rounded-[2rem] bg-gradient-to-br from-pink-50 to-orange-50 shadow-xl border border-white/60 overflow-hidden">
+<div class="relative w-full p-4 sm:p-8 rounded-[2rem] bg-gradient-to-br from-pink-50 to-orange-50 shadow-xl border border-white/60 overflow-hidden">
     <style>
         @keyframes trash-to-hole {
             0% { transform: translate(-40px, -40px) scale(0.5); opacity: 0; }
