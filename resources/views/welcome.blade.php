@@ -23,13 +23,6 @@
 
     <!-- Styles / Scripts -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @if(config('services.recaptcha.key'))
-        <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    @elseif(config('services.turnstile.key'))
-        <link rel="preconnect" href="https://challenges.cloudflare.com" crossorigin>
-        <link rel="dns-prefetch" href="https://challenges.cloudflare.com">
-        <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-    @endif
 
     <style>
         body {
@@ -167,18 +160,6 @@
                         <a href="{{ route('password.request') }}" class="text-sm font-bold text-rose-500 hover:text-rose-600 transition-colors">Forgot password?</a>
                     </div>
 
-                    <!-- CAPTCHA -->
-                    @if(config('services.recaptcha.key'))
-                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center justify-center w-full py-2">
-                            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.key') }}"></div>
-                            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-2 text-center" />
-                        </div>
-                    @elseif(config('services.turnstile.key'))
-                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center justify-center w-full py-2">
-                            <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}" data-theme="light"></div>
-                            <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2 text-center" />
-                        </div>
-                    @endif
 
                     <!-- Submit Button -->
                     <div class="opacity-0 animate-fade-in-up delay-300">
