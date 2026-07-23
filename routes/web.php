@@ -40,6 +40,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/api/bins/{slug}/scan', [\App\Http\Controllers\BinController::class, 'simulateScan'])->name('bins.scan');
         Route::post('/api/bins/{slug}/empty', [\App\Http\Controllers\BinController::class, 'emptyBin'])->name('bins.empty');
         Route::get('/dashboard/reports', [\App\Http\Controllers\BinController::class, 'reports'])->name('dashboard.reports');
+        Route::get('/dashboard/export', [\App\Http\Controllers\BinController::class, 'exportPdf'])->name('dashboard.export');
         Route::get('/dashboard/history', [\App\Http\Controllers\BinController::class, 'history'])->name('dashboard.history');
     });
 
@@ -47,7 +48,6 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['role:superadmin', 'throttle:60,1'])->group(function () {
         Route::get('/dashboard/hardware', [\App\Http\Controllers\BinController::class, 'hardware'])->name('dashboard.hardware');
         Route::post('/api/system/seed-mock-data', [\App\Http\Controllers\BinController::class, 'seedMockData'])->name('system.seed');
-        Route::get('/dashboard/export', [\App\Http\Controllers\BinController::class, 'exportPdf'])->name('dashboard.export');
         Route::delete('/dashboard/history/clear', [\App\Http\Controllers\BinController::class, 'clearHistory'])->name('dashboard.history.clear');
     });
 });

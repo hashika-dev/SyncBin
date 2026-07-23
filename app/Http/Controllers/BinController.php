@@ -147,6 +147,28 @@ class BinController extends Controller
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error("Mail delivery failed: " . $e->getMessage());
             }
+
+            // Semaphore SMS Alert
+            $semaphoreApiKey = config('services.semaphore.key');
+            $alertPhoneNumber = config('services.semaphore.number');
+
+            if (!empty($semaphoreApiKey) && !empty($alertPhoneNumber)) {
+                try {
+                    $smsResponse = \Illuminate\Support\Facades\Http::post('https://api.semaphore.co/api/v4/messages', [
+                        'apikey'  => $semaphoreApiKey,
+                        'number'  => $alertPhoneNumber,
+                        'message' => "CRITICAL ALERT: SyncBin {$bin->name} has reached {$bin->level}% capacity! Please evacuate the bin.",
+                    ]);
+
+                    if ($smsResponse->successful()) {
+                        \Illuminate\Support\Facades\Log::info("Semaphore SMS alert sent successfully to {$alertPhoneNumber} for Bin {$bin->name}.");
+                    } else {
+                        \Illuminate\Support\Facades\Log::warning("Semaphore SMS delivery failed: " . json_encode($smsResponse->json()));
+                    }
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Semaphore SMS error: " . $e->getMessage());
+                }
+            }
         }
 
         return response()->json($bin->load(['items' => function($q) { $q->latest(); }]));

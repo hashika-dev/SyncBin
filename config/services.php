@@ -45,4 +45,9 @@ return [
         'secret' => env('RECAPTCHA_SECRET_KEY', '6LeIxAcTAAAAAGG-vFI1TnRWxMZNFuojJ4WifJWe'),
     ],
 
+    'semaphore' => [
+        'key' => env('SEMAPHORE_API_KEY'),
+        'number' => env('SEMAPHORE_ALERT_NUMBER'),
+    ],
+
 ];
