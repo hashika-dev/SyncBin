@@ -253,6 +253,7 @@
 
         <!-- Custom Confirmation Modal Overlay -->
         <div x-show="showClearConfirm" 
+             style="display: none;"
              class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
