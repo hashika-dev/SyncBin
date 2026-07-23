@@ -178,6 +178,7 @@
                     <div class="mt-6 pt-6 border-t border-rose-50 dark:border-zinc-800">
                         {{ $logs->links() }}
                     </div>
+                @endif
             </div>
 
             <!-- Evacuation Audit History Table -->
