@@ -22,7 +22,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Force HTTPS in production / reverse proxies (Railway) to prevent Mixed Content & 419 token redirects
-        if (!$this->app->environment('local') || request()->header('X-Forwarded-Proto') === 'https' || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
+        if (request()->header('X-Forwarded-Proto') === 'https' || isset($_SERVER['HTTP_X_FORWARDED_PROTO']) || isset($_SERVER['HTTPS']) || env('APP_ENV') === 'production') {
             URL::forceScheme('https');
         }
 
