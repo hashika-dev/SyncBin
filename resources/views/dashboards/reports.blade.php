@@ -26,8 +26,12 @@
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                         Seed Demo Data
                     </button>
-                    <a href="{{ route('dashboard.export') }}" target="_blank" class="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-emerald-500 text-white rounded-2xl font-black shadow-lg shadow-emerald-250 dark:shadow-none hover:bg-emerald-600 hover:-translate-y-0.5 transition-all active:scale-95 text-sm shrink-0">
+                    <a href="{{ route('dashboard.export.csv') }}" class="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-zinc-800 dark:bg-zinc-700 text-white rounded-2xl font-black shadow-lg hover:bg-zinc-900 hover:-translate-y-0.5 transition-all active:scale-95 text-sm shrink-0">
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+                        Export CSV Data
+                    </a>
+                    <a href="{{ route('dashboard.export') }}" target="_blank" class="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-emerald-500 text-white rounded-2xl font-black shadow-lg shadow-emerald-250 dark:shadow-none hover:bg-emerald-600 hover:-translate-y-0.5 transition-all active:scale-95 text-sm shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
                         Download PDF Report
                     </a>
                 </div>

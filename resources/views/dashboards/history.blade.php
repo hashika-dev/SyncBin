@@ -90,10 +90,21 @@
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-end pt-2">
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-end pt-2">
                         <button type="submit" class="px-6 py-3.5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black shadow-md shadow-rose-200 transition-all text-xs sm:text-sm uppercase tracking-wider">
                             Apply Filters
                         </button>
+
+                        <a href="{{ route('dashboard.export.csv', request()->query()) }}" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-md shadow-emerald-200 transition-all text-xs sm:text-sm text-center uppercase tracking-wider flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+                            Export CSV
+                        </a>
+
+                        <a href="{{ route('dashboard.export', request()->query()) }}" target="_blank" class="px-6 py-3.5 bg-zinc-800 hover:bg-zinc-900 text-white rounded-2xl font-black shadow-md transition-all text-xs sm:text-sm text-center uppercase tracking-wider flex items-center justify-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            Export PDF
+                        </a>
+
                         @if(request()->anyFilled(['search', 'bin', 'from_date', 'to_date', 'quick_range']))
                             <a href="{{ route('dashboard.history') }}" class="px-6 py-3.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 rounded-2xl font-black transition-all text-xs sm:text-sm text-center uppercase tracking-wider">
                                 Reset Filters

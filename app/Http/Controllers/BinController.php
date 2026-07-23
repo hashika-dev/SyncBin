@@ -219,6 +219,85 @@ class BinController extends Controller
     }
 
     /**
+     * Export waste history logs as a CSV file with active filters.
+     */
+    public function exportCsv(Request $request)
+    {
+        $query = WasteItem::with('bin');
+
+        // Search by item name
+        if ($request->filled('search')) {
+            $query->where('name', 'like', '%' . $request->input('search') . '%');
+        }
+
+        // Filter by bin slug / classification
+        if ($request->filled('bin')) {
+            $query->whereHas('bin', function($q) use ($request) {
+                $q->where('slug', $request->input('bin'));
+            });
+        }
+
+        // Quick select range handling
+        if ($request->filled('quick_range')) {
+            $range = $request->input('quick_range');
+            if ($range === 'today') {
+                $query->whereDate('created_at', now()->format('Y-m-d'));
+            } elseif ($range === 'yesterday') {
+                $query->whereDate('created_at', now()->subDay()->format('Y-m-d'));
+            } elseif ($range === '7days') {
+                $query->where('created_at', '>=', now()->subDays(6)->startOfDay());
+            } elseif ($range === '30days') {
+                $query->where('created_at', '>=', now()->subDays(29)->startOfDay());
+            } elseif ($range === 'this_month') {
+                $query->whereMonth('created_at', now()->month)
+                      ->whereYear('created_at', now()->year);
+            }
+        } else {
+            if ($request->filled('from_date')) {
+                $query->whereDate('created_at', '>=', $request->input('from_date'));
+            }
+
+            if ($request->filled('to_date')) {
+                $query->whereDate('created_at', '<=', $request->input('to_date'));
+            }
+        }
+
+        $logs = $query->latest()->get();
+        $filename = 'SyncBin-Waste-Logs-' . now()->format('Y-m-d_His') . '.csv';
+
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+            'Pragma' => 'no-cache',
+            'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+            'Expires' => '0',
+        ];
+
+        $callback = function() use ($logs) {
+            $file = fopen('php://output', 'w');
+            // Add UTF-8 BOM for Excel compatibility
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+            fputcsv($file, ['ID', 'Item Name', 'Icon', 'Bin Name', 'Classification', 'Weight', 'Logged Date & Time']);
+
+            foreach ($logs as $log) {
+                fputcsv($file, [
+                    $log->id,
+                    $log->name,
+                    $log->icon,
+                    $log->bin ? $log->bin->name : 'N/A',
+                    $log->bin ? ucfirst($log->bin->slug) : 'N/A',
+                    $log->weight,
+                    $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : 'N/A',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+    /**
      * Display a paginated audit log of waste history.
      */
     public function history(Request $request)

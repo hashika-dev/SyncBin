@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/api/bins/{slug}/empty', [\App\Http\Controllers\BinController::class, 'emptyBin'])->name('bins.empty');
         Route::get('/dashboard/reports', [\App\Http\Controllers\BinController::class, 'reports'])->name('dashboard.reports');
         Route::get('/dashboard/export', [\App\Http\Controllers\BinController::class, 'exportPdf'])->name('dashboard.export');
+        Route::get('/dashboard/export/csv', [\App\Http\Controllers\BinController::class, 'exportCsv'])->name('dashboard.export.csv');
         Route::get('/dashboard/history', [\App\Http\Controllers\BinController::class, 'history'])->name('dashboard.history');
     });
 
