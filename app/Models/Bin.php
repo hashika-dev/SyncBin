@@ -14,10 +14,12 @@ class Bin extends Model
         'level',
         'status',
         'last_emptied_at',
+        'alert_triggered_at',
     ];
 
     protected $casts = [
         'last_emptied_at' => 'datetime',
+        'alert_triggered_at' => 'datetime',
     ];
 
     /**
@@ -26,5 +28,13 @@ class Bin extends Model
     public function items()
     {
         return $this->hasMany(WasteItem::class);
+    }
+
+    /**
+     * Get the clearance logs for this bin.
+     */
+    public function clearanceLogs()
+    {
+        return $this->hasMany(BinClearanceLog::class);
     }
 }

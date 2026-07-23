@@ -99,6 +99,69 @@
                 </div>
             </div>
 
+            <!-- Evacuation & Maintenance Performance Section -->
+            <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl border border-white dark:border-zinc-800 rounded-3xl lg:rounded-[3rem] p-6 sm:p-10 lg:p-12 shadow-xl dark:shadow-none hover:shadow-rose-200/20 transition-all duration-300 mb-8 sm:mb-12">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-rose-50 dark:border-zinc-800">
+                    <div>
+                        <h3 class="text-xl sm:text-2xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">Recent Evacuation Audit Logs</h3>
+                        <p class="text-[9px] sm:text-[10px] font-black text-rose-400 dark:text-rose-400 uppercase tracking-[0.3em] mt-1">Staff response time and bin clearance history</p>
+                    </div>
+                    <div class="flex items-center gap-3 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl">
+                        <span class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Avg Staff Response Time:</span>
+                        <span class="text-sm font-black text-emerald-700 dark:text-emerald-300">{{ $avgResponseTimeMinutes > 0 ? $avgResponseTimeMinutes . ' min' . ($avgResponseTimeMinutes > 1 ? 's' : '') : 'N/A' }}</span>
+                    </div>
+                </div>
+
+                @if($clearanceLogs->isEmpty())
+                    <div class="text-center py-8">
+                        <p class="text-rose-500/70 dark:text-rose-400/70 font-bold text-sm">No evacuation audit records yet. Click "Empty Bin" on a full bin to generate audit logs.</p>
+                    </div>
+                @else
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="border-b border-rose-100 dark:border-zinc-800 text-[10px] sm:text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500">
+                                    <th class="py-3 px-4">Bin Classification</th>
+                                    <th class="py-3 px-4">Cleared By</th>
+                                    <th class="py-3 px-4 text-center">Level Before Clearing</th>
+                                    <th class="py-3 px-4 text-center">Response Speed</th>
+                                    <th class="py-3 px-4 text-right">Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-rose-50 dark:divide-zinc-800/50 text-xs sm:text-sm font-bold text-rose-950 dark:text-zinc-100">
+                                @foreach($clearanceLogs as $log)
+                                    <tr class="hover:bg-rose-50/50 dark:hover:bg-zinc-800/40 transition-colors">
+                                        <td class="py-3.5 px-4 font-black">
+                                            {{ $log->bin ? $log->bin->name : 'Unknown Bin' }}
+                                        </td>
+                                        <td class="py-3.5 px-4 text-gray-600 dark:text-zinc-400 font-semibold">
+                                            {{ $log->cleared_by_email }}
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center">
+                                            <span class="inline-flex px-2.5 py-0.5 rounded-xl text-xs font-black {{ $log->level_before_clearance >= 85 ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white' }}">
+                                                {{ $log->level_before_clearance }}%
+                                            </span>
+                                        </td>
+                                        <td class="py-3.5 px-4 text-center">
+                                            @if($log->response_time_minutes !== null)
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-0.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black">
+                                                    ⚡ {{ $log->response_time_minutes }} min{{ $log->response_time_minutes > 1 ? 's' : '' }}
+                                                </span>
+                                            @else
+                                                <span class="text-gray-400 dark:text-zinc-600 text-xs">Immediate</span>
+                                            @endif
+                                        </td>
+                                        <td class="py-3.5 px-4 text-right text-gray-500 dark:text-zinc-400 text-xs">
+                                            {{ $log->cleared_at ? $log->cleared_at->format('M d, Y • h:i A') : 'N/A' }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+            </div>
+
             <!-- Detailed Visual Comparison Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-12 pb-16 sm:pb-24">
                 <!-- Column 1 & 2: Volume Comparison Chart -->

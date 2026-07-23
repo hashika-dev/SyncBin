@@ -99,6 +99,8 @@ class BinController extends Controller
 
         // Dispatch alert only when the bin first crosses the 85% critical capacity threshold
         if ($bin->level >= 85 && $previousLevel < 85) {
+            $bin->alert_triggered_at = now();
+            $bin->save();
             try {
                 $recipient = 'kurtumali06@gmail.com';
                 \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($bin, $recipient) {
@@ -181,12 +183,27 @@ class BinController extends Controller
     {
         $bin = Bin::where('slug', $slug)->firstOrFail();
 
+        $levelBefore = $bin->level;
+        $responseTimeMinutes = $bin->alert_triggered_at ? (int) max(1, now()->diffInMinutes($bin->alert_triggered_at)) : null;
+
+        // Log clearance audit record
+        \App\Models\BinClearanceLog::create([
+            'bin_id' => $bin->id,
+            'user_id' => auth()->id(),
+            'cleared_by_email' => auth()->check() ? auth()->user()->email : 'admin@wastesync.com',
+            'level_before_clearance' => $levelBefore,
+            'alert_triggered_at' => $bin->alert_triggered_at,
+            'cleared_at' => now(),
+            'response_time_minutes' => $responseTimeMinutes,
+        ]);
+
         // Delete items
         $bin->items()->delete();
 
-        // Reset levels
+        // Reset levels and timestamps
         $bin->level = 0;
         $bin->status = 'Empty';
+        $bin->alert_triggered_at = null;
         $bin->last_emptied_at = now();
         $bin->save();
 
@@ -343,10 +360,10 @@ class BinController extends Controller
             }
         }
 
-        $logs = $query->latest()->paginate(10)->withQueryString();
-        $bins = Bin::all();
+        $clearanceLogs = \App\Models\BinClearanceLog::with('bin')->latest()->paginate(10, ['*'], 'clearance_page');
+        $avgResponseTimeMinutes = round(\App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes') ?? 0, 1);
 
-        return view('dashboards.history', compact('logs', 'bins'));
+        return view('dashboards.history', compact('logs', 'bins', 'clearanceLogs', 'avgResponseTimeMinutes'));
     }
 
     /**
@@ -390,7 +407,10 @@ class BinController extends Controller
         $chartLabels = $last7Days->keys()->toArray();
         $chartData = $last7Days->values()->toArray();
 
-        return view('dashboards.reports', compact('bins', 'totalItemsCount', 'averageFill', 'recyclingRate', 'totalWeightKg', 'mostActiveBin', 'chartLabels', 'chartData'));
+        $clearanceLogs = \App\Models\BinClearanceLog::with('bin')->latest()->take(5)->get();
+        $avgResponseTimeMinutes = round(\App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes') ?? 0, 1);
+
+        return view('dashboards.reports', compact('bins', 'totalItemsCount', 'averageFill', 'recyclingRate', 'totalWeightKg', 'mostActiveBin', 'chartLabels', 'chartData', 'clearanceLogs', 'avgResponseTimeMinutes'));
     }
 
     /**
@@ -487,6 +507,26 @@ class BinController extends Controller
             else $bin->status = 'Critical';
             
             $bin->save();
+        // Seed realistic evacuation audit logs
+        \App\Models\BinClearanceLog::query()->delete();
+        $sampleEmails = ['admin@wastesync.com', 'staff.mendoza@wastesync.com', 'superadmin@wastesync.com'];
+        for ($k = 15; $k >= 1; $k--) {
+            $bin = $bins->random();
+            $triggeredAt = now()->subDays($k)->setHour(rand(9, 17))->setMinute(rand(0, 30));
+            $responseTime = rand(5, 45); // 5 to 45 minutes response time
+            $clearedAt = (clone $triggeredAt)->addMinutes($responseTime);
+
+            \App\Models\BinClearanceLog::create([
+                'bin_id' => $bin->id,
+                'user_id' => null,
+                'cleared_by_email' => Arr::random($sampleEmails),
+                'level_before_clearance' => rand(85, 98),
+                'alert_triggered_at' => $triggeredAt,
+                'cleared_at' => $clearedAt,
+                'response_time_minutes' => $responseTime,
+                'created_at' => $clearedAt,
+                'updated_at' => $clearedAt,
+            ]);
         }
 
         return response()->json(['message' => 'Demo data seeded successfully.']);
