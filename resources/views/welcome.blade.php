@@ -166,14 +166,14 @@
 
                     <!-- CAPTCHA -->
                     @if(config('services.recaptcha.key'))
-                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center sm:items-start overflow-hidden py-1">
+                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center justify-center w-full py-2">
                             <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.key') }}"></div>
-                            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-2 ml-1" />
+                            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-2 text-center" />
                         </div>
                     @elseif(config('services.turnstile.key'))
-                        <div class="opacity-0 animate-fade-in-up delay-300">
+                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center justify-center w-full py-2">
                             <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key') }}" data-theme="light"></div>
-                            <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2 ml-1" />
+                            <x-input-error :messages="$errors->get('cf-turnstile-response')" class="mt-2 text-center" />
                         </div>
                     @endif
 
