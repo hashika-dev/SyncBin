@@ -27,12 +27,43 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $recaptchaSecret = config('services.recaptcha.secret');
+
+        $rules = [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
             'g-recaptcha-response' => ['nullable'],
             'cf-turnstile-response' => ['nullable'],
         ];
+
+        if (config('services.recaptcha.enabled') && !empty(config('services.recaptcha.key')) && !empty($recaptchaSecret)) {
+            $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) use ($recaptchaSecret) {
+                if (!$value) {
+                    $fail('Please complete the reCAPTCHA verification.');
+                    return;
+                }
+
+                if (config('services.recaptcha.key') === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
+                    return;
+                }
+
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                        'secret' => $recaptchaSecret,
+                        'response' => $value,
+                        'remoteip' => request()->ip(),
+                    ]);
+
+                    if (!$response->successful() || $response->json('success') !== true) {
+                        $fail('CAPTCHA verification failed. Please try again.');
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('reCAPTCHA verification error: ' . $e->getMessage());
+                }
+            }];
+        }
+
+        return $rules;
     }
 
     /**
