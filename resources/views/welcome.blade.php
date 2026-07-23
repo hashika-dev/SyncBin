@@ -129,6 +129,9 @@
                     <p class="text-rose-600 dark:text-rose-400 font-semibold mt-2.5 text-sm sm:text-base">Sign in to your SyncBin account to continue.</p>
                 </div>
 
+                <!-- Session Status Message -->
+                <x-auth-session-status class="mb-6" :status="session('status')" />
+
                 <!-- Login Form -->
                 <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
                     @csrf
