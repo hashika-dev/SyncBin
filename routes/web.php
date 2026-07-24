@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('/api/bins', [\App\Http\Controllers\BinController::class, 'index'])->name('bins.index');
         Route::post('/api/bins/{slug}/scan', [\App\Http\Controllers\BinController::class, 'simulateScan'])->name('bins.scan');
+        Route::post('/api/bins/camera-scan', [\App\Http\Controllers\BinController::class, 'cameraScan'])->name('bins.camera-scan');
         Route::post('/api/bins/{slug}/empty', [\App\Http\Controllers\BinController::class, 'emptyBin'])->name('bins.empty');
         Route::get('/dashboard/reports', [\App\Http\Controllers\BinController::class, 'reports'])->name('dashboard.reports');
         Route::get('/dashboard/export', [\App\Http\Controllers\BinController::class, 'exportPdf'])->name('dashboard.export');

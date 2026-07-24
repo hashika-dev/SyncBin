@@ -177,6 +177,117 @@ class BinController extends Controller
     }
 
     /**
+     * Process AI Camera Vision scan payload (real hardware or dashboard simulator).
+     */
+    public function cameraScan(Request $request)
+    {
+        $request->validate([
+            'image' => 'nullable|image|max:10240', // Max 10MB photo
+            'item_name' => 'nullable|string',
+            'bin_slug' => 'nullable|string',
+            'confidence' => 'nullable|numeric',
+            'weight' => 'nullable|string',
+            'bounding_box' => 'nullable|string',
+        ]);
+
+        // Waste item mapping registry
+        $mapping = [
+            'plastic bottle' => ['slug' => 'recyclable', 'icon' => '🍼', 'weight' => '120g'],
+            'plastic water bottle' => ['slug' => 'recyclable', 'icon' => '🍼', 'weight' => '120g'],
+            'soda can' => ['slug' => 'recyclable', 'icon' => '🥤', 'weight' => '45g'],
+            'aluminum can' => ['slug' => 'recyclable', 'icon' => '🥫', 'weight' => '50g'],
+            'paper box' => ['slug' => 'recyclable', 'icon' => '📄', 'weight' => '200g'],
+            'cardboard box' => ['slug' => 'recyclable', 'icon' => '📦', 'weight' => '250g'],
+            'glass jar' => ['slug' => 'recyclable', 'icon' => '🫙', 'weight' => '85g'],
+
+            'used battery' => ['slug' => 'hazardous', 'icon' => '🔋', 'weight' => '80g'],
+            'battery' => ['slug' => 'hazardous', 'icon' => '🔋', 'weight' => '80g'],
+            'expired medicine' => ['slug' => 'hazardous', 'icon' => '💊', 'weight' => '15g'],
+            'light bulb' => ['slug' => 'hazardous', 'icon' => '💡', 'weight' => '120g'],
+            'aerosol can' => ['slug' => 'hazardous', 'icon' => '🧴', 'weight' => '150g'],
+
+            'banana peel' => ['slug' => 'biodegradable', 'icon' => '🍌', 'weight' => '45g'],
+            'apple core' => ['slug' => 'biodegradable', 'icon' => '🍎', 'weight' => '30g'],
+            'orange peel' => ['slug' => 'biodegradable', 'icon' => '🍊', 'weight' => '20g'],
+            'food scrap' => ['slug' => 'biodegradable', 'icon' => '🥬', 'weight' => '35g'],
+
+            'styrofoam piece' => ['slug' => 'non-bio', 'icon' => '📦', 'weight' => '25g'],
+            'plastic wrap' => ['slug' => 'non-bio', 'icon' => '🍬', 'weight' => '10g'],
+            'chip bag' => ['slug' => 'non-bio', 'icon' => '🍿', 'weight' => '8g'],
+            'face mask' => ['slug' => 'non-bio', 'icon' => '😷', 'weight' => '5g'],
+        ];
+
+        $itemName = $request->input('item_name', 'Plastic Water Bottle');
+        $lowerName = strtolower(trim($itemName));
+
+        $matchedInfo = $mapping[$lowerName] ?? [
+            'slug' => $request->input('bin_slug', 'recyclable'),
+            'icon' => '♻️',
+            'weight' => $request->input('weight', '50g')
+        ];
+
+        $targetSlug = $request->input('bin_slug', $matchedInfo['slug']);
+        $bin = Bin::where('slug', $targetSlug)->first() ?? Bin::first();
+
+        // Handle uploaded photo or default simulation image
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('scans', 'public');
+            $imagePath = 'storage/' . $path;
+        } else {
+            $imagePath = $request->input('image_url', null);
+        }
+
+        $confidence = $request->input('confidence', rand(91, 99) + (rand(0, 9) / 10));
+        $weight = $request->input('weight', $matchedInfo['weight']);
+        $icon = $matchedInfo['icon'];
+
+        $bBox = $request->input('bounding_box', json_encode([
+            'x' => rand(15, 25),
+            'y' => rand(15, 25),
+            'width' => rand(50, 65),
+            'height' => rand(50, 65)
+        ]));
+
+        // Create WasteItem
+        $item = $bin->items()->create([
+            'name' => ucwords($itemName),
+            'icon' => $icon,
+            'weight' => $weight,
+            'image_path' => $imagePath,
+            'ai_confidence' => $confidence,
+            'detection_label' => ucwords($itemName),
+            'bounding_box' => $bBox,
+        ]);
+
+        // Increase fill level
+        $increase = rand(5, 15);
+        $previousLevel = $bin->level;
+        $bin->level = min(100, $bin->level + $increase);
+
+        if ($bin->level === 0) $bin->status = 'Empty';
+        elseif ($bin->level < 30) $bin->status = 'Low';
+        elseif ($bin->level < 60) $bin->status = 'Stable';
+        elseif ($bin->level < 85) $bin->status = 'High';
+        else $bin->status = 'Critical';
+
+        $bin->save();
+
+        // Alert dispatch if crossing 85%
+        if ($bin->level >= 85 && $previousLevel < 85) {
+            $bin->alert_triggered_at = now();
+            $bin->save();
+        }
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'AI scan ingested and categorized successfully.',
+            'item' => $item,
+            'bin' => $bin->load(['items' => function($q) { $q->latest(); }])
+        ]);
+    }
+
+    /**
      * Empty a bin of all items and reset levels.
      */
     public function emptyBin($slug)

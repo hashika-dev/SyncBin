@@ -11,6 +11,10 @@ class WasteItem extends Model
         'name',
         'icon',
         'weight',
+        'image_path',
+        'ai_confidence',
+        'detection_label',
+        'bounding_box',
     ];
 
     /**

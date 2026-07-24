@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->validateCsrfTokens(except: [
+            'logout',
+            'api/*',
+        ]);
         $middleware->alias([
             '2fa' => \Laragear\TwoFactor\Http\Middleware\ConfirmTwoFactorCode::class,
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
@@ -19,6 +23,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Illuminate\Session\TokenMismatchException $e, \Illuminate\Http\Request $request) {
-            return redirect()->route('login')->with('status', 'Your login session expired. Please try signing in again.');
+            return redirect()->route('login')->with('status', 'Your session expired. Please sign in again.');
         });
     })->create();
