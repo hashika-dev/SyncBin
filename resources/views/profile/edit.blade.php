@@ -10,7 +10,7 @@
              init() {
                  if (window.location.hash) {
                      const hash = window.location.hash.replace('#', '');
-                     if (['profile', 'security', 'sms', 'email', 'danger'].includes(hash)) {
+                     if (['profile', 'security', 'notifications', 'danger'].includes(hash)) {
                          this.activeTab = hash;
                      }
                  }
@@ -30,7 +30,7 @@
                 <div>
                     <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-rose-950 dark:text-zinc-50 tracking-tighter">Profile Settings</h1>
                     <p class="text-rose-600 dark:text-rose-400 mt-1 sm:mt-2 font-bold text-sm sm:text-base lg:text-lg opacity-80">
-                        Manage your account information, password, and security settings
+                        Manage your account information, password, security, and alert preferences
                     </p>
                 </div>
             </header>
@@ -62,20 +62,12 @@
                         <span>Security & 2FA</span>
                     </button>
 
-                    <!-- SMS Alerts Tab -->
-                    <button type="button" @click="setTab('sms')"
-                        :class="activeTab === 'sms' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25 border-rose-500' : 'text-zinc-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-zinc-100 hover:bg-rose-500/10 border-transparent'"
+                    <!-- Notifications & Alerts Tab -->
+                    <button type="button" @click="setTab('notifications')"
+                        :class="activeTab === 'notifications' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/25 border-rose-500' : 'text-zinc-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-zinc-100 hover:bg-rose-500/10 border-transparent'"
                         class="flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 whitespace-nowrap border shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
-                        <span>SMS Alerts</span>
-                    </button>
-
-                    <!-- Email Reports Tab -->
-                    <button type="button" @click="setTab('email')"
-                        :class="activeTab === 'email' ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/25 border-sky-500' : 'text-zinc-600 dark:text-zinc-400 hover:text-sky-950 dark:hover:text-zinc-100 hover:bg-sky-500/10 border-transparent'"
-                        class="flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all duration-200 whitespace-nowrap border shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                        <span>Email Reports</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                        <span>Notification Preferences</span>
                     </button>
 
                     <!-- Danger Zone Tab -->
@@ -126,31 +118,19 @@
                     </div>
                 </div>
 
-                <!-- TAB 3: Emergency SMS Alerts -->
-                <div x-show="activeTab === 'sms'"
+                <!-- TAB 3: Combined Notification & Alert Preferences -->
+                <div x-show="activeTab === 'notifications'"
                      x-transition:enter="transition ease-out duration-300 transform"
                      x-transition:enter-start="opacity-0 translate-y-4"
                      x-transition:enter-end="opacity-100 translate-y-0"
                      x-cloak>
                     
                     <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-3xl lg:rounded-[2.5rem] shadow-xl dark:shadow-none border border-white dark:border-zinc-800 p-6 sm:p-10 lg:p-12 hover:shadow-rose-200/20 dark:hover:border-zinc-700 transition-all duration-500">
-                        @include('profile.partials.emergency-sms-alerts-form')
+                        @include('profile.partials.notification-alert-preferences-form')
                     </div>
                 </div>
 
-                <!-- TAB 4: Automated Email Reports -->
-                <div x-show="activeTab === 'email'"
-                     x-transition:enter="transition ease-out duration-300 transform"
-                     x-transition:enter-start="opacity-0 translate-y-4"
-                     x-transition:enter-end="opacity-100 translate-y-0"
-                     x-cloak>
-                    
-                    <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-3xl lg:rounded-[2.5rem] shadow-xl dark:shadow-none border border-white dark:border-zinc-800 p-6 sm:p-10 lg:p-12 hover:shadow-rose-200/20 dark:hover:border-zinc-700 transition-all duration-500">
-                        @include('profile.partials.automated-email-reports-form')
-                    </div>
-                </div>
-
-                <!-- TAB 5: Danger Zone -->
+                <!-- TAB 4: Danger Zone -->
                 <div x-show="activeTab === 'danger'"
                      x-transition:enter="transition ease-out duration-300 transform"
                      x-transition:enter-start="opacity-0 translate-y-4"
