@@ -60,13 +60,14 @@
                         <div>
                             <label for="search" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">Search Item</label>
                             <input type="text" name="search" id="search" placeholder="Item name (e.g. Battery)..." value="{{ request('search') }}"
+                                   @keydown.enter="$el.form.submit()"
                                    class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
                         </div>
 
                         <!-- Classification / Event Type Filter -->
                         <div>
                             <label for="bin" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">Event Classification</label>
-                            <select name="bin" id="bin" class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
+                            <select name="bin" id="bin" @change="$el.form.submit()" class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
                                 <option value="">All Classifications</option>
                                 @foreach($bins as $b)
                                     <option value="{{ $b->slug }}" {{ request('bin') == $b->slug ? 'selected' : '' }}>{{ $b->name }}</option>
@@ -78,6 +79,7 @@
                         <div>
                             <label for="from_date" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">From Date</label>
                             <input type="date" name="from_date" id="from_date" value="{{ request('from_date') }}"
+                                   @change="$el.form.submit()"
                                    class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
                         </div>
 
@@ -85,16 +87,13 @@
                         <div>
                             <label for="to_date" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">To Date</label>
                             <input type="date" name="to_date" id="to_date" value="{{ request('to_date') }}"
+                                   @change="$el.form.submit()"
                                    class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
                     <div class="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-end pt-2">
-                        <button type="submit" class="px-6 py-3.5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black shadow-md shadow-rose-200 transition-all text-xs sm:text-sm uppercase tracking-wider">
-                            Apply Filters
-                        </button>
-
                         <a href="{{ route('dashboard.export.csv', request()->query()) }}" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-md shadow-emerald-200 transition-all text-xs sm:text-sm text-center uppercase tracking-wider flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
                             Export CSV
