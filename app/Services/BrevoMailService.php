@@ -26,7 +26,7 @@ class BrevoMailService
             ])->post('https://api.brevo.com/v3/smtp/email', [
                 'sender' => [
                     'name' => env('MAIL_FROM_NAME', 'SyncBin Security'),
-                    'email' => env('MAIL_FROM_ADDRESS', 'no-reply@syncbin.app'),
+                    'email' => 'kurtumali06@gmail.com',
                 ],
                 'to' => [
                     [
