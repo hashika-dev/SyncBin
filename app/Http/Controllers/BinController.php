@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Bin;
 use App\Models\WasteItem;
+use App\Services\HardwareCryptoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -668,9 +669,10 @@ class BinController extends Controller
     /**
      * Display SuperAdmin hardware monitoring dashboard.
      */
-    public function hardware()
+    public function hardware(HardwareCryptoService $crypto)
     {
         $bins = Bin::all();
+        $cryptoDiagnostic = $crypto->getDiagnosticInfo();
 
         // Hardware component diagnostic statuses
         $components = [
@@ -715,13 +717,53 @@ class BinController extends Controller
                 'badge' => 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/40',
             ],
             [
-                'name' => 'Servo Motor Flap Actuators',
-                'category' => 'Sorting Mechanism',
+                'name' => 'Crypto Security Engine (ECDSA / AES-256)',
+                'category' => 'Payload Verification',
+                'status' => $cryptoDiagnostic['status'],
+                'health' => '100%',
+                'signal' => 'secp256r1 & GCM',
+                'ip' => 'OpenSSL Security Module',
+                'icon' => '🔒',
+                'badge' => 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/40',
+            ],
+            [
+                'name' => 'NIR Optical Moisture Sensor (AS7263 1450nm)',
+                'category' => 'Non-Contact Organic Classifier',
+                'status' => 'Calibrated',
+                'health' => '100%',
+                'signal' => 'I2C Bus (0x49)',
+                'ip' => 'Overhead AI Camera Mount',
+                'icon' => '💡',
+                'badge' => 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/40',
+            ],
+            [
+                'name' => 'Inductive Proximity Metal Sensor (LJ12A3)',
+                'category' => 'Electromagnetic Can Detector',
+                'status' => 'Active',
+                'health' => '100%',
+                'signal' => 'Digital NPN (GPIO 35)',
+                'ip' => 'Intake Tray Chute',
+                'icon' => '🧲',
+                'badge' => 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/40',
+            ],
+            [
+                'name' => 'Biodegradable Bin Servo Lid Actuator',
+                'category' => 'Odor Seal Mechanism',
                 'status' => 'Standby',
                 'health' => '100%',
-                'signal' => 'PWM 50Hz',
-                'ip' => 'GPIO 18, 19',
-                'icon' => '🔄',
+                'signal' => 'PWM 50Hz (GPIO 18)',
+                'ip' => 'Single Lid Actuator',
+                'icon' => '🔒',
+                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+            ],
+            [
+                'name' => 'Organic Waste Grinder / Shredder Motor',
+                'category' => 'Compost Pre-Processor',
+                'status' => 'Standby',
+                'health' => '100%',
+                'signal' => 'High-Torque 12V (Relay #3)',
+                'ip' => 'Bio Chute Entrance',
+                'icon' => '⚙️',
                 'badge' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-900/40',
             ],
             [
@@ -736,6 +778,55 @@ class BinController extends Controller
             ]
         ];
 
-        return view('dashboards.hardware', compact('bins', 'components'));
+        return view('dashboards.hardware', compact('bins', 'components', 'cryptoDiagnostic'));
+    }
+
+    /**
+     * Generate an ECDSA signature & AES-256-GCM encrypted payload demonstration.
+     */
+    public function cryptoDemo(HardwareCryptoService $crypto)
+    {
+        $keypair = $crypto->generateKeyPair();
+        
+        $payload = [
+            'device_id' => 'SYNCBIN-ESP32-HW01',
+            'bin_slug' => 'recyclable',
+            'item_scanned' => 'Plastic Water Bottle',
+            'confidence' => 98.4,
+            'timestamp' => time(),
+        ];
+
+        $jsonPayload = json_encode($payload);
+
+        // Sign payload with ECDSA Private Key
+        $signature = $crypto->signPayload($jsonPayload, $keypair['private_key']);
+        
+        // Encrypt payload with AES-256-GCM
+        $encrypted = $crypto->encryptPayload($payload);
+
+        // Verify ECDSA signature with Public Key
+        $isSignatureValid = $crypto->verifySignature($jsonPayload, $signature, $keypair['public_key']);
+
+        // Decrypt AES-256-GCM payload
+        $decryptedPayload = $crypto->decryptPayload($encrypted['ciphertext'], $encrypted['iv'], $encrypted['tag']);
+
+        return response()->json([
+            'status' => 'SUCCESS',
+            'message' => 'ECDSA & AES-256-GCM Hardware Cryptography Verification Completed',
+            'raw_payload' => $payload,
+            'ecdsa' => [
+                'algorithm' => $keypair['algorithm'],
+                'public_key_pem' => $keypair['public_key'],
+                'digital_signature_base64' => $signature,
+                'signature_verification_passed' => $isSignatureValid,
+            ],
+            'aes_256_gcm' => [
+                'cipher' => $encrypted['cipher'],
+                'ciphertext' => $encrypted['ciphertext'],
+                'initialization_vector_iv' => $encrypted['iv'],
+                'auth_tag' => $encrypted['tag'],
+                'decrypted_payload' => $decryptedPayload,
+            ],
+        ]);
     }
 }

@@ -12,11 +12,9 @@ use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('guest')->group(function () {
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-
-    Route::post('register', [RegisteredUserController::class, 'store'])
-        ->middleware('throttle:5,1');
+    // Public registration disabled for internal SyncBin Admin System
+    // Route::get('register', [RegisteredUserController::class, 'create'])->name('register');
+    // Route::post('register', [RegisteredUserController::class, 'store'])->middleware('throttle:5,1');
 
     Route::post('login', [AuthenticatedSessionController::class, 'store'])
         ->middleware('throttle:20,1')

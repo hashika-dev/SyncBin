@@ -11,17 +11,14 @@
             isRefreshing: false,
             testMessage: 'System Ready — Click any control below to test physical hardware',
             testStatus: 'idle',
-            servos: { s1: 45, s2: 0, s3: 90, s4: 30 },
+            servos: { bio: 0 },
             runTest(component, action) {
                 this.testStatus = 'running';
                 this.testMessage = 'Executing command: Sending signal to ' + component + ' ➔ ' + action + '...';
                 setTimeout(() => {
                     this.testStatus = 'success';
                     this.testMessage = '✓ Verified! ' + component + ' responded to ' + action + ' command.';
-                    if(component === 'Servo #1') this.servos.s1 = parseInt(action);
-                    if(component === 'Servo #2') this.servos.s2 = parseInt(action);
-                    if(component === 'Servo #3') this.servos.s3 = parseInt(action);
-                    if(component === 'Servo #4') this.servos.s4 = parseInt(action);
+                    if(component.includes('Bio')) this.servos.bio = parseInt(action);
                     setTimeout(() => { this.testStatus = 'idle'; }, 4000);
                 }, 500);
             },
@@ -128,6 +125,9 @@
                     <button type="button" @click="activeTab = 'testbench'" :class="activeTab === 'testbench' ? 'bg-rose-950 dark:bg-rose-600 text-white shadow-md font-bold' : 'text-gray-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-white font-semibold'" class="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center gap-2">
                         <span>🎮</span> Remote Test Bench
                     </button>
+                    <button type="button" @click="activeTab = 'crypto'" :class="activeTab === 'crypto' ? 'bg-rose-950 dark:bg-rose-600 text-white shadow-md font-bold' : 'text-gray-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-white font-semibold'" class="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center gap-2">
+                        <span>🔒</span> Payload Cryptography
+                    </button>
                     <button type="button" @click="activeTab = 'health'" :class="activeTab === 'health' ? 'bg-rose-950 dark:bg-rose-600 text-white shadow-md font-bold' : 'text-gray-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-white font-semibold'" class="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center gap-2">
                         <span>🩺</span> Parts Health & Lifespan
                     </button>
@@ -189,64 +189,24 @@
                                 <h3 class="text-xs font-black uppercase tracking-widest text-rose-500 dark:text-rose-400 mb-6 truncate">Servo Bin Lid Controls (4 Bins)</h3>
                                 
                                 <div class="space-y-4">
-                                    <!-- Servo 1 Hazardous -->
-                                    <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 space-y-2">
+                                    <!-- Servo Bio Lid -->
+                                    <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 space-y-3">
                                         <div class="flex justify-between items-center text-xs font-bold">
                                             <span class="text-rose-950 dark:text-zinc-100 flex items-center gap-2">
-                                                <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> Servo #1 (Hazardous Lid)
+                                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Servo #1 (Biodegradable Lid Motor)
                                             </span>
-                                            <span class="font-mono text-rose-600 dark:text-rose-400 font-black" x-text="servos.s1 + '°'"></span>
+                                            <span class="font-mono text-rose-600 dark:text-rose-400 font-black" x-text="servos.bio + '°'"></span>
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 pt-1">
-                                            <button type="button" @click="runTest('Servo #1 (Hazardous Lid)', '0°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">0° (Closed)</button>
-                                            <button type="button" @click="runTest('Servo #1 (Hazardous Lid)', '45°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">45° (Open)</button>
-                                            <button type="button" @click="runTest('Servo #1 (Hazardous Lid)', '90°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">90° (Wide)</button>
+                                            <button type="button" @click="runTest('Bio Lid Servo', '0°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">0° (Closed)</button>
+                                            <button type="button" @click="runTest('Bio Lid Servo', '45°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">45° (Partial)</button>
+                                            <button type="button" @click="runTest('Bio Lid Servo', '90°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">90° (Fully Open)</button>
                                         </div>
                                     </div>
 
-                                    <!-- Servo 2 Rec -->
-                                    <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 space-y-2">
-                                        <div class="flex justify-between items-center text-xs font-bold">
-                                            <span class="text-rose-950 dark:text-zinc-100 flex items-center gap-2">
-                                                <span class="w-2.5 h-2.5 rounded-full bg-sky-500"></span> Servo #2 (Recyclable Lid)
-                                            </span>
-                                            <span class="font-mono text-rose-600 dark:text-rose-400 font-black" x-text="servos.s2 + '°'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2 pt-1">
-                                            <button type="button" @click="runTest('Servo #2 (Rec Lid)', '0°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">0° (Closed)</button>
-                                            <button type="button" @click="runTest('Servo #2 (Rec Lid)', '45°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">45° (Open)</button>
-                                            <button type="button" @click="runTest('Servo #2 (Rec Lid)', '90°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">90° (Wide)</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Servo 3 Non-Bio -->
-                                    <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 space-y-2">
-                                        <div class="flex justify-between items-center text-xs font-bold">
-                                            <span class="text-rose-950 dark:text-zinc-100 flex items-center gap-2">
-                                                <span class="w-2.5 h-2.5 rounded-full bg-orange-400"></span> Servo #3 (Non-Bio Lid)
-                                            </span>
-                                            <span class="font-mono text-rose-600 dark:text-rose-400 font-black" x-text="servos.s3 + '°'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2 pt-1">
-                                            <button type="button" @click="runTest('Servo #3 (Non-Bio Lid)', '0°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">0° (Closed)</button>
-                                            <button type="button" @click="runTest('Servo #3 (Non-Bio Lid)', '45°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">45° (Open)</button>
-                                            <button type="button" @click="runTest('Servo #3 (Non-Bio Lid)', '90°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">90° (Wide)</button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Servo 4 Bio -->
-                                    <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 space-y-2">
-                                        <div class="flex justify-between items-center text-xs font-bold">
-                                            <span class="text-rose-950 dark:text-zinc-100 flex items-center gap-2">
-                                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Servo #4 (Biodegradable Lid)
-                                            </span>
-                                            <span class="font-mono text-rose-600 dark:text-rose-400 font-black" x-text="servos.s4 + '°'"></span>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2 pt-1">
-                                            <button type="button" @click="runTest('Servo #4 (Bio Lid)', '0°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">0° (Closed)</button>
-                                            <button type="button" @click="runTest('Servo #4 (Bio Lid)', '45°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">45° (Open)</button>
-                                            <button type="button" @click="runTest('Servo #4 (Bio Lid)', '90°')" class="py-2 bg-gray-100 dark:bg-zinc-800 hover:bg-rose-950 hover:text-white dark:hover:bg-rose-600 text-gray-700 dark:text-zinc-300 rounded-lg text-[10px] font-black uppercase transition-all">90° (Wide)</button>
-                                        </div>
+                                    <!-- Compartment Design Note -->
+                                    <div class="p-3.5 bg-emerald-500/10 dark:bg-emerald-950/20 border border-emerald-500/30 rounded-xl text-xs font-bold text-emerald-800 dark:text-emerald-300">
+                                        💡 <strong>Hardware Architecture Note:</strong> An automated servo lid is equipped on the <strong>Biodegradable Bin</strong> for odor sealing. Recyclable, Hazardous, and Non-Bio compartments utilize open-top chutes for instant disposal.
                                     </div>
                                 </div>
                             </div>
@@ -272,6 +232,14 @@
                                         <span class="block text-xs font-black text-rose-950 dark:text-zinc-100">Vibration Agitation Motor</span>
                                         <button type="button" @click="runTest('Vibration Motor', 'Pulse Agitation 3s')" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-black uppercase shadow-sm flex items-center justify-center gap-2">
                                             <span>⚡</span> Trigger Unjam Vibration (3s)
+                                        </button>
+                                    </div>
+
+                                    <!-- Organic Grinder Motor -->
+                                    <div class="p-4 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 space-y-3">
+                                        <span class="block text-xs font-black text-rose-950 dark:text-zinc-100">Organic Waste Grinder Motor (Bio Chute)</span>
+                                        <button type="button" @click="runTest('Grinder Motor', 'Pulse Shredder 4s')" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-black uppercase shadow-sm flex items-center justify-center gap-2">
+                                            <span>⚙️</span> Run Bio Shredder & Grinder (4s)
                                         </button>
                                     </div>
                                 </div>
@@ -305,6 +273,95 @@
                     </div>
                 </div>
 
+                <!-- NEW SECTION: Cryptographic Payload Protection (ECDSA & AES-256-GCM) -->
+                <div x-show="activeTab === 'all' || activeTab === 'crypto'" class="bg-gradient-to-br from-rose-950 via-zinc-900 to-rose-900 text-white rounded-3xl shadow-xl border border-rose-800/50 p-8 lg:p-10 mb-10 space-y-8" x-data="{
+                    cryptoResult: null,
+                    isTesting: false,
+                    async runCryptoDemo() {
+                        this.isTesting = true;
+                        try {
+                            const res = await fetch('{{ route('hardware.crypto-demo') }}', {
+                                method: 'POST',
+                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
+                            });
+                            this.cryptoResult = await res.json();
+                        } catch (e) {
+                            console.error(e);
+                        } finally {
+                            this.isTesting = false;
+                        }
+                    }
+                }">
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-rose-800/40">
+                        <div class="flex items-center gap-4 min-w-0">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-300 flex items-center justify-center font-black border border-rose-500/30 shrink-0">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                            </div>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-3">
+                                    <h2 class="text-2xl lg:text-3xl font-black text-white tracking-tight truncate">IoT Payload Cryptography Engine</h2>
+                                    <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-black uppercase tracking-wider">ACTIVE</span>
+                                </div>
+                                <p class="text-sm font-bold text-rose-200/80 mt-1">ECDSA (secp256r1) Digital Signature Verification & AES-256-GCM Encrypted Payloads</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="runCryptoDemo()" class="px-6 py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-rose-950/50 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :class="isTesting ? 'animate-spin' : ''"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                            <span>Run Cryptographic Verification Test</span>
+                        </button>
+                    </div>
+
+                    <!-- Diagnostic Details Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Digital Signature</span>
+                            <span class="text-lg font-black text-white block">ECDSA (SHA-256)</span>
+                            <span class="text-xs text-rose-200/70 block">Curve: prime256v1 / secp256r1</span>
+                        </div>
+                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Payload Encryption</span>
+                            <span class="text-lg font-black text-white block">AES-256-GCM</span>
+                            <span class="text-xs text-rose-200/70 block">Authenticated Tag: 16 Bytes</span>
+                        </div>
+                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Anti-Replay Window</span>
+                            <span class="text-lg font-black text-emerald-400 block">±300 Seconds</span>
+                            <span class="text-xs text-rose-200/70 block">Timestamp Verification Active</span>
+                        </div>
+                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
+                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Spoofing Protection</span>
+                            <span class="text-lg font-black text-emerald-400 block">Enforced</span>
+                            <span class="text-xs text-rose-200/70 block">Unsigned Payloads Blocked</span>
+                        </div>
+                    </div>
+
+                    <!-- Live Test Results Box -->
+                    <div x-show="cryptoResult" x-transition class="bg-zinc-950/90 border border-rose-800/60 rounded-2xl p-6 space-y-4 font-mono text-xs text-rose-100 overflow-hidden shadow-2xl">
+                        <div class="flex items-center justify-between border-b border-rose-900/60 pb-3">
+                            <span class="font-black text-emerald-400 text-sm flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                Cryptographic Hardware Handshake Completed Successfully
+                            </span>
+                            <button type="button" @click="cryptoResult = null" class="text-rose-400 hover:text-white font-sans font-bold text-xs">✕ Close</button>
+                        </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <div class="space-y-2 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
+                                <span class="text-rose-400 font-bold block text-[11px] uppercase tracking-wider">1. ECDSA Signature Verification</span>
+                                <p class="text-gray-300 truncate"><span class="text-rose-300">Public Key:</span> <span class="text-zinc-400" x-text="cryptoResult?.ecdsa?.public_key_pem?.substring(0, 45) + '...'"></span></p>
+                                <p class="text-gray-300 truncate"><span class="text-rose-300">Digital Signature:</span> <span class="text-amber-300" x-text="cryptoResult?.ecdsa?.digital_signature_base64?.substring(0, 45) + '...'"></span></p>
+                                <p class="text-emerald-400 font-bold mt-2">Signature Verification Status: PASSED ✓</p>
+                            </div>
+                            <div class="space-y-2 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
+                                <span class="text-rose-400 font-bold block text-[11px] uppercase tracking-wider">2. AES-256-GCM Decryption Test</span>
+                                <p class="text-gray-300 truncate"><span class="text-rose-300">Ciphertext:</span> <span class="text-sky-300" x-text="cryptoResult?.aes_256_gcm?.ciphertext?.substring(0, 40) + '...'"></span></p>
+                                <p class="text-gray-300"><span class="text-rose-300">IV / Auth Tag:</span> <span class="text-zinc-400" x-text="cryptoResult?.aes_256_gcm?.initialization_vector_iv"></span> / <span class="text-zinc-400" x-text="cryptoResult?.aes_256_gcm?.auth_tag"></span></p>
+                                <p class="text-emerald-400 font-bold mt-2">Decrypted Item: "<span class="text-white" x-text="cryptoResult?.aes_256_gcm?.decrypted_payload?.item_scanned"></span>"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- NEW SECTION B: Component Lifespan & Parts Health Tracker -->
                 <div x-show="activeTab === 'all' || activeTab === 'health'" class="bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-rose-100 dark:border-zinc-800 p-8 lg:p-10 mb-10 space-y-8">
                     <!-- Header -->
@@ -324,85 +381,64 @@
                     <!-- Lifespan Cards Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         
-                        <!-- Part 1: Servo #1 Hazardous -->
+                        <!-- Part 1: Servo #1 Bio Lid -->
                         <div class="p-6 bg-rose-50/50 dark:bg-zinc-950 rounded-2xl border border-rose-100/80 dark:border-zinc-800 space-y-4">
                             <div class="flex justify-between items-start gap-2">
                                 <div>
-                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">Servo #1 (Hazardous Lid)</span>
-                                    <span class="text-xs text-red-500 font-bold">Red Bin Lid Motor</span>
+                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">Servo #1 (Bio Lid Seal)</span>
+                                    <span class="text-xs text-emerald-500 font-bold">Biodegradable Bin Lid Motor</span>
                                 </div>
-                                <span class="px-2.5 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-black uppercase">94% Health</span>
+                                <span class="px-2.5 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-black uppercase">92% Health</span>
                             </div>
                             <div class="space-y-1">
                                 <div class="flex justify-between text-xs font-bold">
                                     <span class="text-gray-500 dark:text-zinc-400">Actuations</span>
-                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">3,120 / 50,000</span>
+                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">4,120 / 50,000</span>
                                 </div>
                                 <div class="h-2.5 w-full bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5">
-                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 94%"></div>
+                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 92%"></div>
                                 </div>
                             </div>
                             <span class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">✓ Operating in optimal condition</span>
                         </div>
 
-                        <!-- Part 2: Servo #2 Bio -->
+                        <!-- Part 2: Gantry Linear Rail Drive -->
                         <div class="p-6 bg-rose-50/50 dark:bg-zinc-950 rounded-2xl border border-rose-100/80 dark:border-zinc-800 space-y-4">
                             <div class="flex justify-between items-start gap-2">
                                 <div>
-                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">Servo #2 (Bio Lid)</span>
-                                    <span class="text-xs text-emerald-500 font-bold">Green Bin Lid Motor</span>
+                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">GT2 Gantry Linear Rail Drive</span>
+                                    <span class="text-xs text-indigo-500 font-bold">Left-to-Right Carriage Motor</span>
                                 </div>
-                                <span class="px-2.5 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-black uppercase">83% Health</span>
+                                <span class="px-2.5 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-black uppercase">96% Health</span>
                             </div>
                             <div class="space-y-1">
                                 <div class="flex justify-between text-xs font-bold">
-                                    <span class="text-gray-500 dark:text-zinc-400">Actuations</span>
-                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">8,450 / 50,000</span>
+                                    <span class="text-gray-500 dark:text-zinc-400">Travel Cycles</span>
+                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">12,450 / 200,000</span>
                                 </div>
                                 <div class="h-2.5 w-full bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5">
-                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 83%"></div>
+                                    <div class="h-full bg-indigo-500 rounded-full" style="width: 96%"></div>
                                 </div>
                             </div>
-                            <span class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">✓ Operating in optimal condition</span>
+                            <span class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">✓ Belt tension nominal</span>
                         </div>
 
-                        <!-- Part 3: Servo #3 Rec HIGH WEAR -->
-                        <div class="p-6 bg-amber-500/10 dark:bg-amber-950/20 rounded-2xl border-2 border-amber-500/30 space-y-4">
-                            <div class="flex justify-between items-start gap-2">
-                                <div>
-                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">Servo #3 (Recyclable Lid)</span>
-                                    <span class="text-xs text-amber-600 font-bold">Blue Bin Lid Motor (High Duty)</span>
-                                </div>
-                                <span class="px-2.5 py-1 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase">8% Health</span>
-                            </div>
-                            <div class="space-y-1">
-                                <div class="flex justify-between text-xs font-bold">
-                                    <span class="text-gray-500 dark:text-zinc-400">Actuations</span>
-                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">46,120 / 50,000</span>
-                                </div>
-                                <div class="h-2.5 w-full bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5">
-                                    <div class="h-full bg-amber-500 rounded-full" style="width: 8%"></div>
-                                </div>
-                            </div>
-                            <span class="block text-[10px] font-black text-amber-600 dark:text-amber-400">⚠️ Replacement Suggested — Part nearing end of rated life</span>
-                        </div>
-
-                        <!-- Part 4: Servo #4 Non-Bio -->
+                        <!-- Part 3: Robotic Arm Claw Servo -->
                         <div class="p-6 bg-rose-50/50 dark:bg-zinc-950 rounded-2xl border border-rose-100/80 dark:border-zinc-800 space-y-4">
                             <div class="flex justify-between items-start gap-2">
                                 <div>
-                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">Servo #4 (Non-Bio Lid)</span>
-                                    <span class="text-xs text-zinc-400 font-bold">Gray Bin Lid Motor</span>
+                                    <span class="font-black text-sm text-rose-950 dark:text-zinc-100 block">Robotic Arm Claw Servo</span>
+                                    <span class="text-xs text-amber-500 font-bold">Gripper Mechanism</span>
                                 </div>
-                                <span class="px-2.5 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-black uppercase">91% Health</span>
+                                <span class="px-2.5 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 rounded-full text-[10px] font-black uppercase">88% Health</span>
                             </div>
                             <div class="space-y-1">
                                 <div class="flex justify-between text-xs font-bold">
-                                    <span class="text-gray-500 dark:text-zinc-400">Actuations</span>
-                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">4,520 / 50,000</span>
+                                    <span class="text-gray-500 dark:text-zinc-400">Grip Cycles</span>
+                                    <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">6,120 / 50,000</span>
                                 </div>
                                 <div class="h-2.5 w-full bg-gray-200 dark:bg-zinc-800 rounded-full overflow-hidden p-0.5">
-                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 91%"></div>
+                                    <div class="h-full bg-emerald-500 rounded-full" style="width: 88%"></div>
                                 </div>
                             </div>
                             <span class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400">✓ Operating in optimal condition</span>
@@ -744,11 +780,11 @@
                             </div>
                         </div>
 
-                        <!-- Primary Card 3: Moisture Capacitive -->
+                        <!-- Primary Card 3: NIR Optical Moisture Sensor -->
                         <div class="bg-rose-50/50 dark:bg-zinc-950 rounded-2xl p-6 lg:p-8 flex flex-col justify-between space-y-6 border border-rose-100/80 dark:border-zinc-800">
                             <div>
                                 <div class="flex items-center justify-between gap-4 mb-6">
-                                    <h3 class="text-xs font-black uppercase tracking-widest text-rose-500 dark:text-rose-400 truncate">Moisture (Capacitive v1.2)</h3>
+                                    <h3 class="text-xs font-black uppercase tracking-widest text-rose-500 dark:text-rose-400 truncate">NIR Optical Moisture (AS7263)</h3>
                                     <span class="px-3 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase shrink-0">Online</span>
                                 </div>
 
@@ -756,23 +792,53 @@
                                     <div class="relative w-20 h-20 flex items-center justify-center mb-1">
                                         <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
                                             <path class="text-gray-200 dark:text-zinc-800" stroke-width="3" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                                            <path class="text-sky-500 stroke-current" stroke-width="3" stroke-dasharray="28, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            <path class="text-sky-500 stroke-current" stroke-width="3" stroke-dasharray="15, 100" stroke-linecap="round" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
                                         </svg>
-                                        <span class="absolute text-sm font-black text-rose-950 dark:text-zinc-100 font-mono">28%</span>
+                                        <span class="absolute text-sm font-black text-rose-950 dark:text-zinc-100 font-mono">15%</span>
                                     </div>
-                                    <span class="text-xl font-black text-sky-600 dark:text-sky-400">Dry</span>
-                                    <span class="text-xs font-bold text-gray-400">Low Moisture Index</span>
+                                    <span class="text-xl font-black text-sky-600 dark:text-sky-400">Dry Item</span>
+                                    <span class="text-xs font-bold text-gray-400">1450nm NIR Light Absorption</span>
                                 </div>
 
                                 <!-- Data Rows -->
                                 <div class="space-y-3 pt-4">
                                     <div class="px-5 py-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
-                                        <span class="text-gray-500 dark:text-zinc-400">Analog Out</span>
-                                        <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">281 / 1023</span>
+                                        <span class="text-gray-500 dark:text-zinc-400">Sensor Method</span>
+                                        <span class="text-emerald-600 font-mono font-black">Non-Contact Optical</span>
                                     </div>
                                     <div class="px-5 py-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
-                                        <span class="text-gray-500 dark:text-zinc-400">Threshold</span>
-                                        <span class="text-amber-600 font-mono font-black">70% Wet Alert</span>
+                                        <span class="text-gray-500 dark:text-zinc-400">Mount Location</span>
+                                        <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">Overhead Camera Module</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Primary Card 4: Inductive Metal Sensor -->
+                        <div class="bg-rose-50/50 dark:bg-zinc-950 rounded-2xl p-6 lg:p-8 flex flex-col justify-between space-y-6 border border-rose-100/80 dark:border-zinc-800">
+                            <div>
+                                <div class="flex items-center justify-between gap-4 mb-6">
+                                    <h3 class="text-xs font-black uppercase tracking-widest text-amber-500 dark:text-amber-400 truncate">Inductive Metal Proximity (LJ12A3)</h3>
+                                    <span class="px-3 py-1 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 rounded-full text-[10px] font-black uppercase shrink-0">Online</span>
+                                </div>
+
+                                <div class="py-6 px-6 my-4 bg-white dark:bg-zinc-900 rounded-2xl border border-rose-100/60 dark:border-zinc-800 flex flex-col items-center justify-center text-center space-y-2">
+                                    <div class="w-16 h-16 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center mb-1 shrink-0">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                                    </div>
+                                    <span class="text-xl font-black text-amber-600 dark:text-amber-400">Standby (No Metal)</span>
+                                    <span class="text-xs font-bold text-gray-400">Electromagnetic Field Ready</span>
+                                </div>
+
+                                <!-- Data Rows -->
+                                <div class="space-y-3 pt-4">
+                                    <div class="px-5 py-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
+                                        <span class="text-gray-500 dark:text-zinc-400">Target Material</span>
+                                        <span class="font-mono text-rose-950 dark:text-zinc-100 font-black">Aluminum Cans & Tins</span>
+                                    </div>
+                                    <div class="px-5 py-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
+                                        <span class="text-gray-500 dark:text-zinc-400">Sensor Type</span>
+                                        <span class="text-amber-600 font-mono font-black">NPN Inductive (4mm)</span>
                                     </div>
                                 </div>
                             </div>
@@ -991,20 +1057,20 @@
                                 <h3 class="text-xs font-black uppercase tracking-widest text-rose-950 dark:text-zinc-100 mb-4 truncate">Relays (3-Ch)</h3>
                                 <div class="space-y-3">
                                     <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
-                                        <span class="truncate">#1 Motor</span>
-                                        <span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-black shrink-0">CLOSED</span>
+                                        <span class="truncate">#1 Motor Power</span>
+                                        <span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-black shrink-0">CLOSED (ACTIVE)</span>
                                     </div>
                                     <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
-                                        <span class="truncate">#2 LED</span>
-                                        <span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-black shrink-0">CLOSED</span>
+                                        <span class="truncate">#2 LED Array</span>
+                                        <span class="text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-black shrink-0">CLOSED (ACTIVE)</span>
                                     </div>
-                                    <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold opacity-60">
-                                        <span class="truncate">#3 Aux</span>
-                                        <span class="text-rose-500 text-[10px] font-mono font-black shrink-0">OPEN</span>
+                                    <div class="p-3.5 bg-white dark:bg-zinc-900 rounded-xl border border-rose-100/60 dark:border-zinc-800 flex justify-between items-center text-xs font-bold">
+                                        <span class="truncate">#3 Bio Grinder</span>
+                                        <span class="text-amber-500 text-[10px] font-mono font-black shrink-0">OPEN (STANDBY)</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="text-center text-xs font-black text-gray-500 dark:text-zinc-400">2 / 3 Active</div>
+                            <div class="text-center text-xs font-black text-gray-500 dark:text-zinc-400">3 / 3 Channels Configured</div>
                         </div>
 
                     </div>

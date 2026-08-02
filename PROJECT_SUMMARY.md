@@ -11,7 +11,7 @@
 ## ✅ 2. Completed Features & Current Progress
 
 ### 🔐 Authentication & Profile Management
-- [x] **User Authentication:** Login, Registration, Password Reset.
+- [x] **Internal Admin Login & CAPTCHA Security:** Secure Admin/SuperAdmin authentication protected with dynamic Security CAPTCHA verification (`CaptchaService`). Public registration is disabled for system integrity.
 - [x] **Two-Factor Authentication (2FA):** Setup, enable/disable, and session confirmation flow (`TwoFactorController`).
 - [x] **Profile Management:** Edit profile, destroy account, and email change verification flow.
 
@@ -27,6 +27,7 @@
 
 ### 🛠️ SuperAdmin & Hardware System Tools
 - [x] **Hardware Monitoring Dashboard:** Real-time hardware status metrics (`/dashboard/hardware`).
+- [x] **Hardware Cryptography Engine:** ECDSA (prime256v1) signature verification and AES-256-GCM encrypted payload decryption (`HardwareCryptoService`, `VerifyHardwareSignature`).
 - [x] **Mock Data Seeding:** System maintenance utility to populate test metrics (`/api/system/seed-mock-data`).
 
 ---

@@ -34,6 +34,12 @@ class RegisteredUserController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'captcha_input' => ['required', function ($attribute, $value, $fail) {
+                $captcha = new \App\Services\CaptchaService();
+                if (!$captcha->verify($value)) {
+                    $fail('Security CAPTCHA verification failed. Please solve the math challenge correctly.');
+                }
+            }],
         ]);
 
         $user = User::create([

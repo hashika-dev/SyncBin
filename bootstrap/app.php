@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             '2fa' => \Laragear\TwoFactor\Http\Middleware\ConfirmTwoFactorCode::class,
             'role' => \App\Http\Middleware\EnsureUserHasRole::class,
+            'hardware.crypto' => \App\Http\Middleware\VerifyHardwareSignature::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
