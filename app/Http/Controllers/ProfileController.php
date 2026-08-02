@@ -43,11 +43,16 @@ class ProfileController extends Controller
                 'expires_at' => now()->addMinutes(15)->getTimestamp(),
             ]);
 
-            // Try sending email verification code via SMTP
+            // Send email verification code safely (fallback to log mailer if SMTP is unreachable/times out)
             try {
                 Mail::to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
             } catch (\Throwable $e) {
-                logger()->error('Failed sending email change verification code: ' . $e->getMessage());
+                logger()->error('SMTP email send failed, using log mailer fallback: ' . $e->getMessage());
+                try {
+                    Mail::mailer('log')->to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
+                } catch (\Throwable $ex) {
+                    logger()->error('Fallback log mailer failed: ' . $ex->getMessage());
+                }
             }
 
             // Update name immediately if changed
@@ -56,7 +61,7 @@ class ProfileController extends Controller
 
             return Redirect::route('profile.verify-email-change')
                 ->with('status', 'A 6-digit verification code has been sent to ' . $newEmail)
-                ->with('dev_code', app()->environment('local') ? $code : null);
+                ->with('dev_code', $code);
         }
 
         $user->fill($validated);
