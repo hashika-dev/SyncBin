@@ -43,16 +43,12 @@ class ProfileController extends Controller
                 'expires_at' => now()->addMinutes(15)->getTimestamp(),
             ]);
 
-            // Send email verification code safely (fallback to log mailer if SMTP is unreachable/times out)
+            // Send 6-digit OTP code directly to email via SMTP
             try {
                 Mail::to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
             } catch (\Throwable $e) {
-                logger()->error('SMTP email send failed, using log mailer fallback: ' . $e->getMessage());
-                try {
-                    Mail::mailer('log')->to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
-                } catch (\Throwable $ex) {
-                    logger()->error('Fallback log mailer failed: ' . $ex->getMessage());
-                }
+                logger()->error('Failed to send verification email: ' . $e->getMessage());
+                return Redirect::route('profile.edit')->withErrors(['email' => 'Unable to send OTP email: ' . $e->getMessage()]);
             }
 
             // Update name immediately if changed
@@ -60,8 +56,7 @@ class ProfileController extends Controller
             $user->save();
 
             return Redirect::route('profile.verify-email-change')
-                ->with('status', 'A 6-digit verification code has been sent to ' . $newEmail)
-                ->with('dev_code', $code);
+                ->with('status', 'A 6-digit OTP verification code has been sent to ' . $newEmail);
         }
 
         $user->fill($validated);

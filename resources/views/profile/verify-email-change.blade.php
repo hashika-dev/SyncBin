@@ -67,12 +67,6 @@
                 </div>
             @endif
 
-            @if(session('dev_code'))
-                <div class="mb-4 p-3 bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-200 rounded-xl text-xs font-bold text-center border border-amber-200 dark:border-amber-900/50">
-                    🔑 Local Dev Code: <span class="font-mono tracking-widest text-sm text-amber-900 dark:text-amber-100">{{ session('dev_code') }}</span>
-                </div>
-            @endif
-
             <form method="POST" action="{{ route('profile.confirm-email-change') }}" class="space-y-6">
                 @csrf
 
