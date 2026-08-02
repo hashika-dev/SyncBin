@@ -63,4 +63,60 @@ class BrevoMailService
             return ['success' => false, 'error' => $errorMsg];
         }
     }
+
+    /**
+     * Send Password Reset link via Brevo HTTPS API (Port 443).
+     */
+    public static function sendPasswordReset(string $toEmail, string $toName, string $resetUrl): bool
+    {
+        $apiKey = trim((string) env('BREVO_API_KEY'));
+
+        if (empty($apiKey)) {
+            return false;
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'api-key' => $apiKey,
+                'content-type' => 'application/json',
+                'accept' => 'application/json',
+            ])->post('https://api.brevo.com/v3/smtp/email', [
+                'sender' => [
+                    'name' => env('MAIL_FROM_NAME', 'SyncBin Security'),
+                    'email' => 'kurtumali06@gmail.com',
+                ],
+                'to' => [
+                    [
+                        'email' => $toEmail,
+                        'name' => $toName ?: 'User',
+                    ]
+                ],
+                'subject' => 'SyncBin - Reset Your Password',
+                'htmlContent' => '
+                    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fcf4f6;">
+                        <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 20px; border: 1px solid #fce7f3; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
+                            <h2 style="color: #881337; text-align: center; margin-bottom: 20px;">SyncBin Password Reset</h2>
+                            <p>Hello <strong>' . htmlspecialchars($toName) . '</strong>,</p>
+                            <p>You are receiving this email because we received a password reset request for your SyncBin account.</p>
+                            <div style="text-align: center; margin: 30px 0;">
+                                <a href="' . htmlspecialchars($resetUrl) . '" style="background-color: #9f1239; color: #ffffff; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 12px; display: inline-block; font-size: 14px;">Reset Password</a>
+                            </div>
+                            <p style="font-size: 12px; color: #6b7280; text-align: center;">This password reset link will expire in 60 minutes. If you did not request a password reset, no further action is required.</p>
+                        </div>
+                    </div>
+                ',
+            ]);
+
+            if ($response->successful()) {
+                logger()->info("Brevo Password Reset link successfully sent to {$toEmail}");
+                return true;
+            }
+
+            logger()->error("Brevo Password Reset API Error: " . $response->body());
+            return false;
+        } catch (\Throwable $e) {
+            logger()->error("Brevo Password Reset API Exception: " . $e->getMessage());
+            return false;
+        }
+    }
 }

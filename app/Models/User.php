@@ -82,6 +82,30 @@ class User extends Authenticatable implements TwoFactorAuthenticatableContract
     }
 
     /**
+     * Send the password reset notification via Brevo HTTPS API (Port 443).
+     *
+     * @param  string  $token
+     * @return void
+     */
+    public function sendPasswordResetNotification($token)
+    {
+        $resetUrl = url(route('password.reset', [
+            'token' => $token,
+            'email' => $this->getEmailForPasswordReset(),
+        ], false));
+
+        if (!empty(env('BREVO_API_KEY'))) {
+            \App\Services\BrevoMailService::sendPasswordReset($this->email, $this->name, $resetUrl);
+        } else {
+            try {
+                $this->notify(new \Illuminate\Auth\Notifications\ResetPassword($token));
+            } catch (\Throwable $e) {
+                logger()->error('Failed sending password reset notification: ' . $e->getMessage());
+            }
+        }
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
