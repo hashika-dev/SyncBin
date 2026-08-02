@@ -45,12 +45,16 @@ class ProfileController extends Controller
 
             // Send 6-digit OTP code directly to email via Brevo HTTPS API (for any email) or standard Mailer
             if (!empty(env('BREVO_API_KEY'))) {
-                \App\Services\BrevoMailService::sendOtp($newEmail, $validated['name'], $code);
+                $result = \App\Services\BrevoMailService::sendOtp($newEmail, $validated['name'], $code);
+                if (!$result['success']) {
+                    return Redirect::route('profile.edit')->withErrors(['email' => 'OTP Dispatch Alert: ' . $result['error']]);
+                }
             } else {
                 try {
                     Mail::to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
                 } catch (\Throwable $e) {
                     logger()->error('Failed to send verification email via mailer: ' . $e->getMessage());
+                    return Redirect::route('profile.edit')->withErrors(['email' => 'OTP Dispatch Alert: ' . $e->getMessage()]);
                 }
             }
 

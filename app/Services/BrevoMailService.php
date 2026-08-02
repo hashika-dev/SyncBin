@@ -9,13 +9,12 @@ class BrevoMailService
     /**
      * Send an email via Brevo HTTPS API (Port 443) - Works 100% on Railway to ANY recipient.
      */
-    public static function sendOtp(string $toEmail, string $toName, string $code): bool
+    public static function sendOtp(string $toEmail, string $toName, string $code): array
     {
-        $apiKey = env('BREVO_API_KEY');
+        $apiKey = trim((string) env('BREVO_API_KEY'));
 
         if (empty($apiKey)) {
-            logger()->warning('Brevo API Key is missing in environment.');
-            return false;
+            return ['success' => false, 'error' => 'BREVO_API_KEY environment variable is empty.'];
         }
 
         try {
@@ -52,14 +51,16 @@ class BrevoMailService
 
             if ($response->successful()) {
                 logger()->info("Brevo OTP email successfully delivered to {$toEmail}");
-                return true;
+                return ['success' => true, 'message' => 'Email delivered'];
             }
 
-            logger()->error("Brevo API error response: " . $response->body());
-            return false;
+            $errorMsg = 'Brevo API (' . $response->status() . '): ' . $response->body();
+            logger()->error($errorMsg);
+            return ['success' => false, 'error' => $errorMsg];
         } catch (\Throwable $e) {
-            logger()->error("Brevo API exception: " . $e->getMessage());
-            return false;
+            $errorMsg = 'Brevo API Exception: ' . $e->getMessage();
+            logger()->error($errorMsg);
+            return ['success' => false, 'error' => $errorMsg];
         }
     }
 }
