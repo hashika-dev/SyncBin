@@ -28,17 +28,47 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         $recaptchaSecret = config('services.recaptcha.secret');
+        $recaptchaKey = config('services.recaptcha.key');
 
         $rules = [
             'email' => ['required', 'string', 'email'],
             'password' => ['required', 'string'],
-            'captcha_input' => ['required', function ($attribute, $value, $fail) {
+        ];
+
+        if (config('services.recaptcha.enabled')) {
+            $rules['g-recaptcha-response'] = ['required', function ($attribute, $value, $fail) use ($recaptchaSecret, $recaptchaKey) {
+                if (!$value) {
+                    $fail('Please complete the Google reCAPTCHA verification.');
+                    return;
+                }
+
+                // Official Google reCAPTCHA universal test key bypass
+                if ($recaptchaKey === '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI') {
+                    return;
+                }
+
+                try {
+                    $response = \Illuminate\Support\Facades\Http::timeout(5)->asForm()->post('https://www.google.com/recaptcha/api/siteverify', [
+                        'secret' => $recaptchaSecret,
+                        'response' => $value,
+                        'remoteip' => request()->ip(),
+                    ]);
+
+                    if (!$response->successful() || $response->json('success') !== true) {
+                        $fail('Google reCAPTCHA verification failed. Please try again.');
+                    }
+                } catch (\Throwable $e) {
+                    \Illuminate\Support\Facades\Log::error('reCAPTCHA error: ' . $e->getMessage());
+                }
+            }];
+        } else {
+            $rules['captcha_input'] = ['required', function ($attribute, $value, $fail) {
                 $captcha = new \App\Services\CaptchaService();
                 if (!$captcha->verify($value)) {
                     $fail('Security CAPTCHA verification failed. Please solve the math challenge correctly.');
                 }
-            }],
-        ];
+            }];
+        }
 
         return $rules;
     }
