@@ -43,12 +43,15 @@ class ProfileController extends Controller
                 'expires_at' => now()->addMinutes(15)->getTimestamp(),
             ]);
 
-            // Send 6-digit OTP code directly to email via Mailer
-            try {
-                Mail::to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
-            } catch (\Throwable $e) {
-                logger()->error('Failed to send verification email via mailer: ' . $e->getMessage());
-                // If cloud host blocks SMTP socket, log code safely and proceed to verification screen
+            // Send 6-digit OTP code directly to email via Brevo HTTPS API (for any email) or standard Mailer
+            if (!empty(env('BREVO_API_KEY'))) {
+                \App\Services\BrevoMailService::sendOtp($newEmail, $validated['name'], $code);
+            } else {
+                try {
+                    Mail::to($newEmail)->send(new EmailChangeVerificationMail($code, $newEmail, $validated['name']));
+                } catch (\Throwable $e) {
+                    logger()->error('Failed to send verification email via mailer: ' . $e->getMessage());
+                }
             }
 
             // Update name immediately if changed
