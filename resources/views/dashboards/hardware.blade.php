@@ -125,9 +125,7 @@
                     <button type="button" @click="activeTab = 'testbench'" :class="activeTab === 'testbench' ? 'bg-rose-950 dark:bg-rose-600 text-white shadow-md font-bold' : 'text-gray-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-white font-semibold'" class="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center gap-2">
                         <span>🎮</span> Remote Test Bench
                     </button>
-                    <button type="button" @click="activeTab = 'crypto'" :class="activeTab === 'crypto' ? 'bg-rose-950 dark:bg-rose-600 text-white shadow-md font-bold' : 'text-gray-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-white font-semibold'" class="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center gap-2">
-                        <span>🔒</span> Payload Cryptography
-                    </button>
+
                     <button type="button" @click="activeTab = 'health'" :class="activeTab === 'health' ? 'bg-rose-950 dark:bg-rose-600 text-white shadow-md font-bold' : 'text-gray-600 dark:text-zinc-400 hover:text-rose-950 dark:hover:text-white font-semibold'" class="px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider transition-all shrink-0 flex items-center gap-2">
                         <span>🩺</span> Parts Health & Lifespan
                     </button>
@@ -273,94 +271,7 @@
                     </div>
                 </div>
 
-                <!-- NEW SECTION: Cryptographic Payload Protection (ECDSA & AES-256-GCM) -->
-                <div x-show="activeTab === 'all' || activeTab === 'crypto'" class="bg-gradient-to-br from-rose-950 via-zinc-900 to-rose-900 text-white rounded-3xl shadow-xl border border-rose-800/50 p-8 lg:p-10 mb-10 space-y-8" x-data="{
-                    cryptoResult: null,
-                    isTesting: false,
-                    async runCryptoDemo() {
-                        this.isTesting = true;
-                        try {
-                            const res = await fetch('{{ route('hardware.crypto-demo') }}', {
-                                method: 'POST',
-                                headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' }
-                            });
-                            this.cryptoResult = await res.json();
-                        } catch (e) {
-                            console.error(e);
-                        } finally {
-                            this.isTesting = false;
-                        }
-                    }
-                }">
-                    <!-- Header -->
-                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 pb-6 border-b border-rose-800/40">
-                        <div class="flex items-center gap-4 min-w-0">
-                            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-300 flex items-center justify-center font-black border border-rose-500/30 shrink-0">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/></svg>
-                            </div>
-                            <div class="min-w-0">
-                                <div class="flex items-center gap-3">
-                                    <h2 class="text-2xl lg:text-3xl font-black text-white tracking-tight truncate">IoT Payload Cryptography Engine</h2>
-                                    <span class="px-3 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 rounded-full text-xs font-black uppercase tracking-wider">ACTIVE</span>
-                                </div>
-                                <p class="text-sm font-bold text-rose-200/80 mt-1">ECDSA (secp256r1) Digital Signature Verification & AES-256-GCM Encrypted Payloads</p>
-                            </div>
-                        </div>
-                        <button type="button" @click="runCryptoDemo()" class="px-6 py-3.5 bg-rose-500 hover:bg-rose-600 text-white font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg shadow-rose-950/50 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2.5">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" :class="isTesting ? 'animate-spin' : ''"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
-                            <span>Run Cryptographic Verification Test</span>
-                        </button>
-                    </div>
 
-                    <!-- Diagnostic Details Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Digital Signature</span>
-                            <span class="text-lg font-black text-white block">ECDSA (SHA-256)</span>
-                            <span class="text-xs text-rose-200/70 block">Curve: prime256v1 / secp256r1</span>
-                        </div>
-                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Payload Encryption</span>
-                            <span class="text-lg font-black text-white block">AES-256-GCM</span>
-                            <span class="text-xs text-rose-200/70 block">Authenticated Tag: 16 Bytes</span>
-                        </div>
-                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Anti-Replay Window</span>
-                            <span class="text-lg font-black text-emerald-400 block">±300 Seconds</span>
-                            <span class="text-xs text-rose-200/70 block">Timestamp Verification Active</span>
-                        </div>
-                        <div class="bg-rose-900/30 border border-rose-800/40 rounded-2xl p-5 space-y-2">
-                            <span class="text-[10px] font-black uppercase tracking-widest text-rose-300 block">Spoofing Protection</span>
-                            <span class="text-lg font-black text-emerald-400 block">Enforced</span>
-                            <span class="text-xs text-rose-200/70 block">Unsigned Payloads Blocked</span>
-                        </div>
-                    </div>
-
-                    <!-- Live Test Results Box -->
-                    <div x-show="cryptoResult" x-transition class="bg-zinc-950/90 border border-rose-800/60 rounded-2xl p-6 space-y-4 font-mono text-xs text-rose-100 overflow-hidden shadow-2xl">
-                        <div class="flex items-center justify-between border-b border-rose-900/60 pb-3">
-                            <span class="font-black text-emerald-400 text-sm flex items-center gap-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-                                Cryptographic Hardware Handshake Completed Successfully
-                            </span>
-                            <button type="button" @click="cryptoResult = null" class="text-rose-400 hover:text-white font-sans font-bold text-xs">✕ Close</button>
-                        </div>
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            <div class="space-y-2 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
-                                <span class="text-rose-400 font-bold block text-[11px] uppercase tracking-wider">1. ECDSA Signature Verification</span>
-                                <p class="text-gray-300 truncate"><span class="text-rose-300">Public Key:</span> <span class="text-zinc-400" x-text="cryptoResult?.ecdsa?.public_key_pem?.substring(0, 45) + '...'"></span></p>
-                                <p class="text-gray-300 truncate"><span class="text-rose-300">Digital Signature:</span> <span class="text-amber-300" x-text="cryptoResult?.ecdsa?.digital_signature_base64?.substring(0, 45) + '...'"></span></p>
-                                <p class="text-emerald-400 font-bold mt-2">Signature Verification Status: PASSED ✓</p>
-                            </div>
-                            <div class="space-y-2 bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
-                                <span class="text-rose-400 font-bold block text-[11px] uppercase tracking-wider">2. AES-256-GCM Decryption Test</span>
-                                <p class="text-gray-300 truncate"><span class="text-rose-300">Ciphertext:</span> <span class="text-sky-300" x-text="cryptoResult?.aes_256_gcm?.ciphertext?.substring(0, 40) + '...'"></span></p>
-                                <p class="text-gray-300"><span class="text-rose-300">IV / Auth Tag:</span> <span class="text-zinc-400" x-text="cryptoResult?.aes_256_gcm?.initialization_vector_iv"></span> / <span class="text-zinc-400" x-text="cryptoResult?.aes_256_gcm?.auth_tag"></span></p>
-                                <p class="text-emerald-400 font-bold mt-2">Decrypted Item: "<span class="text-white" x-text="cryptoResult?.aes_256_gcm?.decrypted_payload?.item_scanned"></span>"</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- NEW SECTION B: Component Lifespan & Parts Health Tracker -->
                 <div x-show="activeTab === 'all' || activeTab === 'health'" class="bg-white dark:bg-zinc-900 rounded-3xl shadow-sm border border-rose-100 dark:border-zinc-800 p-8 lg:p-10 mb-10 space-y-8">

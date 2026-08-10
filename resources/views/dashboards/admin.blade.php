@@ -15,12 +15,7 @@
                     <span class="block sm:inline">Real-time waste bin monitoring</span>
                 </p>
             </div>
-            <div class="flex items-center gap-3 w-full sm:w-auto">
-                <button @click="openCameraModal()" class="w-full sm:w-auto flex items-center justify-center gap-2.5 px-6 py-3.5 bg-rose-600 text-white rounded-2xl font-black shadow-lg shadow-rose-200 dark:shadow-none hover:bg-rose-700 hover:-translate-y-0.5 transition-all active:scale-95 text-sm shrink-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                    AI Camera Simulator
-                </button>
-            </div>
+
         </header>
 
         <!-- Hero Bin Panel -->
@@ -460,169 +455,11 @@
         </div>
     </div>
 
-    <!-- AI Camera Simulator Modal -->
-    <div x-show="cameraModalOpen" 
-         class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
-         x-transition:enter="transition ease-out duration-300"
-         x-transition:enter-start="opacity-0"
-         x-transition:enter-end="opacity-100"
-         x-transition:leave="transition ease-in duration-200"
-         x-transition:leave-start="opacity-100"
-         x-transition:leave-end="opacity-0"
-         x-cloak>
-        
-        <div @click.away="cameraModalOpen = false" 
-             class="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-2xl max-w-2xl w-full p-6 sm:p-10 relative overflow-hidden border border-rose-100 dark:border-zinc-800 transition-all">
-            
-            <!-- Header -->
-            <div class="flex justify-between items-start mb-6">
-                <div>
-                    <div class="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-rose-500 mb-1">
-                        <span class="w-2 h-2 rounded-full bg-rose-500 animate-ping"></span>
-                        AI Camera Vision Module
-                    </div>
-                    <h2 class="text-2xl sm:text-3xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">Camera & YOLO Simulator</h2>
-                </div>
-                <button @click="cameraModalOpen = false" class="w-10 h-10 bg-rose-50 dark:bg-zinc-800 text-rose-500 rounded-xl flex items-center justify-center hover:bg-rose-100 transition-colors">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                </button>
-            </div>
-
-            <!-- Body Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Left: Controls & Presets -->
-                <div class="space-y-4">
-                    <label class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-400">1. Select Waste Sample Preset</label>
-                    <div class="space-y-2">
-                        <template x-for="(preset, key) in aiPresetDetails" :key="key">
-                            <button @click="aiSelectedPreset = key; aiCustomFile = null; aiPreviewUrl = ''"
-                                    class="w-full flex items-center justify-between p-3 rounded-2xl border text-left transition-all"
-                                    :class="aiSelectedPreset === key && !aiCustomFile ? 'bg-rose-500 text-white border-rose-500 shadow-md shadow-rose-200' : 'bg-gray-50 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border-gray-200 dark:border-zinc-700 hover:border-rose-300'">
-                                <div class="flex items-center gap-3">
-                                    <span class="text-xl" x-text="preset.icon"></span>
-                                    <div>
-                                        <span class="block text-xs font-black" x-text="preset.name"></span>
-                                        <span class="block text-[9px] uppercase font-bold tracking-widest opacity-80" x-text="'Target: ' + preset.slug"></span>
-                                    </div>
-                                </div>
-                                <span class="text-[10px] font-black px-2 py-1 bg-white/20 rounded-lg" x-text="preset.confidence + '%'"></span>
-                            </button>
-                        </template>
-                    </div>
-
-                    <div class="pt-2">
-                        <label class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-400 mb-2">OR Upload Custom Waste Photo</label>
-                        <input type="file" @change="handleFileUpload($event)" accept="image/*" class="w-full text-xs text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-rose-500 file:text-white hover:file:bg-rose-600 cursor-pointer">
-                    </div>
-                </div>
-
-                <!-- Right: AI Vision Preview Frame -->
-                <div class="flex flex-col">
-                    <label class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-400 mb-2">2. Camera Vision Detection Canvas</label>
-                    <div class="relative flex-1 bg-zinc-950 rounded-3xl border-2 border-zinc-800 p-4 flex flex-col items-center justify-center overflow-hidden min-h-[220px]">
-                        <!-- Camera Grid Lines -->
-                        <div class="absolute inset-0 bg-[radial-gradient(#3f3f46_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
-                        
-                        <!-- Simulated Image Container -->
-                        <div class="relative w-full h-full flex items-center justify-center">
-                            <template x-if="aiPreviewUrl">
-                                <img :src="aiPreviewUrl" class="max-h-48 object-contain rounded-xl shadow-lg">
-                            </template>
-                            <template x-if="!aiPreviewUrl">
-                                <div class="flex flex-col items-center text-center p-6">
-                                    <span class="text-6xl mb-2 animate-bounce" x-text="aiPresetDetails[aiSelectedPreset].icon"></span>
-                                    <span class="text-sm font-black text-white" x-text="aiPresetDetails[aiSelectedPreset].name"></span>
-                                </div>
-                            </template>
-
-                            <!-- Drawn YOLO Bounding Box Overlay -->
-                            <div class="absolute inset-4 border-2 border-emerald-400 bg-emerald-500/10 rounded-2xl flex flex-col justify-between p-2 shadow-[0_0_20px_rgba(52,211,153,0.4)] pointer-events-none animate-pulse">
-                                <div class="self-start px-2 py-0.5 bg-emerald-500 text-black text-[9px] font-black uppercase tracking-wider rounded">
-                                    YOLOv8: <span x-text="aiCustomFile ? 'Custom Object' : aiPresetDetails[aiSelectedPreset].name"></span> (<span x-text="aiCustomFile ? '95.0%' : aiPresetDetails[aiSelectedPreset].confidence + '%'"></span>)
-                                </div>
-                                <div class="self-end text-[9px] font-mono text-emerald-400 font-bold bg-black/60 px-1.5 py-0.5 rounded">
-                                    Conf: <span x-text="aiCustomFile ? '0.95' : (aiPresetDetails[aiSelectedPreset].confidence / 100).toFixed(2)"></span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Target Routing Badge -->
-                    <div class="mt-4 p-3 bg-rose-50/50 dark:bg-zinc-800/50 border border-rose-100 dark:border-zinc-800 rounded-2xl flex items-center justify-between">
-                        <span class="text-[10px] font-black uppercase tracking-widest text-zinc-500">Auto Route To:</span>
-                        <span class="text-xs font-black text-rose-600 dark:text-rose-400 uppercase" x-text="aiCustomFile ? 'Auto-Classifier' : aiPresetDetails[aiSelectedPreset].slug"></span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Submit Button -->
-            <button @click="executeCameraScan()" 
-                    :disabled="aiProcessing"
-                    class="w-full py-4 bg-rose-600 text-white rounded-2xl text-xs font-black uppercase tracking-[0.2em] shadow-xl shadow-rose-200 dark:shadow-none hover:bg-rose-700 transition-all active:scale-95 flex items-center justify-center gap-2">
-                <svg x-show="!aiProcessing" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></svg>
-                <svg x-show="aiProcessing" class="animate-spin -ml-1 mr-2 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                <span x-text="aiProcessing ? 'Processing YOLO Vision...' : 'Trigger AI Camera Scan'"></span>
-            </button>
-        </div>
-    </div>
-
     <script>
         function binModal() {
             return {
                 sidebarOpen: false,
                 isOpen: false,
-                cameraModalOpen: false,
-                aiProcessing: false,
-                aiSelectedPreset: 'plastic_bottle',
-                aiCustomFile: null,
-                aiPreviewUrl: '',
-                aiPresetDetails: {
-                    'plastic_bottle': { name: 'Plastic Water Bottle', slug: 'recyclable', icon: '🍼', confidence: 96.4, weight: '120g' },
-                    'used_battery': { name: 'Used Battery', slug: 'hazardous', icon: '🔋', confidence: 98.2, weight: '80g' },
-                    'banana_peel': { name: 'Banana Peel', slug: 'biodegradable', icon: '🍌', confidence: 94.7, weight: '45g' },
-                    'soda_can': { name: 'Aluminum Soda Can', slug: 'recyclable', icon: '🥤', confidence: 95.8, weight: '45g' },
-                    'styrofoam': { name: 'Styrofoam Piece', slug: 'non-bio', icon: '📦', confidence: 92.1, weight: '25g' }
-                },
-                openCameraModal() {
-                    this.cameraModalOpen = true;
-                },
-                handleFileUpload(event) {
-                    const file = event.target.files[0];
-                    if (file) {
-                        this.aiCustomFile = file;
-                        this.aiPreviewUrl = URL.createObjectURL(file);
-                    }
-                },
-                async executeCameraScan() {
-                    this.aiProcessing = true;
-                    try {
-                        const formData = new FormData();
-                        const preset = this.aiPresetDetails[this.aiSelectedPreset];
-                        
-                        if (this.aiCustomFile) {
-                            formData.append('image', this.aiCustomFile);
-                            formData.append('item_name', 'Custom Scanned Item');
-                        } else {
-                            formData.append('item_name', preset.name);
-                            formData.append('bin_slug', preset.slug);
-                            formData.append('confidence', preset.confidence);
-                            formData.append('weight', preset.weight);
-                        }
-                        
-                        await axios.post('/api/bins/camera-scan', formData, {
-                            headers: { 'Content-Type': 'multipart/form-data' }
-                        });
-                        
-                        await this.fetchBins();
-                        this.aiProcessing = false;
-                        this.cameraModalOpen = false;
-                        this.aiCustomFile = null;
-                        this.aiPreviewUrl = '';
-                    } catch (error) {
-                        console.error("Camera scan error:", error);
-                        this.aiProcessing = false;
-                    }
-                },
                 activeKey: '',
                 activeBin: {
                     name: '',
