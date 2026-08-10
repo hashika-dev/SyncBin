@@ -59,10 +59,6 @@
                 <h1 class="text-4xl font-black text-gray-900 tracking-tight">Admin Dashboard</h1>
                 <p class="text-gray-500 mt-2 font-bold text-lg">Welcome back, <span class="text-[#9B1C1C]">admin@wastesync.com</span> - <span class="opacity-60">Real-time waste bin monitoring</span></p>
             </div>
-            <button class="flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black shadow-2xl shadow-emerald-200 hover:bg-emerald-700 hover:-translate-y-0.5 transition-all active:scale-95">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
-                Export Report to PDF
-            </button>
         </header>
 
         <!-- Hero Bin Panel -->
