@@ -8,7 +8,7 @@
         <!-- Header -->
         <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-12">
             <div>
-                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-rose-950 dark:text-zinc-100 tracking-tighter">Admin Dashboard</h1>
+                <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-rose-950 dark:text-zinc-100 tracking-tighter">{{ Auth::user()->isSuperAdmin() ? 'Super Admin Dashboard' : 'Admin Dashboard' }}</h1>
                 <p class="text-rose-600 dark:text-rose-400 mt-2 font-bold text-sm sm:text-base lg:text-lg opacity-80">
                     Welcome back, <span class="font-black">{{ Auth::user()->email }}</span> 
                     <span class="hidden sm:inline mx-2 opacity-30">|</span> 

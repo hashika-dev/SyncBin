@@ -56,7 +56,7 @@
         <!-- Header -->
         <header class="flex items-center justify-between mb-12">
             <div>
-                <h1 class="text-4xl font-black text-gray-900 tracking-tight">Admin Dashboard</h1>
+                <h1 class="text-4xl font-black text-gray-900 tracking-tight">{{ Auth::user()->isSuperAdmin() ? 'Super Admin Dashboard' : 'Admin Dashboard' }}</h1>
                 <p class="text-gray-500 mt-2 font-bold text-lg">Welcome back, <span class="text-[#9B1C1C]">admin@wastesync.com</span> - <span class="opacity-60">Real-time waste bin monitoring</span></p>
             </div>
         </header>
