@@ -32,7 +32,7 @@ class EmailChangeVerificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'SyncBin - Email Change Verification Code: ' . $this->code,
+            subject: 'EcoSync - Email Change Verification Code: ' . $this->code,
         );
     }
 

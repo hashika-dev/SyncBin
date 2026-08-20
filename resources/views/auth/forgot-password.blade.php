@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SyncBin - Forgot Password</title>
+    <title>EcoSync - Forgot Password</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
@@ -54,50 +54,47 @@
         .delay-300 { animation-delay: 0.3s; }
     </style>
 </head>
-<body class="antialiased bg-gradient-to-br from-rose-100 via-pink-50 to-orange-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 selection:bg-rose-200 selection:text-rose-900 min-h-screen flex items-center justify-center p-6 transition-colors duration-300">
+<body class="antialiased bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-emerald-500 selection:text-white min-h-screen flex items-center justify-center p-6 transition-colors duration-300">
     
-    <!-- Decorative Background Ambient Glows -->
-    <div class="fixed top-0 right-0 w-96 h-96 bg-rose-200/30 dark:bg-rose-900/10 blur-[100px] rounded-full -mr-48 -mt-48 pointer-events-none"></div>
-    <div class="fixed bottom-0 left-0 w-96 h-96 bg-orange-200/30 dark:bg-orange-900/10 blur-[100px] rounded-full -ml-48 -mb-48 pointer-events-none"></div>
-
     <div class="w-full max-w-md opacity-0 animate-fade-in-up relative z-10">
         
-        <!-- Brand Header with Logo (Strict AGENT_RULES.md Compliance) -->
+        <!-- Brand Header with Logo -->
         <div class="flex flex-col items-center mb-8">
-            <div class="w-16 h-16 bg-white dark:bg-zinc-900 rounded-3xl flex items-center justify-center shadow-lg shadow-rose-100/50 dark:shadow-none border border-rose-100 dark:border-zinc-800 mb-3 transition-transform hover:scale-105 duration-300">
+            <div class="w-16 h-16 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 mb-3 transition-transform hover:scale-105 duration-300">
                 <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-10 h-10 object-contain">
             </div>
-            <h1 class="text-3xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">SyncBin</h1>
+            <h1 class="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">EcoSync</h1>
+            <p class="text-xs font-mono font-bold text-emerald-600 dark:text-emerald-400 mt-1 uppercase tracking-widest">Password Recovery</p>
         </div>
 
         <!-- Form Container -->
-        <div class="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-2xl rounded-[2.5rem] p-8 sm:p-10 shadow-2xl border border-white/60 dark:border-zinc-800">
+        <div class="bg-white dark:bg-slate-900 rounded-3xl p-8 sm:p-10 shadow-xl border border-slate-200 dark:border-slate-800">
             <div class="mb-8 text-center sm:text-left">
-                <h2 class="text-2xl font-bold text-gray-900 dark:text-zinc-50 mb-2">Reset Password</h2>
-                <p class="text-gray-600 dark:text-zinc-400 text-sm leading-relaxed">
-                    Forgot your password? No problem. Enter your account email address and we'll send you a password reset link.
+                <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1.5">Reset Password</h2>
+                <p class="text-slate-500 dark:text-slate-400 text-xs sm:text-sm leading-relaxed">
+                    Forgot your password? Enter your email address and we'll dispatch a secure recovery link.
                 </p>
             </div>
 
             <!-- Session Status Alert -->
-            <x-auth-session-status class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-2xl border border-emerald-100 dark:border-emerald-900/50 text-sm font-medium" :status="session('status')" />
+            <x-auth-session-status class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs font-semibold" :status="session('status')" />
 
-            <form method="POST" action="{{ route('password.email') }}" class="space-y-6">
+            <form method="POST" action="{{ route('password.email') }}" class="space-y-5">
                 @csrf
 
                 <!-- Email Input -->
                 <div class="opacity-0 animate-fade-in-up delay-100">
-                    <label for="email" class="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-1.5 ml-1">Email Address</label>
+                    <label for="email" class="block text-xs font-mono font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-1.5">Email Address</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400 dark:text-zinc-500">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400 dark:text-slate-500">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
                         </div>
                         <input type="email" id="email" name="email" value="{{ old('email') }}" placeholder="you@example.com" required autofocus
-                               class="w-full pl-11 pr-4 py-3.5 border border-gray-200 dark:border-zinc-700 rounded-2xl focus:ring-4 focus:ring-rose-100 dark:focus:ring-rose-950 focus:border-rose-400 outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-600 bg-white/60 dark:bg-zinc-800/60 text-gray-900 dark:text-zinc-100">
+                               class="w-full pl-10 pr-4 py-3 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 bg-slate-50/50 dark:bg-slate-950 text-xs font-medium text-slate-900 dark:text-slate-100">
                     </div>
-                    <x-input-error :messages="$errors->get('email')" class="mt-2 ml-1" />
+                    <x-input-error :messages="$errors->get('email')" class="mt-1.5" />
                 </div>
 
                 <!-- CAPTCHA -->
@@ -109,16 +106,16 @@
                 @endif
 
                 <!-- Submit Button -->
-                <div class="opacity-0 animate-fade-in-up delay-200">
-                    <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-rose-200 dark:shadow-none hover:shadow-rose-300 active:scale-[0.98] hover:-translate-y-0.5">
+                <div class="opacity-0 animate-fade-in-up delay-200 pt-1">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-mono font-bold text-xs uppercase tracking-wider py-3.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2">
                         Email Password Reset Link
                     </button>
                 </div>
 
                 <!-- Back to Login Link -->
                 <div class="pt-2 text-center opacity-0 animate-fade-in-up delay-200">
-                    <a href="{{ route('login') }}" class="text-sm font-bold text-rose-500 hover:text-rose-600 dark:text-rose-400 dark:hover:text-rose-300 transition-colors inline-flex items-center gap-2 group">
-                        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <a href="{{ route('login') }}" class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-600 hover:text-emerald-500 dark:text-emerald-400 dark:hover:text-emerald-300 transition-colors inline-flex items-center gap-2 group">
+                        <svg class="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                         </svg>
                         Back to Login
@@ -128,8 +125,8 @@
         </div>
 
         <!-- Security Footer -->
-        <p class="text-center text-[11px] text-gray-400 dark:text-zinc-600 uppercase tracking-widest mt-8 font-bold">
-            Secure SyncBin Gateway
+        <p class="text-center text-[10px] font-mono text-slate-400 dark:text-slate-600 uppercase tracking-widest mt-8 font-semibold">
+            EcoSync Automated Telemetry &copy; {{ date('Y') }}
         </p>
     </div>
 </body>

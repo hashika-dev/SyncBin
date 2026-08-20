@@ -23,7 +23,7 @@ class HardwareCryptoService
     public function __construct()
     {
         // 32-byte key derived from app secret or default fallback
-        $rawKey = config('app.key') ?? 'SyncBinSecureHardwareKey32Bytes!';
+        $rawKey = config('app.key') ?? 'EcoSyncSecureHardwareKey32Bytes!';
         $this->aesSecret = hash('sha256', $rawKey, true); // Always 32 bytes
     }
 

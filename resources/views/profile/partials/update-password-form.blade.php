@@ -1,10 +1,10 @@
 <section>
     <header>
-        <h2 class="text-lg font-medium text-gray-900 dark:text-zinc-100">
+        <h2 class="text-lg font-bold text-slate-900 dark:text-white">
             {{ __('Update Password') }}
         </h2>
 
-        <p class="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {{ __('Ensure your account is using a long, random password to stay secure.') }}
         </p>
     </header>
@@ -42,22 +42,22 @@
             <x-text-input id="update_password_password" name="password" type="password" x-model="pass" class="mt-1 block w-full" autocomplete="new-password" placeholder="••••••••••••" />
             <x-input-error :messages="$errors->updatePassword->get('password')" class="mt-2" />
             
-            <div class="mt-3 p-4 bg-gray-50/80 dark:bg-zinc-800/80 rounded-2xl border border-gray-200/80 dark:border-zinc-700/80 text-xs font-semibold text-gray-600 dark:text-zinc-400">
-                <span class="block font-black uppercase tracking-wider text-[11px] text-gray-800 dark:text-zinc-200 mb-1.5 flex items-center gap-1.5">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-rose-500"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            <div class="mt-3 p-4 bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                <span class="block font-mono font-bold uppercase tracking-wider text-[11px] text-slate-800 dark:text-slate-200 mb-1.5 flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
                     Password Requirements:
                 </span>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px]">
-                    <div class="flex items-center gap-1.5 transition-colors" :class="hasLength ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-500 dark:text-zinc-400'">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-[11px] font-mono">
+                    <div class="flex items-center gap-1.5 transition-colors" :class="hasLength ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400 dark:text-slate-500'">
                         <span class="font-mono text-xs" x-text="hasLength ? '✓' : '•'"></span> At least 12 characters
                     </div>
-                    <div class="flex items-center gap-1.5 transition-colors" :class="hasMixed ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-500 dark:text-zinc-400'">
+                    <div class="flex items-center gap-1.5 transition-colors" :class="hasMixed ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400 dark:text-slate-500'">
                         <span class="font-mono text-xs" x-text="hasMixed ? '✓' : '•'"></span> Upper & lowercase letters
                     </div>
-                    <div class="flex items-center gap-1.5 transition-colors" :class="hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-500 dark:text-zinc-400'">
+                    <div class="flex items-center gap-1.5 transition-colors" :class="hasNumber ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400 dark:text-slate-500'">
                         <span class="font-mono text-xs" x-text="hasNumber ? '✓' : '•'"></span> At least one number
                     </div>
-                    <div class="flex items-center gap-1.5 transition-colors" :class="hasSymbol ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-gray-500 dark:text-zinc-400'">
+                    <div class="flex items-center gap-1.5 transition-colors" :class="hasSymbol ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-slate-400 dark:text-slate-500'">
                         <span class="font-mono text-xs" x-text="hasSymbol ? '✓' : '•'"></span> At least one symbol (!@#$)
                     </div>
                 </div>

@@ -7,7 +7,7 @@
                 <x-application-logo class="w-8 h-8 text-white" />
             </div>
             <div class="leading-tight">
-                <span class="block font-bold text-lg tracking-tight">SyncBin</span>
+                <span class="block font-bold text-lg tracking-tight">EcoSync</span>
                 <span class="block text-[10px] uppercase tracking-[0.2em] opacity-70">Admin System</span>
             </div>
         </div>

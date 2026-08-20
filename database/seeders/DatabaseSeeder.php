@@ -13,23 +13,45 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Admin User
+        // Create Admin Users (both EcoSync and WasteSync domains supported)
+        User::updateOrCreate(
+            ['email' => 'admin@ecosync.com'],
+            [
+                'name' => 'EcoSync Admin',
+                'password' => Hash::make('password'),
+                'role' => 'admin',
+                'email_verified_at' => now(),
+            ]
+        );
+
         User::updateOrCreate(
             ['email' => 'admin@wastesync.com'],
             [
                 'name' => 'Admin',
                 'password' => Hash::make('password'),
                 'role' => 'admin',
+                'email_verified_at' => now(),
             ]
         );
 
-        // Create SuperAdmin User
+        // Create SuperAdmin Users
+        User::updateOrCreate(
+            ['email' => 'superadmin@ecosync.com'],
+            [
+                'name' => 'EcoSync SuperAdmin',
+                'password' => Hash::make('password'),
+                'role' => 'superadmin',
+                'email_verified_at' => now(),
+            ]
+        );
+
         User::updateOrCreate(
             ['email' => 'superadmin@wastesync.com'],
             [
                 'name' => 'SuperAdmin',
                 'password' => Hash::make('password'),
                 'role' => 'superadmin',
+                'email_verified_at' => now(),
             ]
         );
 

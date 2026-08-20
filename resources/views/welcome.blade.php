@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SyncBin - Login</title>
+    <title>EcoSync - Sign In</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
@@ -31,156 +31,140 @@
         body {
             font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif;
         }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(2deg); }
-        }
-
-        @keyframes float-slow {
-            0%, 100% { transform: translate(0, 0); }
-            33% { transform: translate(10px, -15px); }
-            66% { transform: translate(-15px, 10px); }
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(2deg); }
-        }
-
-        .animate-float {
-            animation: float 3s ease-in-out infinite;
-        }
-
-        .animate-float-slow {
-            animation: float-slow 8s ease-in-out infinite;
-        }
-
-        .animate-fade-in-up {
-            animation: fadeInUp 0.8s ease-out forwards;
-        }
-
-        .delay-100 { animation-delay: 0.1s; }
-        .delay-200 { animation-delay: 0.2s; }
-        .delay-300 { animation-delay: 0.3s; }
     </style>
 </head>
-<body class="antialiased bg-white dark:bg-zinc-950 selection:bg-rose-200 selection:text-rose-900 transition-colors duration-300">
-    <div class="flex flex-col lg:flex-row min-h-screen w-full">
-        <!-- Left Panel -->
-        <div class="hidden lg:flex lg:w-1/3 bg-gradient-to-br from-rose-100 via-pink-50 to-orange-50 dark:from-zinc-900 dark:via-zinc-800 dark:to-zinc-900 text-rose-950 dark:text-zinc-50 p-12 flex-col justify-between relative border-r border-rose-100 dark:border-zinc-800 transition-colors duration-300">
-            <!-- Decorative Floating Elements -->
-            <div class="absolute top-20 left-10 w-32 h-32 bg-rose-300/20 blur-2xl rounded-full animate-float-slow"></div>
-            <div class="absolute bottom-40 right-10 w-40 h-40 bg-orange-300/20 blur-3xl rounded-full animate-float-slow delay-500"></div>
-            
-            <!-- Top left: Logo -->
-            <div class="flex items-center gap-3 relative z-10">
-                <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-8 h-8 object-contain animate-float">
-                <span class="text-2xl font-bold tracking-tight text-rose-900 dark:text-zinc-50">SyncBin</span>
-            </div>
+<body class="antialiased bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 selection:bg-emerald-500 selection:text-white min-h-screen flex flex-col justify-center items-center p-4 sm:p-6 transition-colors duration-300 relative"
+      x-data="{
+          isDark: document.documentElement.classList.contains('dark'),
+          toggleTheme() {
+              this.isDark = !this.isDark;
+              if (this.isDark) {
+                  document.documentElement.classList.add('dark');
+                  localStorage.theme = 'dark';
+              } else {
+                  document.documentElement.classList.remove('dark');
+                  localStorage.theme = 'light';
+              }
+          }
+      }">
 
-            <!-- Middle: Description & Animation -->
-            <div class="max-w-xl relative z-10 flex flex-col gap-12">
-                <p class="text-xl leading-relaxed font-medium opacity-90 text-rose-900/80 dark:text-zinc-300">
-                    Simplify your segregation process. Automated bin tracking, real-time alerts, and comprehensive insights in a minimalist workspace. Keep your environment clean and organized.
-                </p>
-                
-                <!-- SyncBin in Action Graphic -->
-                <div class="flex flex-col py-4">
-                    <x-sorting-graphic />
-                </div>
-            </div>
+    <!-- Top Right Theme Toggle -->
+    <div class="absolute top-4 right-4 z-50">
+        <button @click="toggleTheme()" type="button" class="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white shadow-sm transition-all flex items-center gap-2" title="Toggle Theme">
+            <svg x-show="!isDark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-amber-500"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+            <svg x-show="isDark" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-sky-400"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+            <span class="text-xs font-semibold hidden sm:inline" x-text="isDark ? 'Dark' : 'Light'"></span>
+        </button>
+    </div>
 
-            <!-- Bottom: Carousel Indicator -->
-            <div class="flex gap-3 relative z-10">
-                <div class="w-8 h-2 rounded-full bg-rose-400 transition-all duration-300"></div>
-                <div class="w-2 h-2 rounded-full bg-rose-200 transition-all duration-300"></div>
-                <div class="w-2 h-2 rounded-full bg-rose-200 transition-all duration-300"></div>
+    <!-- Login Container -->
+    <div class="w-full max-w-md my-auto">
+        
+        <!-- Brand Header -->
+        <div class="flex flex-col items-center mb-6 text-center">
+            <div class="w-14 h-14 bg-white dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-sm border border-slate-200 dark:border-slate-800 mb-3">
+                <img src="{{ asset('favicon.svg') }}" alt="EcoSync Logo" class="w-9 h-9 object-contain">
             </div>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">EcoSync</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Smart Waste Management System</p>
         </div>
 
-        <!-- Right Panel (Form) -->
-        <div class="w-full lg:w-2/3 bg-white dark:bg-zinc-900 flex flex-col justify-center items-center p-6 sm:p-12 lg:p-16 transition-colors duration-300 min-h-screen">
-            <div class="w-full max-w-md opacity-0 animate-fade-in-up">
-                <!-- Mobile Branding Header (Visible < lg) -->
-                <div class="flex lg:hidden items-center gap-3 mb-8">
-                    <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-8 h-8 object-contain animate-float">
-                    <span class="text-2xl font-black tracking-tight text-rose-950 dark:text-zinc-50">SyncBin</span>
+        <!-- Form Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl p-6 sm:p-8 shadow-sm dark:shadow-xl border border-slate-200 dark:border-slate-800">
+            
+            <div class="mb-6">
+                <h2 class="text-lg font-bold text-slate-900 dark:text-white">Sign In</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Enter your account credentials to continue</p>
+            </div>
+
+            <!-- Session Status Alert -->
+            <x-auth-session-status class="mb-5 p-3.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl border border-emerald-200 dark:border-emerald-800 text-xs font-medium" :status="session('status')" />
+
+            <!-- Error Banner -->
+            @if ($errors->any())
+                <div class="mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-300 text-xs">
+                    <ul class="list-disc list-inside space-y-0.5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
+                @csrf
+                
+                <!-- Email Field -->
+                <div>
+                    <label for="email" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Email Address</label>
+                    <input type="email" id="email" name="email" placeholder="name@ecosync.com" value="{{ old('email') }}" required autofocus autocomplete="username"
+                           class="w-full px-3.5 py-2.5 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-xs">
+                    <x-input-error :messages="$errors->get('email')" class="mt-1 text-xs text-red-500" />
                 </div>
 
-                <!-- Form Header -->
-                <div class="mb-8 sm:mb-10">
-                    <h2 class="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-zinc-50">Welcome back</h2>
-                    <p class="text-rose-600 dark:text-rose-400 font-semibold mt-2.5 text-sm sm:text-base">Sign in to your SyncBin account to continue.</p>
-                </div>
-
-                <!-- Session Status Message -->
-                <x-auth-session-status class="mb-6" :status="session('status')" />
-
-                <!-- Login Form -->
-                <form action="{{ route('login.post') }}" method="POST" class="space-y-6">
-                    @csrf
-                    
-                    <!-- Email Field -->
-                    <div class="opacity-0 animate-fade-in-up delay-100">
-                        <label for="email" class="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-1.5 ml-1">Email Address</label>
-                        <input type="email" id="email" name="email" placeholder="you@example.com" value="{{ old('email') }}" required
-                               class="w-full px-4 py-3.5 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-650 bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-gray-900 dark:text-zinc-100">
-                        <x-input-error :messages="$errors->get('email')" class="mt-2 ml-1" />
+                <!-- Password Field -->
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <label for="password" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Password</label>
+                        @if (Route::has('password.request'))
+                            <a href="{{ route('password.request') }}" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline">Forgot password?</a>
+                        @endif
                     </div>
-
-                    <!-- Password Field -->
-                    <div class="opacity-0 animate-fade-in-up delay-200">
-                        <label for="password" class="block text-sm font-semibold text-gray-700 dark:text-zinc-300 mb-1.5 ml-1">Password</label>
-                        <div class="relative group">
-                            <input type="password" id="password" name="password" placeholder="........" required
-                                   class="w-full px-4 py-3.5 border border-gray-200 dark:border-zinc-700 rounded-xl focus:ring-4 focus:ring-rose-100 focus:border-rose-400 outline-none transition-all placeholder:text-gray-300 dark:placeholder:text-zinc-650 bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-gray-900 dark:text-zinc-100">
-                            <button type="button" id="togglePassword" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-rose-500 focus:outline-none transition-colors">
-                                <svg id="eyeIconOpen" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
-                                <svg id="eyeIconClosed" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-eye-off hidden"><path d="M9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
-                            </button>
-                        </div>
-                        <x-input-error :messages="$errors->get('password')" class="mt-2 ml-1" />
-                    </div>
-
-                    <!-- Form Actions -->
-                    <div class="flex items-center justify-between opacity-0 animate-fade-in-up delay-300">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="remember" name="remember" class="h-4.5 w-4.5 text-rose-500 focus:ring-rose-400 border-gray-300 rounded-md cursor-pointer transition-colors">
-                            <label for="remember" class="ml-2 block text-sm text-gray-600 dark:text-zinc-400 font-medium cursor-pointer">Remember me</label>
-                        </div>
-                        <a href="{{ route('password.request') }}" class="text-sm font-bold text-rose-500 hover:text-rose-600 transition-colors">Forgot password?</a>
-                    </div>
-
-
-                    <!-- CAPTCHA (Controlled via RECAPTCHA_ENABLED env variable) -->
-                    @if(config('services.recaptcha.enabled') && config('services.recaptcha.key'))
-                        <div class="opacity-0 animate-fade-in-up delay-300 flex flex-col items-center justify-center w-full py-2">
-                            <div class="g-recaptcha" data-sitekey="{{ config('services.recaptcha.key') }}"></div>
-                            <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-2 text-center" />
-                        </div>
-                    @endif
-
-                    <!-- Submit Button -->
-                    <div class="opacity-0 animate-fade-in-up delay-300">
-                        <button type="submit" class="w-full bg-rose-500 hover:bg-rose-600 text-white font-bold py-4 rounded-xl transition-all shadow-lg shadow-rose-200 hover:shadow-rose-300 active:scale-[0.98] mt-2">
-                            Sign In
+                    <div class="relative">
+                        <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password"
+                               class="w-full px-3.5 py-2.5 pr-10 border border-slate-300 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none transition-all placeholder:text-slate-400 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white text-xs">
+                        <button type="button" id="togglePassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                            <svg id="eyeIconOpen" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                            <svg id="eyeIconClosed" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="hidden"><path d="M9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.52 13.52 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
                         </button>
                     </div>
-                </form>
-            </div>
+                    <x-input-error :messages="$errors->get('password')" class="mt-1 text-xs text-red-500" />
+                </div>
+
+                <!-- Google reCAPTCHA v2 / Verification Check -->
+                @if(config('services.recaptcha.enabled') && config('services.recaptcha.key'))
+                    <div class="flex flex-col items-center justify-center pt-2">
+                        <div class="g-recaptcha scale-90 sm:scale-100 origin-center" data-sitekey="{{ config('services.recaptcha.key') }}"></div>
+                        <x-input-error :messages="$errors->get('g-recaptcha-response')" class="mt-1 text-center text-xs text-red-500" />
+                    </div>
+                @else
+                    @php
+                        $captchaQuestion = (new \App\Services\CaptchaService())->getQuestion();
+                    @endphp
+                    <div class="p-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="font-semibold text-slate-700 dark:text-slate-300">Security Question</span>
+                            <span class="px-2 py-0.5 bg-emerald-600 text-white rounded font-mono font-bold text-xs">
+                                {{ $captchaQuestion }} = ?
+                            </span>
+                        </div>
+                        <input type="text" id="captcha_input" name="captcha_input" placeholder="Type answer..." required
+                               class="w-full text-center font-mono font-bold text-xs py-2 border border-slate-300 dark:border-slate-700 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-emerald-500">
+                        <x-input-error :messages="$errors->get('captcha_input')" class="mt-1 text-xs text-center text-red-500" />
+                    </div>
+                @endif
+
+                <!-- Remember Me -->
+                <div class="flex items-center pt-1">
+                    <label class="flex items-center gap-2 cursor-pointer select-none">
+                        <input type="checkbox" id="remember" name="remember" class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-slate-700 rounded dark:bg-slate-950 cursor-pointer">
+                        <span class="text-xs text-slate-600 dark:text-slate-400">Remember me</span>
+                    </label>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2">
+                    <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                        <span>Sign In</span>
+                    </button>
+                </div>
+            </form>
         </div>
+
+        <!-- Footer -->
+        <p class="text-center text-[11px] text-slate-400 dark:text-slate-600 mt-6">
+            EcoSync &copy; {{ date('Y') }}
+        </p>
     </div>
 
     <script>
@@ -190,12 +174,14 @@
             const eyeOpen = document.querySelector('#eyeIconOpen');
             const eyeClosed = document.querySelector('#eyeIconClosed');
 
-            togglePassword.addEventListener('click', function (e) {
-                const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
-                password.setAttribute('type', type);
-                eyeOpen.classList.toggle('hidden');
-                eyeClosed.classList.toggle('hidden');
-            });
+            if (togglePassword && password) {
+                togglePassword.addEventListener('click', function () {
+                    const type = password.getAttribute('type') === 'password' ? 'text' : 'password';
+                    password.setAttribute('type', type);
+                    eyeOpen.classList.toggle('hidden');
+                    eyeClosed.classList.toggle('hidden');
+                });
+            }
         });
     </script>
 </body>

@@ -1,4 +1,4 @@
-<div class="relative w-full p-4 sm:p-8 rounded-[2rem] bg-gradient-to-br from-pink-50 via-rose-50/50 to-orange-50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 shadow-xl border border-white/60 dark:border-zinc-800/80 overflow-hidden transition-colors duration-300">
+<div class="relative w-full p-5 sm:p-7 rounded-2xl bg-white dark:bg-slate-900/90 border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl overflow-hidden text-slate-700 dark:text-slate-200">
     <style>
         @keyframes trash-to-hole {
             0% { transform: translate(-40px, -40px) scale(0.5); opacity: 0; }
@@ -16,19 +16,19 @@
         }
 
         @keyframes led-red {
-            0%, 25% { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
+            0%, 25% { background-color: #ef4444; box-shadow: 0 0 10px rgba(239,68,68,0.8); }
             26%, 100% { background-color: #450a0a; box-shadow: none; }
         }
 
         @keyframes led-yellow {
             0%, 25% { background-color: #422006; box-shadow: none; }
-            26%, 50% { background-color: #eab308; box-shadow: 0 0 8px #eab308; }
+            26%, 50% { background-color: #eab308; box-shadow: 0 0 10px rgba(234,179,8,0.8); }
             51%, 100% { background-color: #422006; box-shadow: none; }
         }
 
         @keyframes led-green {
             0%, 50% { background-color: #064e3b; box-shadow: none; }
-            51%, 75% { background-color: #22c55e; box-shadow: 0 0 8px #22c55e; }
+            51%, 75% { background-color: #10b981; box-shadow: 0 0 10px rgba(16,185,129,0.8); }
             76%, 100% { background-color: #064e3b; box-shadow: none; }
         }
 
@@ -47,131 +47,131 @@
         .led-g { animation: led-green 8s infinite; }
     </style>
 
-    <!-- Title -->
-    <div class="flex justify-center mb-6">
-        <h3 class="text-[10px] font-bold tracking-[0.2em] text-rose-400 dark:text-rose-400/90 uppercase">
-            SyncBin in Action
-        </h3>
+    <!-- Header / System Status Banner -->
+    <div class="flex items-center justify-between mb-5 pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+            <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            </span>
+            <span class="text-[11px] font-bold tracking-wider text-slate-700 dark:text-slate-300 uppercase">Automated Telemetry Chamber</span>
+        </div>
+        <span class="px-2 py-0.5 rounded bg-emerald-50 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 text-[10px] font-mono font-bold tracking-wider">
+            OPTICAL AI ACTIVE
+        </span>
     </div>
 
-    <!-- Main Window Container -->
-    <div class="relative px-2">
-        
-        <!-- Main Mock Window -->
-        <div class="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl dark:shadow-none border border-gray-100 dark:border-zinc-800 overflow-hidden flex flex-col h-64 w-full transition-colors duration-300">
+    <!-- Main Chamber Enclosure -->
+    <div class="relative">
+        <div class="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col h-64 w-full shadow-inner">
             
-            <!-- Header Bar with Hole and LEDs -->
-            <div class="h-14 border-b border-gray-100 dark:border-zinc-800 flex items-center justify-between px-6 shrink-0 bg-gray-50/50 dark:bg-zinc-950/60 backdrop-blur-sm">
-                <!-- Left: The Entry Hole -->
+            <!-- Intake & Sensor Array Bar -->
+            <div class="h-14 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-5 shrink-0 bg-white dark:bg-slate-900/90">
+                <!-- Intake Hatch with Animated Deposit Items -->
                 <div class="flex items-center gap-4">
                     <div class="relative">
-                        <div class="w-16 h-6 bg-slate-900 dark:bg-zinc-950 border border-slate-700/50 dark:border-zinc-800 rounded-full shadow-inner flex items-center justify-center overflow-visible">
+                        <div class="w-16 h-7 bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700/80 rounded-lg shadow-inner flex items-center justify-center overflow-visible">
                             <!-- Animated Trash Item 1: Hazardous -->
                             <div class="absolute -top-10 -left-10 animate-trash-1">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
                             </div>
                             <!-- Animated Trash Item 2: Recyclable -->
                             <div class="absolute -top-10 -left-10 animate-trash-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </div>
                             <!-- Animated Trash Item 3: Biodegradable -->
                             <div class="absolute -top-10 -left-10 animate-trash-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
                             </div>
                             <!-- Animated Trash Item 4: Non-Biodegradable -->
                             <div class="absolute -top-10 -left-10 animate-trash-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
                             </div>
                         </div>
-                        <span class="absolute -bottom-5 left-0 text-[7px] font-bold text-slate-400 dark:text-zinc-500 uppercase tracking-tighter">Entry Hole</span>
+                        <span class="absolute -bottom-4 left-0 text-[7px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase">Intake</span>
                     </div>
 
-                    <!-- The 3 LEDs -->
-                    <div class="flex gap-1.5 ml-2">
-                        <div class="flex flex-col items-center gap-1">
+                    <!-- Sensor Array Status LEDs -->
+                    <div class="flex gap-2 ml-1">
+                        <div class="flex flex-col items-center gap-0.5">
                             <div class="w-2.5 h-2.5 rounded-full bg-red-950 led-r transition-all"></div>
-                            <span class="text-[5px] font-bold text-slate-400 dark:text-zinc-500 uppercase">Scan</span>
+                            <span class="text-[6px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase">SCAN</span>
                         </div>
-                        <div class="flex flex-col items-center gap-1">
+                        <div class="flex flex-col items-center gap-0.5">
                             <div class="w-2.5 h-2.5 rounded-full bg-yellow-950 led-y transition-all"></div>
-                            <span class="text-[5px] font-bold text-slate-400 dark:text-zinc-500 uppercase">Ready</span>
+                            <span class="text-[6px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase">SORT</span>
                         </div>
-                        <div class="flex flex-col items-center gap-1">
+                        <div class="flex flex-col items-center gap-0.5">
                             <div class="w-2.5 h-2.5 rounded-full bg-green-950 led-g transition-all"></div>
-                            <span class="text-[5px] font-bold text-slate-400 dark:text-zinc-500 uppercase">In</span>
+                            <span class="text-[6px] font-mono font-bold text-slate-400 dark:text-slate-500 uppercase">PASS</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Status Pill -->
-                <div class="hidden sm:block px-3 py-1 bg-rose-50 dark:bg-rose-950/40 rounded-full border border-rose-100 dark:border-rose-900/50">
-                    <span class="text-[8px] font-bold text-rose-500 dark:text-rose-400 uppercase tracking-widest">System Active</span>
+                <!-- Servo Controller Pill -->
+                <div class="hidden sm:flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 dark:bg-slate-950 rounded border border-slate-200 dark:border-slate-800">
+                    <span class="font-mono text-[9px] text-cyan-600 dark:text-cyan-400 font-bold">SERVO-01: READY</span>
                 </div>
             </div>
 
-            <!-- The 4 Segregation Columns -->
-            <div class="grid grid-cols-4 flex-grow divide-x divide-gray-100 dark:divide-zinc-800">
+            <!-- The 4 Segregation Chutes -->
+            <div class="grid grid-cols-4 flex-grow divide-x divide-slate-200 dark:divide-slate-800/80 bg-slate-50/60 dark:bg-slate-950/40">
                 <!-- Column 1: Hazardous -->
-                <div class="bg-red-50/60 dark:bg-red-950/20 flex flex-col justify-between p-4 relative group">
-                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
-                        <!-- Appearing Item -->
+                <div class="flex flex-col justify-between p-3 relative bg-red-50/40 dark:bg-red-950/10 hover:bg-red-100/40 dark:hover:bg-red-950/20 transition-colors">
+                    <div class="flex-grow flex flex-col items-center justify-center">
                         <div class="appear-1 opacity-0">
-                            <div class="p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-red-100 dark:border-red-900/50">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" class="lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
+                            <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-red-200 dark:border-red-900/60 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" class="lucide lucide-skull"><path d="M9 10h.01"/><path d="M15 10h.01"/><path d="M12 2a8 8 0 0 0-8 8v1a4 4 0 0 0 4 4h8a4 4 0 0 0 4-4v-1a8 8 0 0 0-8-8z"/><path d="M9 14v3a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2v-3"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center font-bold text-red-600 dark:text-red-400 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
+                    <div class="text-center font-bold text-red-600 dark:text-red-400 text-[8px] sm:text-[9px] uppercase tracking-wider">
                         Hazardous
                     </div>
                 </div>
 
                 <!-- Column 2: Recyclable -->
-                <div class="bg-blue-50/60 dark:bg-blue-950/20 flex flex-col justify-between p-4 relative group">
-                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
-                        <!-- Appearing Item -->
+                <div class="flex flex-col justify-between p-3 relative bg-sky-50/40 dark:bg-sky-950/10 hover:bg-sky-100/40 dark:hover:bg-sky-950/20 transition-colors">
+                    <div class="flex-grow flex flex-col items-center justify-center">
                         <div class="appear-2 opacity-0">
-                            <div class="p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-blue-100 dark:border-blue-900/50">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+                            <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-sky-200 dark:border-sky-900/60 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2"><path d="M3 6h18M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center font-bold text-blue-500 dark:text-blue-400 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
+                    <div class="text-center font-bold text-sky-600 dark:text-sky-400 text-[8px] sm:text-[9px] uppercase tracking-wider">
                         Recyclable
                     </div>
                 </div>
 
-                <!-- Column 3: Bio Degradable -->
-                <div class="bg-green-50/60 dark:bg-emerald-950/20 flex flex-col justify-between p-4 relative group">
-                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
-                        <!-- Appearing Item -->
+                <!-- Column 3: Biodegradable -->
+                <div class="flex flex-col justify-between p-3 relative bg-emerald-50/40 dark:bg-emerald-950/10 hover:bg-emerald-100/40 dark:hover:bg-emerald-950/20 transition-colors">
+                    <div class="flex-grow flex flex-col items-center justify-center">
                         <div class="appear-3 opacity-0">
-                            <div class="p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-green-100 dark:border-emerald-900/50">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
+                            <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-emerald-200 dark:border-emerald-900/60 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center font-bold text-green-600 dark:text-emerald-400 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
-                        Biodegradable
+                    <div class="text-center font-bold text-emerald-600 dark:text-emerald-400 text-[8px] sm:text-[9px] uppercase tracking-wider">
+                        Bio-Waste
                     </div>
                 </div>
 
-                <!-- Column 4: Non-Bio Degradable -->
-                <div class="bg-orange-50/60 dark:bg-orange-950/20 flex flex-col justify-between p-4 relative group">
-                    <div class="flex-grow flex flex-col items-center justify-center gap-2">
-                        <!-- Appearing Item -->
+                <!-- Column 4: Non-Biodegradable -->
+                <div class="flex flex-col justify-between p-3 relative bg-amber-50/40 dark:bg-amber-950/10 hover:bg-amber-100/40 dark:hover:bg-amber-950/20 transition-colors">
+                    <div class="flex-grow flex flex-col items-center justify-center">
                         <div class="appear-4 opacity-0">
-                            <div class="p-2 bg-white dark:bg-zinc-900 rounded-lg shadow-sm border border-orange-100 dark:border-orange-900/50">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                            <div class="p-2 bg-white dark:bg-slate-900 rounded-lg border border-amber-200 dark:border-amber-900/60 shadow">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
                             </div>
                         </div>
                     </div>
-                    <div class="text-center font-bold text-orange-500 dark:text-orange-400 text-[8px] sm:text-[9px] uppercase tracking-wide whitespace-nowrap z-10">
-                        Non-Bio
+                    <div class="text-center font-bold text-amber-600 dark:text-amber-400 text-[8px] sm:text-[9px] uppercase tracking-wider">
+                        General
                     </div>
                 </div>
             </div>
         </div>
-
     </div>
 </div>

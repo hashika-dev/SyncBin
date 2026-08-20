@@ -24,7 +24,7 @@ class BrevoMailService
                 'accept' => 'application/json',
             ])->post('https://api.brevo.com/v3/smtp/email', [
                 'sender' => [
-                    'name' => env('MAIL_FROM_NAME', 'SyncBin Security'),
+                    'name' => env('MAIL_FROM_NAME', 'EcoSync Security'),
                     'email' => 'kurtumali06@gmail.com',
                 ],
                 'to' => [
@@ -33,11 +33,11 @@ class BrevoMailService
                         'name' => $toName ?: 'User',
                     ]
                 ],
-                'subject' => 'SyncBin - Email Change Verification Code: ' . $code,
+                'subject' => 'EcoSync - Email Change Verification Code: ' . $code,
                 'htmlContent' => '
                     <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fcf4f6;">
                         <div style="max-width: 480px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 20px; border: 1px solid #fce7f3;">
-                            <h2 style="color: #881337; text-align: center;">SyncBin Security Verification</h2>
+                            <h2 style="color: #881337; text-align: center;">EcoSync Security Verification</h2>
                             <p>Hello <strong>' . htmlspecialchars($toName) . '</strong>,</p>
                             <p>Your 6-digit OTP verification code is:</p>
                             <div style="text-align: center; background: #fff1f2; padding: 15px; border-radius: 12px; font-size: 28px; font-weight: bold; letter-spacing: 6px; color: #9f1239; margin: 20px 0;">
@@ -82,7 +82,7 @@ class BrevoMailService
                 'accept' => 'application/json',
             ])->post('https://api.brevo.com/v3/smtp/email', [
                 'sender' => [
-                    'name' => env('MAIL_FROM_NAME', 'SyncBin Security'),
+                    'name' => env('MAIL_FROM_NAME', 'EcoSync Security'),
                     'email' => 'kurtumali06@gmail.com',
                 ],
                 'to' => [
@@ -91,13 +91,13 @@ class BrevoMailService
                         'name' => $toName ?: 'User',
                     ]
                 ],
-                'subject' => 'SyncBin - Reset Your Password',
+                'subject' => 'EcoSync - Reset Your Password',
                 'htmlContent' => '
                     <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #fcf4f6;">
                         <div style="max-width: 500px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 20px; border: 1px solid #fce7f3; box-shadow: 0 10px 30px rgba(0,0,0,0.05);">
-                            <h2 style="color: #881337; text-align: center; margin-bottom: 20px;">SyncBin Password Reset</h2>
+                            <h2 style="color: #881337; text-align: center; margin-bottom: 20px;">EcoSync Password Reset</h2>
                             <p>Hello <strong>' . htmlspecialchars($toName) . '</strong>,</p>
-                            <p>You are receiving this email because we received a password reset request for your SyncBin account.</p>
+                            <p>You are receiving this email because we received a password reset request for your EcoSync account.</p>
                             <div style="text-align: center; margin: 30px 0;">
                                 <a href="' . htmlspecialchars($resetUrl) . '" style="background-color: #9f1239; color: #ffffff; padding: 14px 28px; text-decoration: none; font-weight: bold; border-radius: 12px; display: inline-block; font-size: 14px;">Reset Password</a>
                             </div>

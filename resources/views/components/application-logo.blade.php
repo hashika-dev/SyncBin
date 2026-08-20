@@ -1,1 +1,1 @@
-<img src="{{ asset('favicon.svg') }}" alt="SyncBin Logo" {{ $attributes }}>
+<img src="{{ asset('favicon.svg') }}" alt="EcoSync Logo" {{ $attributes }}>

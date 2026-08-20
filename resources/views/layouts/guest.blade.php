@@ -14,6 +14,15 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+        <!-- Dark Mode Detection -->
+        <script>
+            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        </script>
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
@@ -21,8 +30,8 @@
         <div class="min-h-screen flex flex-col sm:justify-center items-center p-4 sm:p-6 pt-8 sm:pt-0 bg-gradient-to-br from-rose-50 via-white to-orange-50/50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950">
             <div class="flex flex-col items-center">
                 <a href="/" class="flex items-center gap-3">
-                    <img src="{{ asset('favicon.svg') }}" alt="SyncBin Logo" class="w-12 h-12">
-                    <span class="text-3xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">SyncBin</span>
+                    <img src="{{ asset('favicon.svg') }}" alt="EcoSync Logo" class="w-12 h-12">
+                    <span class="text-3xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">EcoSync</span>
                 </a>
             </div>
 

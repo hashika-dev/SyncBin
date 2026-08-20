@@ -1,7 +1,7 @@
-# 📌 Project Summary & Transfer Guide: SyncBin (Capstone)
+# 📌 Project Summary & Transfer Guide: EcoSync (Capstone)
 
 ## 🏢 1. Project Architecture & Stack
-- **Project Name:** SyncBin (Smart Waste Management System)
+- **Project Name:** EcoSync (Smart Waste Management System)
 - **Framework & Stack:** Laravel 11+, Tailwind CSS, Alpine.js, Vite
 - **Authentication & Security:** Laravel Breeze with Custom 2FA (Two-Factor Auth), Role-based middleware (`superadmin`, `admin`), Rate limiting (`throttle:60,1`).
 - **Core Assets Policy:** Uses `public/favicon.svg` for primary system logo rendering in Blade layouts (`{{ asset('favicon.svg') }}`).
@@ -42,8 +42,8 @@
 ## 🚀 4. Setup Instructions for New Machine (Friend's PC)
 1. **Clone Repository:**
    ```powershell
-   git clone https://github.com/hashika-dev/SyncBin.git
-   cd SyncBin
+   git clone https://github.com/hashika-dev/EcoSync.git
+   cd EcoSync
    ```
 2. **Install Dependencies:**
    ```powershell

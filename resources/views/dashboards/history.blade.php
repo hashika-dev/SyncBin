@@ -3,72 +3,48 @@
         true
     @endslot
 
-    <div class="flex flex-col lg:flex-row min-h-screen w-full bg-gradient-to-br from-rose-50 via-white to-orange-50/50 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300" x-data="{ sidebarOpen: false, showClearConfirm: false, setQuickRange(val) { document.getElementById('quick_range_input').value = val; document.getElementById('from_date').value = ''; document.getElementById('to_date').value = ''; document.getElementById('historyFilterForm').submit(); } }">
+    <div class="flex flex-col lg:flex-row min-h-screen w-full bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300" x-data="{ sidebarOpen: false, showClearConfirm: false, setQuickRange(val) { document.getElementById('quick_range_input').value = val; document.getElementById('from_date').value = ''; document.getElementById('to_date').value = ''; document.getElementById('historyFilterForm').submit(); } }">
         <!-- Sidebar -->
         @include('layouts.sidebar', ['active' => 'history'])
 
         <!-- Main Content -->
         <main class="flex-1 w-full min-w-0 ml-0 lg:ml-72 p-4 sm:p-6 lg:p-10 xl:p-12">
             <!-- Header -->
-            <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 sm:mb-12">
+            <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200 dark:border-slate-800">
                 <div>
-                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-rose-950 dark:text-zinc-50 tracking-tighter">Activity History</h1>
-                    <p class="text-rose-600 dark:text-rose-400 mt-2 font-bold text-sm sm:text-base lg:text-lg opacity-80">
-                        Audit trail and logs of segregated waste items
+                    <span class="text-[11px] font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Audit Trail Console</span>
+                    <h1 class="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight mt-0.5">Activity History</h1>
+                    <p class="text-slate-500 dark:text-slate-400 mt-1 text-xs sm:text-sm">
+                        Verified telemetry records and segregation audit history
                     </p>
                 </div>
                 
                 @if($logs->isNotEmpty())
-                    <button type="button" @click="showClearConfirm = true" class="w-full sm:w-auto flex items-center justify-center gap-3 px-6 py-3.5 bg-rose-500 text-white rounded-2xl font-black shadow-lg shadow-rose-200 hover:bg-rose-600 hover:-translate-y-0.5 transition-all active:scale-95 text-sm shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-                        Clear All Logs
+                    <button type="button" @click="showClearConfirm = true" class="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 bg-red-950/60 hover:bg-red-900/80 text-red-300 border border-red-800/80 rounded-xl font-semibold transition-colors text-xs shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
+                        <span>Purge History Logs</span>
                     </button>
                 @endif
             </header>
 
             <!-- Filters Banner -->
-            <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-3xl lg:rounded-[2.5rem] shadow-xl dark:shadow-none border border-white dark:border-zinc-800 p-5 sm:p-8 mb-8 sm:mb-12 transition-colors duration-300">
-                <form action="{{ route('dashboard.history') }}" method="GET" id="historyFilterForm" class="space-y-6">
-                    <!-- Quick Select Preset Badges -->
-                    <div class="flex flex-wrap items-center gap-2 sm:gap-3 pb-4 border-b border-rose-50 dark:border-zinc-800">
-                        <span class="text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mr-2 w-full sm:w-auto">Quick Select:</span>
-                        <input type="hidden" name="quick_range" id="quick_range_input" value="{{ request('quick_range') }}">
-                        
-                        <button type="button" @click="setQuickRange('')" class="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all {{ !request('quick_range') ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-rose-100 dark:hover:bg-zinc-700' }}">
-                            All Time
-                        </button>
-                        <button type="button" @click="setQuickRange('today')" class="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all {{ request('quick_range') == 'today' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-rose-100 dark:hover:bg-zinc-700' }}">
-                            Today
-                        </button>
-                        <button type="button" @click="setQuickRange('yesterday')" class="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all {{ request('quick_range') == 'yesterday' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-rose-100 dark:hover:bg-zinc-700' }}">
-                            Yesterday
-                        </button>
-                        <button type="button" @click="setQuickRange('7days')" class="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all {{ request('quick_range') == '7days' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-rose-100 dark:hover:bg-zinc-700' }}">
-                            Last 7 Days
-                        </button>
-                        <button type="button" @click="setQuickRange('30days')" class="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all {{ request('quick_range') == '30days' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-rose-100 dark:hover:bg-zinc-700' }}">
-                            Last 30 Days
-                        </button>
-                        <button type="button" @click="setQuickRange('this_month')" class="px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all {{ request('quick_range') == 'this_month' ? 'bg-rose-500 text-white shadow-md' : 'bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-400 hover:bg-rose-100 dark:hover:bg-zinc-700' }}">
-                            This Month
-                        </button>
-                    </div>
-
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 sm:p-6 mb-8 shadow-sm dark:shadow-xl">
+                <form action="{{ route('dashboard.history') }}" method="GET" id="historyFilterForm" class="space-y-4">
                     <!-- Input Controls Grid -->
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 items-end">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                         <!-- Search Field -->
                         <div>
-                            <label for="search" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">Search Item</label>
-                            <input type="text" name="search" id="search" placeholder="Item name (e.g. Battery)..." value="{{ request('search') }}"
+                            <label for="search" class="block text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Search Item</label>
+                            <input type="text" name="search" id="search" placeholder="Item name..." value="{{ request('search') }}"
                                    @keydown.enter="$el.form.submit()"
-                                   class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all placeholder:text-gray-400 dark:placeholder:text-zinc-600 bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs text-slate-800 dark:text-slate-200 placeholder:text-slate-400">
                         </div>
 
                         <!-- Classification / Event Type Filter -->
                         <div>
-                            <label for="bin" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">Event Classification</label>
-                            <select name="bin" id="bin" @change="$el.form.submit()" class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
-                                <option value="">All Classifications</option>
+                            <label for="bin" class="block text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">Bin Category</label>
+                            <select name="bin" id="bin" @change="$el.form.submit()" class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs text-slate-800 dark:text-slate-200">
+                                <option value="">All Categories</option>
                                 @foreach($bins as $b)
                                     <option value="{{ $b->slug }}" {{ request('bin') == $b->slug ? 'selected' : '' }}>{{ $b->name }}</option>
                                 @endforeach
@@ -77,96 +53,103 @@
 
                         <!-- From Date -->
                         <div>
-                            <label for="from_date" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">From Date</label>
+                            <label for="from_date" class="block text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">From Date</label>
                             <input type="date" name="from_date" id="from_date" value="{{ request('from_date') }}"
                                    @change="$el.form.submit()"
-                                   class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs font-mono text-slate-800 dark:text-slate-200">
                         </div>
 
                         <!-- To Date -->
                         <div>
-                            <label for="to_date" class="block text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500 mb-2">To Date</label>
+                            <label for="to_date" class="block text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500 dark:text-slate-400 mb-1.5">To Date</label>
                             <input type="date" name="to_date" id="to_date" value="{{ request('to_date') }}"
                                    @change="$el.form.submit()"
-                                   class="w-full px-4 py-3.5 border border-rose-100 dark:border-zinc-800 rounded-2xl focus:ring-4 focus:ring-rose-100 focus:border-rose-300 outline-none transition-all bg-gray-50/50 dark:bg-zinc-800/50 hover:bg-white dark:hover:bg-zinc-800 focus:bg-white dark:focus:bg-zinc-800 text-sm font-bold text-rose-950 dark:text-zinc-100">
+                                   class="w-full px-3.5 py-2.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 outline-none text-xs font-mono text-slate-800 dark:text-slate-200">
                         </div>
                     </div>
 
                     <!-- Action Buttons -->
-                    <div class="flex flex-col sm:flex-row flex-wrap gap-3 items-stretch sm:items-center justify-end pt-2">
-                        <a href="{{ route('dashboard.export.csv', request()->query()) }}" class="px-6 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-md shadow-emerald-200 transition-all text-xs sm:text-sm text-center uppercase tracking-wider flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
-                            Export CSV
-                        </a>
+                    <div class="flex flex-col sm:flex-row flex-wrap gap-2.5 items-stretch sm:items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                        <div>
+                            @if(request()->anyFilled(['search', 'bin', 'from_date', 'to_date']))
+                                <a href="{{ route('dashboard.history') }}" class="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 font-semibold">
+                                    <span>✕ Reset Filters</span>
+                                </a>
+                            @endif
+                        </div>
 
-                        <a href="{{ route('dashboard.export', request()->query()) }}" target="_blank" class="px-6 py-3.5 bg-zinc-800 hover:bg-zinc-900 text-white rounded-2xl font-black shadow-md transition-all text-xs sm:text-sm text-center uppercase tracking-wider flex items-center justify-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
-                            Export PDF
-                        </a>
-
-                        @if(request()->anyFilled(['search', 'bin', 'from_date', 'to_date', 'quick_range']))
-                            <a href="{{ route('dashboard.history') }}" class="px-6 py-3.5 bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-700 dark:text-zinc-300 rounded-2xl font-black transition-all text-xs sm:text-sm text-center uppercase tracking-wider">
-                                Reset Filters
+                        <div class="flex items-center gap-2.5">
+                            <a href="{{ route('dashboard.export.csv', request()->query()) }}" class="px-4 py-2 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 rounded-xl font-semibold text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg>
+                                <span>Export CSV</span>
                             </a>
-                        @endif
+
+                            <a href="{{ route('dashboard.export', request()->query()) }}" target="_blank" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition-colors flex items-center justify-center gap-2 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <span>Export PDF</span>
+                            </a>
+                        </div>
                     </div>
                 </form>
             </div>
 
             <!-- Status Alert Message -->
             @if (session('status'))
-                <div class="mb-8 p-5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-2xl flex items-center gap-4 text-emerald-800 dark:text-emerald-400">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="shrink-0"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-                    <span class="font-bold text-sm">{{ session('status') }}</span>
+                <div class="mb-6 p-4 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800/80 rounded-xl flex items-center gap-3 text-emerald-700 dark:text-emerald-400 text-xs font-mono shadow-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="shrink-0"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+                    <span>{{ session('status') }}</span>
                 </div>
             @endif
 
             <!-- History Logs Table -->
-            <div class="bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-3xl lg:rounded-[2.5rem] shadow-xl dark:shadow-none border border-white dark:border-zinc-800 overflow-hidden p-4 sm:p-8 transition-colors duration-300">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden p-5 sm:p-6 shadow-sm dark:shadow-xl mb-8">
+                <div class="mb-4 pb-3 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-[11px] font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Classified Item Stream</span>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">Telemetry Ingestion Logs</h3>
+                    </div>
+                </div>
+
                 @if($logs->isEmpty())
-                    <div class="text-center py-16 sm:py-20">
-                        <div class="w-16 h-16 sm:w-20 sm:h-20 bg-rose-50 dark:bg-zinc-800 rounded-2xl lg:rounded-[2rem] flex items-center justify-center text-rose-500 mx-auto mb-6">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="sm:w-9 sm:h-9"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-                        </div>
-                        <h4 class="text-lg sm:text-xl font-black text-rose-950 dark:text-zinc-100">No logs found</h4>
-                        <p class="text-rose-500/70 dark:text-rose-400/70 font-bold mt-2 text-sm">Try adjusting your filters or simulate some scans from the dashboard.</p>
+                    <div class="text-center py-12 text-slate-400 dark:text-slate-500 text-xs font-mono">
+                        No telemetry logs match your active filter criteria.
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse min-w-[600px]">
+                        <table class="w-full text-left border-collapse min-w-[600px] text-xs">
                             <thead>
-                                <tr class="border-b border-rose-50 dark:border-zinc-800">
-                                    <th class="pb-5 font-black text-[10px] sm:text-xs uppercase tracking-widest text-rose-400 dark:text-zinc-500 pl-4 min-w-[140px]">Timestamp</th>
-                                    <th class="pb-5 font-black text-[10px] sm:text-xs uppercase tracking-widest text-rose-400 dark:text-zinc-500 min-w-[140px]">Classification</th>
-                                    <th class="pb-5 font-black text-[10px] sm:text-xs uppercase tracking-widest text-rose-400 dark:text-zinc-500 min-w-[60px]">Icon</th>
-                                    <th class="pb-5 font-black text-[10px] sm:text-xs uppercase tracking-widest text-rose-400 dark:text-zinc-500 min-w-[160px]">Item Name</th>
-                                    <th class="pb-5 font-black text-[10px] sm:text-xs uppercase tracking-widest text-rose-400 dark:text-zinc-500 text-right pr-4 min-w-[90px]">Weight</th>
+                                <tr class="border-b border-slate-200 dark:border-slate-800 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    <th class="pb-3 pl-3 min-w-[140px]">Timestamp</th>
+                                    <th class="pb-3 min-w-[140px]">Classification</th>
+                                    <th class="pb-3 min-w-[50px]">Icon</th>
+                                    <th class="pb-3 min-w-[160px]">Item Description</th>
+                                    <th class="pb-3 text-right pr-3 min-w-[90px]">Weight</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-rose-50/50 dark:divide-zinc-800/50">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-semibold text-slate-700 dark:text-slate-200">
                                 @foreach($logs as $log)
-                                    <tr class="hover:bg-rose-50/30 dark:hover:bg-zinc-800/30 transition-all duration-300">
-                                        <td class="py-5 text-sm font-bold text-rose-900/60 dark:text-zinc-400 pl-4">
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                        <td class="py-3 pl-3 font-mono text-slate-500 dark:text-slate-400">
                                             {{ $log->created_at->format('M d, Y') }}
-                                            <span class="block text-xs font-medium text-rose-400 dark:text-rose-500 mt-0.5">{{ $log->created_at->format('h:i:s A') }}</span>
+                                            <span class="text-slate-400 dark:text-slate-500 block text-[11px]">{{ $log->created_at->format('H:i:s') }}</span>
                                         </td>
-                                        <td class="py-5">
+                                        <td class="py-3">
                                             @php
                                                 $badgeColors = [
-                                                    'hazardous' => 'bg-red-100 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-900/40',
-                                                    'recyclable' => 'bg-sky-100 dark:bg-sky-950/40 text-sky-800 dark:text-sky-300 border-sky-200 dark:border-sky-900/40',
-                                                    'biodegradable' => 'bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/40',
-                                                    'non-bio' => 'bg-orange-100 dark:bg-orange-950/40 text-orange-800 dark:text-orange-300 border-orange-200 dark:border-orange-900/40'
+                                                    'hazardous' => 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800',
+                                                    'recyclable' => 'bg-sky-50 dark:bg-sky-950 text-sky-700 dark:text-sky-400 border-sky-200 dark:border-sky-800',
+                                                    'biodegradable' => 'bg-emerald-50 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
+                                                    'non-bio' => 'bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
                                                 ];
-                                                $colorClass = $badgeColors[$log->bin->slug] ?? 'bg-gray-100 dark:bg-zinc-800 text-gray-800 dark:text-zinc-300 border-gray-200 dark:border-zinc-700';
+                                                $colorClass = $badgeColors[$log->bin->slug] ?? 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700';
                                             @endphp
-                                            <span class="inline-block px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border {{ $colorClass }}">
+                                            <span class="inline-block px-2 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded border {{ $colorClass }}">
                                                 {{ $log->bin->name }}
                                             </span>
                                         </td>
-                                        <td class="py-5 text-xl sm:text-2xl">{{ $log->icon }}</td>
-                                        <td class="py-5 text-xs sm:text-sm font-black text-rose-950 dark:text-zinc-100">{{ $log->name }}</td>
-                                        <td class="py-5 text-xs sm:text-sm font-bold text-rose-900/60 dark:text-zinc-400 text-right pr-4">{{ $log->weight }}</td>
+                                        <td class="py-3 text-xl">{{ $log->icon }}</td>
+                                        <td class="py-3 text-slate-900 dark:text-white font-bold">{{ $log->name }}</td>
+                                        <td class="py-3 font-mono text-slate-500 dark:text-slate-400 text-right pr-3">{{ $log->weight }}</td>
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -174,66 +157,66 @@
                     </div>
 
                     <!-- Pagination Container -->
-                    <div class="mt-6 pt-6 border-t border-rose-50 dark:border-zinc-800">
+                    <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
                         {{ $logs->links() }}
                     </div>
                 @endif
             </div>
 
             <!-- Evacuation Audit History Table -->
-            <div class="mt-12 bg-white/70 dark:bg-zinc-900/70 backdrop-blur-xl rounded-3xl lg:rounded-[2.5rem] shadow-xl dark:shadow-none border border-white dark:border-zinc-800 overflow-hidden p-4 sm:p-8 transition-colors duration-300">
-                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 pb-6 border-b border-rose-50 dark:border-zinc-800">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden p-5 sm:p-6 shadow-sm dark:shadow-xl">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
                     <div>
-                        <h3 class="text-xl sm:text-2xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">Maintenance & Evacuation Audit Logs</h3>
-                        <p class="text-rose-500/70 dark:text-rose-400/70 font-bold text-xs sm:text-sm mt-1">Audit trail of cleared bins and staff response times</p>
+                        <span class="text-[11px] font-mono font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Maintenance Dispatch</span>
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white tracking-tight mt-0.5">Evacuation Audit Trail</h3>
                     </div>
-                    <div class="flex items-center gap-3 px-4 py-2.5 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-900/40 rounded-2xl">
-                        <span class="text-xs font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Avg Response Time:</span>
-                        <span class="text-sm font-black text-emerald-700 dark:text-emerald-300">{{ $avgResponseTimeMinutes > 0 ? $avgResponseTimeMinutes . ' min' . ($avgResponseTimeMinutes > 1 ? 's' : '') : 'N/A' }}</span>
+                    <div class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs">
+                        <span class="text-slate-500 dark:text-slate-400 font-mono">Avg Fleet Response:</span>
+                        <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400">{{ $avgResponseTimeMinutes > 0 ? $avgResponseTimeMinutes . 'm' : 'N/A' }}</span>
                     </div>
                 </div>
 
                 @if($clearanceLogs->isEmpty())
-                    <div class="text-center py-12">
-                        <p class="text-rose-500/70 dark:text-rose-400/70 font-bold text-sm">No evacuation audit records yet. Click "Empty Bin" on a full bin to generate audit logs.</p>
+                    <div class="text-center py-8 text-slate-400 dark:text-slate-500 text-xs font-mono">
+                        No evacuation records recorded yet.
                     </div>
                 @else
                     <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
+                        <table class="w-full text-left border-collapse text-xs">
                             <thead>
-                                <tr class="border-b border-rose-100 dark:border-zinc-800 text-[10px] sm:text-xs font-black uppercase tracking-widest text-rose-400 dark:text-zinc-500">
-                                    <th class="py-4 px-4">Bin Name</th>
-                                    <th class="py-4 px-4">Cleared By</th>
-                                    <th class="py-4 px-4 text-center">Level Before Clearing</th>
-                                    <th class="py-4 px-4 text-center">Response Time</th>
-                                    <th class="py-4 px-4 text-right">Cleared At</th>
+                                <tr class="border-b border-slate-200 dark:border-slate-800 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                                    <th class="py-3 px-3">Bin Node</th>
+                                    <th class="py-3 px-3">Operator</th>
+                                    <th class="py-3 px-3 text-center">Pre-Clear Fill</th>
+                                    <th class="py-3 px-3 text-center">Response Speed</th>
+                                    <th class="py-3 px-3 text-right">Cleared At</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-rose-50 dark:divide-zinc-800/50 text-xs sm:text-sm font-bold text-rose-950 dark:text-zinc-100">
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-semibold text-slate-700 dark:text-slate-200">
                                 @foreach($clearanceLogs as $log)
-                                    <tr class="hover:bg-rose-50/50 dark:hover:bg-zinc-800/40 transition-colors">
-                                        <td class="py-4 px-4">
-                                            <span class="font-black">{{ $log->bin ? $log->bin->name : 'Unknown Bin' }}</span>
+                                    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
+                                        <td class="py-3 px-3 font-bold text-slate-900 dark:text-white">
+                                            {{ $log->bin ? $log->bin->name : 'Unknown Node' }}
                                         </td>
-                                        <td class="py-4 px-4">
-                                            <span class="text-gray-600 dark:text-zinc-400 font-semibold">{{ $log->cleared_by_email }}</span>
+                                        <td class="py-3 px-3 text-slate-500 dark:text-slate-400 font-mono">
+                                            {{ $log->cleared_by_email }}
                                         </td>
-                                        <td class="py-4 px-4 text-center">
-                                            <span class="inline-flex px-2.5 py-1 rounded-xl text-xs font-black {{ $log->level_before_clearance >= 85 ? 'bg-rose-500 text-white' : 'bg-amber-500 text-white' }}">
+                                        <td class="py-3 px-3 text-center font-mono">
+                                            <span class="inline-flex px-2 py-0.5 rounded text-[11px] font-bold {{ $log->level_before_clearance >= 85 ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-400 border border-red-300 dark:border-red-800' : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700' }}">
                                                 {{ $log->level_before_clearance }}%
                                             </span>
                                         </td>
-                                        <td class="py-4 px-4 text-center">
+                                        <td class="py-3 px-3 text-center font-mono">
                                             @if($log->response_time_minutes !== null)
-                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 rounded-xl text-xs font-black">
-                                                    ⚡ {{ $log->response_time_minutes }} min{{ $log->response_time_minutes > 1 ? 's' : '' }}
+                                                <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 text-xs">
+                                                    ⚡ {{ $log->response_time_minutes }}m
                                                 </span>
                                             @else
-                                                <span class="text-gray-400 dark:text-zinc-600 text-xs">Immediate</span>
+                                                <span class="text-slate-400 dark:text-slate-500">Immediate</span>
                                             @endif
                                         </td>
-                                        <td class="py-4 px-4 text-right text-gray-500 dark:text-zinc-400 text-xs">
-                                            {{ $log->cleared_at ? $log->cleared_at->format('M d, Y • h:i A') : 'N/A' }}
+                                        <td class="py-3 px-3 text-right text-slate-500 dark:text-slate-400 font-mono">
+                                            {{ $log->cleared_at ? $log->cleared_at->format('M d, Y • H:i') : 'N/A' }}
                                         </td>
                                     </tr>
                                 @endforeach
@@ -242,7 +225,7 @@
                     </div>
 
                     @if($clearanceLogs->hasPages())
-                        <div class="mt-6">
+                        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800">
                             {{ $clearanceLogs->appends(request()->query())->links() }}
                         </div>
                     @endif
@@ -253,7 +236,7 @@
         <!-- Custom Confirmation Modal Overlay -->
         <div x-show="showClearConfirm" 
              style="display: none;"
-             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm overflow-y-auto"
+             class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -262,30 +245,26 @@
              x-transition:leave-end="opacity-0"
              x-cloak>
             
-            <!-- Modal Container -->
             <div @click.away="showClearConfirm = false" 
-                 class="bg-white dark:bg-zinc-900 rounded-3xl lg:rounded-[2.5rem] shadow-2xl dark:shadow-none max-w-md w-full p-6 sm:p-10 relative overflow-hidden border border-rose-100 dark:border-zinc-800 transition-colors duration-300 max-h-[90vh] overflow-y-auto"
+                 class="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-md w-full p-6 relative overflow-hidden border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100"
                  x-transition:enter="transition ease-out duration-300"
-                 x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+                 x-transition:enter-start="opacity-0 scale-95 translate-y-2"
                  x-transition:enter-end="opacity-100 scale-100 translate-y-0">
                 
-                <!-- Warning Icon -->
-                <div class="w-14 h-14 sm:w-16 sm:h-16 bg-red-50 dark:bg-red-950/20 text-red-500 rounded-2xl flex items-center justify-center mb-5 border border-red-100 dark:border-red-900/30">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-xl flex items-center justify-center mb-4 border border-red-300 dark:border-red-800/60">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
                 </div>
 
-                <!-- Content -->
-                <div class="mb-6 sm:mb-8">
-                    <h3 class="text-xl sm:text-2xl font-black text-rose-950 dark:text-zinc-100 tracking-tight">Clear History Logs?</h3>
-                    <p class="text-xs sm:text-sm font-bold text-rose-500/70 dark:text-rose-450/70 mt-2 leading-relaxed">
-                        Are you sure you want to clear all history logs? This action is permanent and will reset all bin fill levels to 0% as well.
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Purge Telemetry Logs?</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                        This action will permanently delete historical telemetry data and reset all current bin storage levels to 0%.
                     </p>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="grid grid-cols-2 gap-3 sm:gap-4">
+                <div class="grid grid-cols-2 gap-3">
                     <button @click="showClearConfirm = false" 
-                            class="py-3.5 border-2 border-rose-100 dark:border-zinc-800 text-rose-350 dark:text-zinc-500 rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] hover:bg-rose-500 hover:text-white hover:border-rose-500 transition-all active:scale-95">
+                            class="py-2.5 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">
                         Cancel
                     </button>
                     
@@ -293,8 +272,8 @@
                         @csrf
                         @method('DELETE')
                         <button type="submit" 
-                                class="w-full py-3.5 bg-red-500 hover:bg-red-600 text-white rounded-xl sm:rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-md shadow-red-100 dark:shadow-none transition-all active:scale-95">
-                            Clear Logs
+                                class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">
+                            Confirm Purge
                         </button>
                     </form>
                 </div>

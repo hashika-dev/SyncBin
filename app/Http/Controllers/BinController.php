@@ -110,12 +110,12 @@ class BinController extends Controller
                         ->html("
                             <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #f43f5e; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);'>
                                 <div style='background-color: #f43f5e; padding: 24px; text-align: center; color: white;'>
-                                    <h1 style='margin: 0; font-size: 24px; font-weight: 900;'>SyncBin Alert</h1>
+                                    <h1 style='margin: 0; font-size: 24px; font-weight: 900;'>EcoSync Alert</h1>
                                     <p style='margin: 8px 0 0; font-size: 14px; opacity: 0.9;'>Critical Waste Capacity Reached</p>
                                 </div>
                                 <div style='padding: 32px; background-color: #ffffff; color: #18181b;'>
                                     <p style='font-size: 16px; line-height: 1.6; margin-top: 0;'>Hello Administrator,</p>
-                                    <p style='font-size: 15px; line-height: 1.6;'>This is an automated alert from the SyncBin system monitor. The following waste classification bin is approaching critical capacity and requires evacuation:</p>
+                                    <p style='font-size: 15px; line-height: 1.6;'>This is an automated alert from the EcoSync system monitor. The following waste classification bin is approaching critical capacity and requires evacuation:</p>
                                     
                                     <div style='background-color: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 20px; margin: 24px 0;'>
                                         <table style='width: 100%; border-collapse: collapse;'>
@@ -160,7 +160,7 @@ class BinController extends Controller
                     $smsResponse = \Illuminate\Support\Facades\Http::post('https://api.semaphore.co/api/v4/messages', [
                         'apikey'  => $semaphoreApiKey,
                         'number'  => $alertPhoneNumber,
-                        'message' => "CRITICAL ALERT: SyncBin {$bin->name} has reached {$bin->level}% capacity! Please evacuate the bin.",
+                        'message' => "CRITICAL ALERT: EcoSync {$bin->name} has reached {$bin->level}% capacity! Please evacuate the bin.",
                     ]);
 
                     if ($smsResponse->successful()) {
@@ -344,7 +344,7 @@ class BinController extends Controller
         // Render PDF view
         $pdf = Pdf::loadView('reports.pdf', compact('bins', 'totalItemsCount', 'averageFill', 'mostActiveBin'));
 
-        return $pdf->stream('SyncBin-Status-Report-' . now()->format('Y-m-d') . '.pdf');
+        return $pdf->stream('EcoSync-Status-Report-' . now()->format('Y-m-d') . '.pdf');
     }
 
     /**
@@ -392,7 +392,7 @@ class BinController extends Controller
         }
 
         $logs = $query->latest()->get();
-        $filename = 'SyncBin-Waste-Logs-' . now()->format('Y-m-d_His') . '.csv';
+        $filename = 'EcoSync-Waste-Logs-' . now()->format('Y-m-d_His') . '.csv';
 
         $headers = [
             'Content-Type' => 'text/csv; charset=UTF-8',
@@ -789,7 +789,7 @@ class BinController extends Controller
         $keypair = $crypto->generateKeyPair();
         
         $payload = [
-            'device_id' => 'SYNCBIN-ESP32-HW01',
+            'device_id' => 'ECOSYNC-ESP32-HW01',
             'bin_slug' => 'recyclable',
             'item_scanned' => 'Plastic Water Bottle',
             'confidence' => 98.4,

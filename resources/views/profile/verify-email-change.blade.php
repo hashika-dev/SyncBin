@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SyncBin - Confirm Email Change</title>
+    <title>EcoSync - Confirm Email Change</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
@@ -62,7 +62,7 @@
             <div class="w-16 h-16 bg-white dark:bg-zinc-900 rounded-3xl flex items-center justify-center shadow-lg shadow-rose-100/50 dark:shadow-none border border-rose-100 dark:border-zinc-800 mb-3 transition-transform hover:scale-105 duration-300">
                 <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-10 h-10 object-contain">
             </div>
-            <h1 class="text-3xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">SyncBin</h1>
+            <h1 class="text-3xl font-black text-rose-950 dark:text-zinc-50 tracking-tight">EcoSync</h1>
             <p class="text-xs font-bold text-rose-600/80 dark:text-zinc-400 mt-1 uppercase tracking-widest">Email Change Verification</p>
         </div>
 
@@ -121,7 +121,7 @@
 
         <!-- Security Footer -->
         <p class="text-center text-[11px] text-gray-400 dark:text-zinc-600 uppercase tracking-widest mt-8 font-bold">
-            Protected by SyncBin Security Engine
+            Protected by EcoSync Security Engine
         </p>
     </div>
 </body>

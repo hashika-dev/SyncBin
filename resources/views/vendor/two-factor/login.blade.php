@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>SyncBin - MFA Verification</title>
+    <title>EcoSync - MFA Verification</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -49,7 +49,7 @@
                 <div class="w-16 h-16 bg-white rounded-3xl flex items-center justify-center shadow-sm border border-rose-100 mb-4 transition-transform hover:scale-105 duration-300">
                     <img src="{{ asset('favicon.svg') }}" alt="System Logo" class="w-10 h-10 object-contain">
                 </div>
-                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">SyncBin</h1>
+                <h1 class="text-3xl font-bold text-gray-900 tracking-tight">EcoSync</h1>
             </div>
 
             <!-- Verification Card -->
