@@ -34,6 +34,7 @@
 </head>
 <body class="antialiased min-h-screen bg-white dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100 flex transition-colors duration-300"
       x-data="{
+          submitting: false,
           isDark: document.documentElement.classList.contains('dark'),
           toggleTheme() {
               this.isDark = !this.isDark;
@@ -116,7 +117,7 @@
                     </div>
                 @endif
 
-                <form action="{{ route('login.post') }}" method="POST" class="space-y-4">
+                <form action="{{ route('login.post') }}" method="POST" @submit="submitting = true" class="space-y-4">
                     @csrf
                     
                     <!-- Email Address -->
@@ -179,8 +180,11 @@
 
                     <!-- Sign In Submit Button (Bright Green from Figma) -->
                     <div class="pt-2">
-                        <button type="submit" class="w-full bg-[#10A34E] hover:bg-[#0E8E43] text-white font-bold py-3 rounded-xl transition-all shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
-                            <span>Sign in</span>
+                        <button type="submit" :disabled="submitting"
+                                class="w-full bg-[#10A34E] hover:bg-[#0E8E43] active:scale-[0.99] text-white font-bold py-3 rounded-xl transition-all duration-150 shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                                :class="submitting ? 'opacity-75 cursor-not-allowed' : ''">
+                            <svg x-show="submitting" class="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                            <span x-text="submitting ? 'Authenticating...' : 'Sign in'"></span>
                         </button>
                     </div>
                 </form>

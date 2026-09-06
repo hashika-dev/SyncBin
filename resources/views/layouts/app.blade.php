@@ -25,7 +25,24 @@
 
         <style>
             [x-cloak] { display: none !important; }
+            html { scroll-behavior: smooth; }
             body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }
+            
+            /* Custom sleek scrollbars */
+            ::-webkit-scrollbar {
+                width: 6px;
+                height: 6px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: #243046;
+                border-radius: 9999px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+                background: #334460;
+            }
         </style>
 
         <!-- Scripts -->

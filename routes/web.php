@@ -16,7 +16,10 @@ Route::get('/login', function () {
 });
 
 Route::get('/dashboard', function () {
-    return view('dashboard');
+    $bins = \App\Models\Bin::with(['items' => function($query) {
+        $query->latest()->limit(20);
+    }])->get()->keyBy('slug');
+    return view('dashboard', compact('bins'));
 })->middleware(['auth', 'verified', '2fa'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
