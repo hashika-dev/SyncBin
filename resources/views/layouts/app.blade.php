@@ -1,48 +1,44 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="dark">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+        <title>{{ config('app.name', 'EcoSync') }}</title>
 
         <!-- Favicon -->
         <link rel="icon" type="image/svg+xml" href="{{ asset('favicon.svg') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
         <!-- Dark Mode Detection -->
         <script>
-            if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            } else {
+            if (localStorage.theme === 'light') {
                 document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
             }
         </script>
+
+        <style>
+            [x-cloak] { display: none !important; }
+            body { font-family: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif; }
+        </style>
 
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased text-gray-900 dark:text-zinc-100 bg-gray-100 dark:bg-zinc-950 transition-colors duration-300">
-        <div class="min-h-screen bg-gray-100 dark:bg-zinc-950 text-gray-900 dark:text-zinc-100 transition-colors duration-300">
+    <body class="antialiased text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#0B0F17] min-h-screen transition-colors duration-300">
+        <div class="min-h-screen flex flex-col bg-slate-100 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100">
             @unless(isset($hideNav))
                 @include('layouts.navigation')
-
-                <!-- Page Heading -->
-                @isset($header)
-                    <header class="bg-white shadow">
-                        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                            {{ $header }}
-                        </div>
-                    </header>
-                @endisset
             @endunless
 
-            <!-- Page Content -->
-            <main>
+            <!-- Main Page Content -->
+            <main class="flex-1 w-full">
                 {{ $slot }}
             </main>
         </div>
