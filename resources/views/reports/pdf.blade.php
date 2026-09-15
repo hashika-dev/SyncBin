@@ -211,11 +211,10 @@
     <table class="data-table">
         <thead>
             <tr>
-                <th style="width: 20%;">Timestamp</th>
-                <th style="width: 25%;">Bin Category</th>
+                <th style="width: 25%;">Timestamp</th>
+                <th style="width: 30%;">Bin Category</th>
                 <th style="width: 10%; text-align: center;">Icon</th>
-                <th style="width: 30%;">Item Name</th>
-                <th style="width: 15%; text-align: right;">Weight</th>
+                <th style="width: 35%;">Item Name</th>
             </tr>
         </thead>
         <tbody>
@@ -230,11 +229,10 @@
                     </td>
                     <td style="text-align: center; font-size: 14px;">{{ $item->icon }}</td>
                     <td style="font-weight: bold; color: #334155;">{{ $item->name }}</td>
-                    <td style="text-align: right; color: #64748b;">{{ $item->weight }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="5" style="text-align: center; color: #94a3b8; padding: 20px;">
+                    <td colspan="4" style="text-align: center; color: #94a3b8; padding: 20px;">
                         No simulated scan history logs available in this session database.
                     </td>
                 </tr>

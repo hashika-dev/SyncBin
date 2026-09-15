@@ -10,7 +10,6 @@ class WasteItem extends Model
         'bin_id',
         'name',
         'icon',
-        'weight',
         'image_path',
         'ai_confidence',
         'detection_label',

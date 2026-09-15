@@ -1,0 +1,115 @@
+### Identify User Roles
+
+List the actual roles implemented or planned in your capstone project.
+
+* User Role | Main Responsibilities | Important Permissions
+* **Guest (Unauthenticated)** | Public visitors who have not logged in | Can view the login screen and request a password reset email. Cannot see any bin data or dashboards.
+* **Admin (Regular Staff)** | Daily waste operators who monitor bins and empty them | Can view the live dashboard, view fill levels, empty bins, scan waste items, view reports, export PDF/CSV files, and manage their own profile and 2FA. Cannot access hardware diagnostic pages or delete the entire history.
+* **SuperAdmin (System Lead)** | Technical and system administrator | Has all Admin permissions, plus exclusive access to the IoT hardware monitor, cryptographic key tests, demo data generator, and the button to clear/reset all history logs.
+
+---
+
+### Identify Protected Resources
+
+List at least five pages, functions, records, or resources that require access restrictions.
+
+* No. | Protected Resource / Function | Why Access Should Be Restricted
+* 1 | **Hardware Diagnostics (`/dashboard/hardware`)** | Shows sensitive microcontroller details, sensor pins, and device IPs. Only SuperAdmins should see this so normal users cannot mess with the physical hardware setup.
+* 2 | **Clear All History (`DELETE /dashboard/history/clear`)** | Wipes out all waste logs and resets all bin data. Only SuperAdmins should be allowed so that important records and proof of waste disposal are not accidentally or maliciously deleted.
+* 3 | **Seed Demo Data (`POST /api/system/seed-mock-data`)** | Erases real data and replaces it with fake 30-day testing data. Restricted to SuperAdmins so live data is not overwritten during actual operations.
+* 4 | **Empty Bin Action (`POST /api/bins/{slug}/empty`)** | Resets a bin's fill level to 0% and logs who emptied it. Restricted to logged-in Admins so random people on the internet cannot fake bin evacuations.
+* 5 | **Export Reports (PDF / CSV) (`/dashboard/export`, `/dashboard/export/csv`)** | Downloads detailed history logs and operator emails. Restricted to logged-in staff to protect internal data and privacy.
+* 6 | **User Profile & 2FA (`/profile`, `/2fa/*`)** | Contains account passwords, email changes, and 2FA security codes. Restricted so users can only view and edit their own account, not anyone else's.
+
+---
+
+### Create an Access-Control Matrix
+
+Replace Role 1, Role 2, and Role 3 with your actual roles. Mark when access should be allowed and X when access should be denied.
+
+* Resource / Function | Guest | Admin | SuperAdmin | Reason / Permission Rule
+* Login Page (`/login`) | Allowed | Allowed | Allowed | Public page so users can sign in.
+* Live Dashboard (`/dashboard`) | X | Allowed | Allowed | Requires login (`auth`) and 2FA check.
+* Empty Bin (`POST /api/bins/{slug}/empty`) | X | Allowed | Allowed | Requires login; standard task for waste operators.
+* Scan Waste Item (`POST /api/bins/camera-scan`) | X | Allowed | Allowed | Requires login and hardware signature verification.
+* View Reports & Analytics (`/dashboard/reports`) | X | Allowed | Allowed | Requires login; operational view for staff.
+* View History Logs & Export (`/dashboard/history`, `/dashboard/export`) | X | Allowed | Allowed | Requires login; lets staff download records.
+* Manage Own Profile & 2FA (`/profile`, `/2fa/*`) | X | Allowed (Self) | Allowed (Self) | Users can only change their own account settings.
+* Hardware Diagnostics (`/dashboard/hardware`) | X | X | Allowed | Restricted to SuperAdmin only (`role:superadmin`).
+* Seed Fake Demo Data (`POST /api/system/seed-mock-data`) | X | X | Allowed | Restricted to SuperAdmin only (`role:superadmin`).
+* Clear Entire History Log (`DELETE /dashboard/history/clear`) | X | X | Allowed | Restricted to SuperAdmin only (`role:superadmin`).
+
+---
+
+### Identify a Potential A01 Scenario
+
+Describe one situation in your capstone project where a user might access a page, function, or data that should be restricted. Examples include changing a URL, changing a record identifier, accessing an administrator function, or performing an action outside the user's role.
+
+* Who is the user or role?
+  A regular **Admin** user (staff member) or an unauthorized visitor trying to access restricted management pages.
+
+* What resource or function could the user access?
+  The user tries typing the URL directly into their browser to open the **Hardware Diagnostics** page (`/dashboard/hardware`) or tries to send a request to **Clear All History** (`/dashboard/history/clear`).
+
+* Why should the user not have access?
+  Regular Admins only need to monitor and empty bins. If they could open the hardware page or clear the history, they could delete all audit logs or interfere with hardware settings without permission.
+
+---
+
+### A01 Security Test
+
+If your capstone application is available for testing, perform one authorized access-control test. Do not use destructive actions or test systems outside your authorization.
+
+* Test performed:
+  We logged in with a regular **Admin** account (`admin@ecosync.com`) and attempted to open the SuperAdmin-only page (`/dashboard/hardware`) by typing the URL directly into the browser.
+
+* Expected result:
+  The system should block the request and show an **HTTP 403 Forbidden** error ("Unauthorized access. Only SuperAdmin accounts can perform this operation.").
+
+* Actual result:
+  The system successfully blocked the Admin and returned an **HTTP 403 Forbidden** error. The `role:superadmin` middleware stopped the request.
+
+* Was unauthorized access possible? (Yes/No)
+  **No**
+
+* Risk if the weakness exists:
+  If regular users could access SuperAdmin features, they could wipe out all waste history records or view sensitive hardware settings.
+
+* Recommended security control:
+  1. Keep using server-side role checks (`role:superadmin`) on all sensitive routes so direct URL typing is always blocked.
+  2. Use Laravel Policy rules on models for an extra layer of protection.
+  3. Ensure all sensitive API requests require CSRF protection or API tokens.
+
+* Retest result:
+  **Pass** (Blocked with 403 Forbidden as expected).
+
+---
+
+### Group Conclusion
+
+Based on your analysis and test, state whether your capstone has a potential Broken Access Control issue, whether the current controls appear appropriate, or whether additional testing is required.
+
+Our SyncBin project has strong access control. Unauthenticated visitors cannot see any dashboard data, and regular Admins are successfully blocked from accessing SuperAdmin pages like Hardware Diagnostics and History Clear. Server-side middleware checks (`EnsureUserHasRole`) and Two-Factor Authentication (2FA) are properly protecting the system.
+
+---
+
+### Group Member Roles
+
+* Member | Assigned Role | Name/Signature
+* Member 1 | Access Analyst | [Name / Signature]
+* Member 2 | Security Analyst | [Name / Signature]
+* Member 3 | Developer/ Security Engineer | [Name / Signature]
+
+---
+
+### Submission Checklist
+
+* [x] User roles are identified.
+* [x] At least five protected resources or functions are identified.
+* [x] Access-control matrix is completed.
+* [x] One potential A01 scenario is described.
+* [x] One authorized security test is documented, if testing is possible.
+* [x] Expected and actual results are recorded.
+* [x] A recommended security control is provided.
+* [x] The group conclusion is completed.
+* [x] All three members participated in the assessment.

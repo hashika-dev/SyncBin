@@ -33,7 +33,7 @@
 ---
 
 ## 🔮 3. Next Planned Steps & Open Items
-- [ ] **Hardware IoT Integration:** Connect real physical sensors (ultrasonic/weight) to bin scan endpoints.
+- [ ] **Hardware IoT Integration:** Connect real physical sensors (ultrasonic/optical/LiDAR sensors) to bin scan endpoints.
 - [ ] **Real-Time Notifications:** Integrate Laravel Reverb or WebSockets for live bin alerts.
 - [ ] **User Role Extensions:** Expand fine-grained permissions for collection staff.
 

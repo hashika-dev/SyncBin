@@ -107,27 +107,27 @@ class DatabaseSeeder extends Seeder
             if ($bin->items()->count() === 0) {
                 if ($bin->slug === 'hazardous') {
                     $bin->items()->createMany([
-                        ['name' => 'Used Battery', 'icon' => '🔋', 'weight' => '80g'],
-                        ['name' => 'Expired Medicine', 'icon' => '💊', 'weight' => '15g'],
-                        ['name' => 'Light Bulb', 'icon' => '💡', 'weight' => '120g'],
+                        ['name' => 'Used Battery', 'icon' => '🔋'],
+                        ['name' => 'Expired Medicine', 'icon' => '💊'],
+                        ['name' => 'Light Bulb', 'icon' => '💡'],
                     ]);
                 } elseif ($bin->slug === 'recyclable') {
                     $bin->items()->createMany([
-                        ['name' => 'Plastic Bottle', 'icon' => '🍼', 'weight' => '120g'],
-                        ['name' => 'Paper Box', 'icon' => '📄', 'weight' => '200g'],
-                        ['name' => 'Aluminum Can', 'icon' => '🥫', 'weight' => '50g'],
+                        ['name' => 'Plastic Bottle', 'icon' => '🍼'],
+                        ['name' => 'Paper Box', 'icon' => '📄'],
+                        ['name' => 'Aluminum Can', 'icon' => '🥫'],
                     ]);
                 } elseif ($bin->slug === 'biodegradable') {
                     $bin->items()->createMany([
-                        ['name' => 'Banana Peel', 'icon' => '🍌', 'weight' => '45g'],
-                        ['name' => 'Apple Core', 'icon' => '🍎', 'weight' => '30g'],
-                        ['name' => 'Carrot Top', 'icon' => '🥕', 'weight' => '15g'],
+                        ['name' => 'Banana Peel', 'icon' => '🍌'],
+                        ['name' => 'Apple Core', 'icon' => '🍎'],
+                        ['name' => 'Carrot Top', 'icon' => '🥕'],
                     ]);
                 } elseif ($bin->slug === 'non-bio') {
                     $bin->items()->createMany([
-                        ['name' => 'Plastic Wrap', 'icon' => '🍬', 'weight' => '10g'],
-                        ['name' => 'Styrofoam Piece', 'icon' => '📦', 'weight' => '25g'],
-                        ['name' => 'Broken Glass', 'icon' => '🍷', 'weight' => '60g'],
+                        ['name' => 'Plastic Wrap', 'icon' => '🍬'],
+                        ['name' => 'Styrofoam Piece', 'icon' => '📦'],
+                        ['name' => 'Broken Glass', 'icon' => '🍷'],
                     ]);
                 }
             }

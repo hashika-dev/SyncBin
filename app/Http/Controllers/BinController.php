@@ -33,39 +33,39 @@ class BinController extends Controller
         // Mock items repository to pick from
         $mockRepo = [
             'hazardous' => [
-                ['name' => 'Used Battery', 'icon' => '🔋', 'weight' => '80g'],
-                ['name' => 'Expired Medicine', 'icon' => '💊', 'weight' => '15g'],
-                ['name' => 'Light Bulb', 'icon' => '💡', 'weight' => '120g'],
-                ['name' => 'Aerosol Can', 'icon' => '🧴', 'weight' => '150g'],
-                ['name' => 'Syringe', 'icon' => '💉', 'weight' => '10g'],
-                ['name' => 'Paint Residue', 'icon' => '🎨', 'weight' => '200g'],
-                ['name' => 'Thermometer', 'icon' => '🌡️', 'weight' => '30g']
+                ['name' => 'Used Battery', 'icon' => '🔋'],
+                ['name' => 'Expired Medicine', 'icon' => '💊'],
+                ['name' => 'Light Bulb', 'icon' => '💡'],
+                ['name' => 'Aerosol Can', 'icon' => '🧴'],
+                ['name' => 'Syringe', 'icon' => '💉'],
+                ['name' => 'Paint Residue', 'icon' => '🎨'],
+                ['name' => 'Thermometer', 'icon' => '🌡️']
             ],
             'recyclable' => [
-                ['name' => 'Plastic Bottle', 'icon' => '🍼', 'weight' => '120g'],
-                ['name' => 'Paper Box', 'icon' => '📄', 'weight' => '200g'],
-                ['name' => 'Aluminum Can', 'icon' => '🥫', 'weight' => '50g'],
-                ['name' => 'Glass Jar', 'icon' => '🫙', 'weight' => '85g'],
-                ['name' => 'Magazine', 'icon' => '📖', 'weight' => '110g'],
-                ['name' => 'Soda Can', 'icon' => '🥤', 'weight' => '45g'],
-                ['name' => 'Cardboard Tube', 'icon' => '🧻', 'weight' => '30g']
+                ['name' => 'Plastic Bottle', 'icon' => '🍼'],
+                ['name' => 'Paper Box', 'icon' => '📄'],
+                ['name' => 'Aluminum Can', 'icon' => '🥫'],
+                ['name' => 'Glass Jar', 'icon' => '🫙'],
+                ['name' => 'Magazine', 'icon' => '📖'],
+                ['name' => 'Soda Can', 'icon' => '🥤'],
+                ['name' => 'Cardboard Tube', 'icon' => '🧻']
             ],
             'biodegradable' => [
-                ['name' => 'Banana Peel', 'icon' => '🍌', 'weight' => '45g'],
-                ['name' => 'Apple Core', 'icon' => '🍎', 'weight' => '30g'],
-                ['name' => 'Carrot Top', 'icon' => '🥕', 'weight' => '15g'],
-                ['name' => 'Orange Peel', 'icon' => '🍊', 'weight' => '20g'],
-                ['name' => 'Lettuce Scrap', 'icon' => '🥬', 'weight' => '15g'],
-                ['name' => 'Coffee Grounds', 'icon' => '☕', 'weight' => '40g']
+                ['name' => 'Banana Peel', 'icon' => '🍌'],
+                ['name' => 'Apple Core', 'icon' => '🍎'],
+                ['name' => 'Carrot Top', 'icon' => '🥕'],
+                ['name' => 'Orange Peel', 'icon' => '🍊'],
+                ['name' => 'Lettuce Scrap', 'icon' => '🥬'],
+                ['name' => 'Coffee Grounds', 'icon' => '☕']
             ],
             'non-bio' => [
-                ['name' => 'Plastic Wrap', 'icon' => '🍬', 'weight' => '10g'],
-                ['name' => 'Styrofoam Piece', 'icon' => '📦', 'weight' => '25g'],
-                ['name' => 'Broken Glass', 'icon' => '🍷', 'weight' => '60g'],
-                ['name' => 'Packaging Film', 'icon' => '🛍️', 'weight' => '15g'],
-                ['name' => 'Plastic Cutlery', 'icon' => '🍴', 'weight' => '12g'],
-                ['name' => 'Chip Bag', 'icon' => '🍿', 'weight' => '8g'],
-                ['name' => 'Mask', 'icon' => '😷', 'weight' => '5g']
+                ['name' => 'Plastic Wrap', 'icon' => '🍬'],
+                ['name' => 'Styrofoam Piece', 'icon' => '📦'],
+                ['name' => 'Broken Glass', 'icon' => '🍷'],
+                ['name' => 'Packaging Film', 'icon' => '🛍️'],
+                ['name' => 'Plastic Cutlery', 'icon' => '🍴'],
+                ['name' => 'Chip Bag', 'icon' => '🍿'],
+                ['name' => 'Mask', 'icon' => '😷']
             ]
         ];
 
@@ -81,7 +81,6 @@ class BinController extends Controller
         $bin->items()->create([
             'name' => $itemTemplate['name'],
             'icon' => $itemTemplate['icon'],
-            'weight' => $itemTemplate['weight']
         ]);
 
         // Increase fill level by random 5%-15%
@@ -187,35 +186,34 @@ class BinController extends Controller
             'item_name' => 'nullable|string',
             'bin_slug' => 'nullable|string',
             'confidence' => 'nullable|numeric',
-            'weight' => 'nullable|string',
             'bounding_box' => 'nullable|string',
         ]);
 
         // Waste item mapping registry
         $mapping = [
-            'plastic bottle' => ['slug' => 'recyclable', 'icon' => '🍼', 'weight' => '120g'],
-            'plastic water bottle' => ['slug' => 'recyclable', 'icon' => '🍼', 'weight' => '120g'],
-            'soda can' => ['slug' => 'recyclable', 'icon' => '🥤', 'weight' => '45g'],
-            'aluminum can' => ['slug' => 'recyclable', 'icon' => '🥫', 'weight' => '50g'],
-            'paper box' => ['slug' => 'recyclable', 'icon' => '📄', 'weight' => '200g'],
-            'cardboard box' => ['slug' => 'recyclable', 'icon' => '📦', 'weight' => '250g'],
-            'glass jar' => ['slug' => 'recyclable', 'icon' => '🫙', 'weight' => '85g'],
+            'plastic bottle' => ['slug' => 'recyclable', 'icon' => '🍼'],
+            'plastic water bottle' => ['slug' => 'recyclable', 'icon' => '🍼'],
+            'soda can' => ['slug' => 'recyclable', 'icon' => '🥤'],
+            'aluminum can' => ['slug' => 'recyclable', 'icon' => '🥫'],
+            'paper box' => ['slug' => 'recyclable', 'icon' => '📄'],
+            'cardboard box' => ['slug' => 'recyclable', 'icon' => '📦'],
+            'glass jar' => ['slug' => 'recyclable', 'icon' => '🫙'],
 
-            'used battery' => ['slug' => 'hazardous', 'icon' => '🔋', 'weight' => '80g'],
-            'battery' => ['slug' => 'hazardous', 'icon' => '🔋', 'weight' => '80g'],
-            'expired medicine' => ['slug' => 'hazardous', 'icon' => '💊', 'weight' => '15g'],
-            'light bulb' => ['slug' => 'hazardous', 'icon' => '💡', 'weight' => '120g'],
-            'aerosol can' => ['slug' => 'hazardous', 'icon' => '🧴', 'weight' => '150g'],
+            'used battery' => ['slug' => 'hazardous', 'icon' => '🔋'],
+            'battery' => ['slug' => 'hazardous', 'icon' => '🔋'],
+            'expired medicine' => ['slug' => 'hazardous', 'icon' => '💊'],
+            'light bulb' => ['slug' => 'hazardous', 'icon' => '💡'],
+            'aerosol can' => ['slug' => 'hazardous', 'icon' => '🧴'],
 
-            'banana peel' => ['slug' => 'biodegradable', 'icon' => '🍌', 'weight' => '45g'],
-            'apple core' => ['slug' => 'biodegradable', 'icon' => '🍎', 'weight' => '30g'],
-            'orange peel' => ['slug' => 'biodegradable', 'icon' => '🍊', 'weight' => '20g'],
-            'food scrap' => ['slug' => 'biodegradable', 'icon' => '🥬', 'weight' => '35g'],
+            'banana peel' => ['slug' => 'biodegradable', 'icon' => '🍌'],
+            'apple core' => ['slug' => 'biodegradable', 'icon' => '🍎'],
+            'orange peel' => ['slug' => 'biodegradable', 'icon' => '🍊'],
+            'food scrap' => ['slug' => 'biodegradable', 'icon' => '🥬'],
 
-            'styrofoam piece' => ['slug' => 'non-bio', 'icon' => '📦', 'weight' => '25g'],
-            'plastic wrap' => ['slug' => 'non-bio', 'icon' => '🍬', 'weight' => '10g'],
-            'chip bag' => ['slug' => 'non-bio', 'icon' => '🍿', 'weight' => '8g'],
-            'face mask' => ['slug' => 'non-bio', 'icon' => '😷', 'weight' => '5g'],
+            'styrofoam piece' => ['slug' => 'non-bio', 'icon' => '📦'],
+            'plastic wrap' => ['slug' => 'non-bio', 'icon' => '🍬'],
+            'chip bag' => ['slug' => 'non-bio', 'icon' => '🍿'],
+            'face mask' => ['slug' => 'non-bio', 'icon' => '😷'],
         ];
 
         $itemName = $request->input('item_name', 'Plastic Water Bottle');
@@ -224,7 +222,6 @@ class BinController extends Controller
         $matchedInfo = $mapping[$lowerName] ?? [
             'slug' => $request->input('bin_slug', 'recyclable'),
             'icon' => '♻️',
-            'weight' => $request->input('weight', '50g')
         ];
 
         $targetSlug = $request->input('bin_slug', $matchedInfo['slug']);
@@ -240,7 +237,6 @@ class BinController extends Controller
         }
 
         $confidence = $request->input('confidence', rand(91, 99) + (rand(0, 9) / 10));
-        $weight = $request->input('weight', $matchedInfo['weight']);
         $icon = $matchedInfo['icon'];
 
         $bBox = $request->input('bounding_box', json_encode([
@@ -254,7 +250,6 @@ class BinController extends Controller
         $item = $bin->items()->create([
             'name' => ucwords($itemName),
             'icon' => $icon,
-            'weight' => $weight,
             'image_path' => $imagePath,
             'ai_confidence' => $confidence,
             'detection_label' => ucwords($itemName),
@@ -406,7 +401,7 @@ class BinController extends Controller
             $file = fopen('php://output', 'w');
             // Add UTF-8 BOM for Excel compatibility
             fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
-            fputcsv($file, ['ID', 'Item Name', 'Icon', 'Bin Name', 'Classification', 'Weight', 'Logged Date & Time']);
+            fputcsv($file, ['ID', 'Item Name', 'Icon', 'Bin Name', 'Classification', 'Logged Date & Time']);
 
             foreach ($logs as $log) {
                 fputcsv($file, [
@@ -415,7 +410,6 @@ class BinController extends Controller
                     $log->icon,
                     $log->bin ? $log->bin->name : 'N/A',
                     $log->bin ? ucfirst($log->bin->slug) : 'N/A',
-                    $log->weight,
                     $log->created_at ? $log->created_at->format('Y-m-d H:i:s') : 'N/A',
                 ]);
             }
@@ -496,12 +490,6 @@ class BinController extends Controller
         
         $recyclingRate = $totalItemsCount > 0 ? round(($recyclableCount / $totalItemsCount) * 100) : 0;
         
-        // Calculate total weight (weights are stored as strings like "120g", "15g", let's extract integer values)
-        $totalWeightG = WasteItem::all()->reduce(function($carry, $item) {
-            return $carry + (int) filter_var($item->weight, FILTER_SANITIZE_NUMBER_INT);
-        }, 0);
-        $totalWeightKg = round($totalWeightG / 1000, 2);
-
         // Most active bin
         $mostActiveBin = $bins->sortByDesc(function($bin) {
             return $bin->items->count();
@@ -524,7 +512,7 @@ class BinController extends Controller
         $clearanceLogs = \App\Models\BinClearanceLog::with('bin')->latest()->take(5)->get();
         $avgResponseTimeMinutes = round(\App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes') ?? 0, 1);
 
-        return view('dashboards.reports', compact('bins', 'totalItemsCount', 'averageFill', 'recyclingRate', 'totalWeightKg', 'mostActiveBin', 'chartLabels', 'chartData', 'clearanceLogs', 'avgResponseTimeMinutes'));
+        return view('dashboards.reports', compact('bins', 'totalItemsCount', 'averageFill', 'recyclingRate', 'mostActiveBin', 'chartLabels', 'chartData', 'clearanceLogs', 'avgResponseTimeMinutes'));
     }
 
     /**
@@ -538,39 +526,39 @@ class BinController extends Controller
         // Mock items repository to pick from
         $mockRepo = [
             'hazardous' => [
-                ['name' => 'Used Battery', 'icon' => '🔋', 'weight' => '80g'],
-                ['name' => 'Expired Medicine', 'icon' => '💊', 'weight' => '15g'],
-                ['name' => 'Light Bulb', 'icon' => '💡', 'weight' => '120g'],
-                ['name' => 'Aerosol Can', 'icon' => '🧴', 'weight' => '150g'],
-                ['name' => 'Syringe', 'icon' => '💉', 'weight' => '10g'],
-                ['name' => 'Paint Residue', 'icon' => '🎨', 'weight' => '200g'],
-                ['name' => 'Thermometer', 'icon' => '🌡️', 'weight' => '30g']
+                ['name' => 'Used Battery', 'icon' => '🔋'],
+                ['name' => 'Expired Medicine', 'icon' => '💊'],
+                ['name' => 'Light Bulb', 'icon' => '💡'],
+                ['name' => 'Aerosol Can', 'icon' => '🧴'],
+                ['name' => 'Syringe', 'icon' => '💉'],
+                ['name' => 'Paint Residue', 'icon' => '🎨'],
+                ['name' => 'Thermometer', 'icon' => '🌡️']
             ],
             'recyclable' => [
-                ['name' => 'Plastic Bottle', 'icon' => '🍼', 'weight' => '120g'],
-                ['name' => 'Paper Box', 'icon' => '📄', 'weight' => '200g'],
-                ['name' => 'Aluminum Can', 'icon' => '🥫', 'weight' => '50g'],
-                ['name' => 'Glass Jar', 'icon' => '🫙', 'weight' => '85g'],
-                ['name' => 'Magazine', 'icon' => '📖', 'weight' => '110g'],
-                ['name' => 'Soda Can', 'icon' => '🥤', 'weight' => '45g'],
-                ['name' => 'Cardboard Tube', 'icon' => '🧻', 'weight' => '30g']
+                ['name' => 'Plastic Bottle', 'icon' => '🍼'],
+                ['name' => 'Paper Box', 'icon' => '📄'],
+                ['name' => 'Aluminum Can', 'icon' => '🥫'],
+                ['name' => 'Glass Jar', 'icon' => '🫙'],
+                ['name' => 'Magazine', 'icon' => '📖'],
+                ['name' => 'Soda Can', 'icon' => '🥤'],
+                ['name' => 'Cardboard Tube', 'icon' => '🧻']
             ],
             'biodegradable' => [
-                ['name' => 'Banana Peel', 'icon' => '🍌', 'weight' => '45g'],
-                ['name' => 'Apple Core', 'icon' => '🍎', 'weight' => '30g'],
-                ['name' => 'Carrot Top', 'icon' => '🥕', 'weight' => '15g'],
-                ['name' => 'Orange Peel', 'icon' => '🍊', 'weight' => '20g'],
-                ['name' => 'Lettuce Scrap', 'icon' => '🥬', 'weight' => '15g'],
-                ['name' => 'Coffee Grounds', 'icon' => '☕', 'weight' => '40g']
+                ['name' => 'Banana Peel', 'icon' => '🍌'],
+                ['name' => 'Apple Core', 'icon' => '🍎'],
+                ['name' => 'Carrot Top', 'icon' => '🥕'],
+                ['name' => 'Orange Peel', 'icon' => '🍊'],
+                ['name' => 'Lettuce Scrap', 'icon' => '🥬'],
+                ['name' => 'Coffee Grounds', 'icon' => '☕']
             ],
             'non-bio' => [
-                ['name' => 'Plastic Wrap', 'icon' => '🍬', 'weight' => '10g'],
-                ['name' => 'Styrofoam Piece', 'icon' => '📦', 'weight' => '25g'],
-                ['name' => 'Broken Glass', 'icon' => '🍷', 'weight' => '60g'],
-                ['name' => 'Packaging Film', 'icon' => '🛍️', 'weight' => '15g'],
-                ['name' => 'Plastic Cutlery', 'icon' => '🍴', 'weight' => '12g'],
-                ['name' => 'Chip Bag', 'icon' => '🍿', 'weight' => '8g'],
-                ['name' => 'Mask', 'icon' => '😷', 'weight' => '5g']
+                ['name' => 'Plastic Wrap', 'icon' => '🍬'],
+                ['name' => 'Styrofoam Piece', 'icon' => '📦'],
+                ['name' => 'Broken Glass', 'icon' => '🍷'],
+                ['name' => 'Packaging Film', 'icon' => '🛍️'],
+                ['name' => 'Plastic Cutlery', 'icon' => '🍴'],
+                ['name' => 'Chip Bag', 'icon' => '🍿'],
+                ['name' => 'Mask', 'icon' => '😷']
             ]
         ];
 
@@ -597,7 +585,6 @@ class BinController extends Controller
                 $bin->items()->create([
                     'name' => $template['name'],
                     'icon' => $template['icon'],
-                    'weight' => $template['weight'],
                     'created_at' => $createdAt,
                     'updated_at' => $createdAt,
                 ]);
@@ -697,13 +684,13 @@ class BinController extends Controller
                 'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
             ],
             [
-                'name' => 'HX711 Strain Gauge Load Cells',
-                'category' => 'Weight Measurement',
+                'name' => 'Time-of-Flight LiDAR Array (VL53L0X)',
+                'category' => 'Intake Chute Sensor',
                 'status' => 'Active',
-                'health' => '95%',
-                'signal' => '24-Bit ADC',
-                'ip' => 'GPIO 26, 27',
-                'icon' => '⚖️',
+                'health' => '98%',
+                'signal' => 'I2C (0x29)',
+                'ip' => 'GPIO 21, 22',
+                'icon' => '📡',
                 'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
             ],
             [
