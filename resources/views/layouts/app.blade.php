@@ -48,8 +48,8 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="antialiased text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#0B0F17] min-h-screen transition-colors duration-300">
-        <div class="min-h-screen flex flex-col bg-slate-100 dark:bg-[#0B0F17] text-slate-900 dark:text-slate-100">
+    <body class="antialiased text-slate-900 dark:text-slate-100 bg-slate-100 dark:bg-[#030906] min-h-screen transition-colors duration-300">
+        <div class="min-h-screen flex flex-col bg-slate-100 dark:bg-[#030906] text-slate-900 dark:text-slate-100">
             @unless(isset($hideNav))
                 @include('layouts.navigation')
             @endunless

@@ -9,13 +9,13 @@
         </p>
     </header>
 
-    <div class="p-5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div class="p-5 bg-white/40 dark:bg-white/[0.03] rounded-2xl border border-white/60 dark:border-white/10 backdrop-blur-md flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div class="flex items-center gap-4">
-            <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm border {{ auth()->user()->twoFactorAuth()->exists() && auth()->user()->twoFactorAuth->first()->enabled_at ? 'bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : 'bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800' }}">
+            <div class="w-11 h-11 rounded-xl flex items-center justify-center shadow-sm border {{ auth()->user()->twoFactorAuth()->exists() && auth()->user()->twoFactorAuth->first()->enabled_at ? 'bg-emerald-500/15 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-400/40' : 'bg-white/60 dark:bg-white/[0.05] text-slate-500 dark:text-slate-400 border-white/60 dark:border-white/10' }}">
                 @if(auth()->user()->twoFactorAuth()->exists() && auth()->user()->twoFactorAuth->first()->enabled_at)
                     <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 11 2 2 4-4"/></svg>
                 @else
-                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
                 @endif
             </div>
             <div>
@@ -38,13 +38,13 @@
             @if(auth()->user()->twoFactorAuth()->exists() && auth()->user()->twoFactorAuth->first()->enabled_at)
                 <form method="POST" action="{{ route('2fa.disable') }}" onsubmit="return confirm('Are you sure you want to disable Multi-Factor Authentication? Your account will be less secure.');">
                     @csrf
-                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-colors shadow-sm">
+                    <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-colors shadow-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg>
                         Disable MFA
                     </button>
                 </form>
             @else
-                <a href="{{ route('2fa.setup') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-colors shadow-sm">
+                <a href="{{ route('2fa.setup') }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition-all shadow-[0_4px_16px_rgba(16,185,129,0.25)] hover:shadow-[0_6px_20px_rgba(16,185,129,0.35)]">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
                     Enable MFA
                 </a>
