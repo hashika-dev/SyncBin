@@ -335,17 +335,6 @@
                         <x-input-error :messages="$errors->get('captcha_input')" class="mt-1 text-xs text-rose-500" />
                     @endif
 
-                    <!-- Remember Device -->
-                    <div class="flex items-center pt-1">
-                        <label class="flex items-center gap-2 cursor-pointer select-none">
-                            <input type="checkbox" 
-                                   id="remember" 
-                                   name="remember" 
-                                   class="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-slate-300 dark:border-white/20 rounded dark:bg-white/5 cursor-pointer">
-                            <span class="text-xs text-slate-600 dark:text-slate-400 font-medium">Remember this device</span>
-                        </label>
-                    </div>
-
                     <!-- Submit Button -->
                     <div class="pt-2">
                         <button type="submit" 

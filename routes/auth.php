@@ -56,6 +56,9 @@ Route::middleware('auth')->group(function () {
     Route::post('confirm-password', [ConfirmablePasswordController::class, 'store']);
 
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
+    Route::get('password/verify-change', [PasswordController::class, 'showVerifyPasswordChange'])->name('password.verify-change');
+    Route::post('password/confirm-change', [PasswordController::class, 'confirmPasswordChange'])->name('password.confirm-change');
+    Route::post('password/resend-otp', [PasswordController::class, 'resendOtp'])->middleware('throttle:3,1')->name('password.resend-otp');
 });
 
 Route::match(['get', 'post'], 'logout', [AuthenticatedSessionController::class, 'destroy'])
