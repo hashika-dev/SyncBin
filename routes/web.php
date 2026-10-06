@@ -62,4 +62,10 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Hardware & IoT Telemetry Endpoints (ESP32 / Ultrasonic / Microcontroller)
+Route::middleware(['throttle:120,1', 'hardware.crypto'])->group(function () {
+    Route::post('/api/bins/telemetry', [\App\Http\Controllers\BinController::class, 'updateTelemetry'])->name('bins.telemetry');
+    Route::post('/api/hardware/telemetry', [\App\Http\Controllers\BinController::class, 'updateTelemetry'])->name('hardware.telemetry');
+});
+
 require __DIR__.'/auth.php';

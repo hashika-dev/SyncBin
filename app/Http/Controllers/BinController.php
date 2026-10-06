@@ -8,6 +8,7 @@ use App\Services\HardwareCryptoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Http\Requests\UpdateBinTelemetryRequest;
 
 class BinController extends Controller
 {
@@ -100,77 +101,7 @@ class BinController extends Controller
         // Dispatch alert only when the bin first crosses the 85% critical capacity threshold
         if ($bin->level >= 85 && $previousLevel < 85) {
             $bin->alert_triggered_at = now();
-            $bin->save();
-            try {
-                $recipient = 'kurtumali06@gmail.com';
-                \Illuminate\Support\Facades\Mail::send([], [], function ($message) use ($bin, $recipient) {
-                    $message->to($recipient)
-                        ->subject("⚠️ CRITICAL ALERT: {$bin->name} has reached {$bin->level}% capacity!")
-                        ->html("
-                            <div style='font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #f43f5e; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);'>
-                                <div style='background-color: #f43f5e; padding: 24px; text-align: center; color: white;'>
-                                    <h1 style='margin: 0; font-size: 24px; font-weight: 900;'>EcoSync Alert</h1>
-                                    <p style='margin: 8px 0 0; font-size: 14px; opacity: 0.9;'>Critical Waste Capacity Reached</p>
-                                </div>
-                                <div style='padding: 32px; background-color: #ffffff; color: #18181b;'>
-                                    <p style='font-size: 16px; line-height: 1.6; margin-top: 0;'>Hello Administrator,</p>
-                                    <p style='font-size: 15px; line-height: 1.6;'>This is an automated alert from the EcoSync system monitor. The following waste classification bin is approaching critical capacity and requires evacuation:</p>
-                                    
-                                    <div style='background-color: #fff1f2; border: 1px solid #ffe4e6; border-radius: 12px; padding: 20px; margin: 24px 0;'>
-                                        <table style='width: 100%; border-collapse: collapse;'>
-                                            <tr>
-                                                <td style='font-weight: bold; width: 120px; padding: 8px 0;'>Bin Type:</td>
-                                                <td style='padding: 8px 0;'>{$bin->name}</td>
-                                            </tr>
-                                            <tr>
-                                                <td style='font-weight: bold; padding: 8px 0;'>Fill Level:</td>
-                                                <td style='padding: 8px 0; color: #e11d48; font-weight: bold;'>{$bin->level}% (Critical)</td>
-                                            </tr>
-                                            <tr>
-                                                <td style='font-weight: bold; padding: 8px 0;'>Status:</td>
-                                                <td style='padding: 8px 0;'><span style='background-color: #ef4444; color: white; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: bold; text-transform: uppercase;'>{$bin->status}</span></td>
-                                            </tr>
-                                        </table>
-                                    </div>
-                                    
-                                    <p style='font-size: 14px; line-height: 1.6; color: #71717a;'>To reset this alert, please physically clear the bin and click \"Empty Bin\" on the system control panel dashboard.</p>
-                                    
-                                    <div style='text-align: center; margin-top: 32px;'>
-                                        <a href='http://127.0.0.1:8000/dashboard' style='background-color: #f43f5e; color: white; text-decoration: none; padding: 14px 28px; font-weight: bold; border-radius: 12px; display: inline-block;'>Access Dashboard</a>
-                                    </div>
-                                </div>
-                                <div style='background-color: #f4f4f5; padding: 16px; text-align: center; font-size: 11px; color: #71717a; border-top: 1px solid #e4e4e7;'>
-                                    This is a system generated notification. Please do not reply directly to this message.
-                                </div>
-                            </div>
-                        ");
-                });
-                \Illuminate\Support\Facades\Log::info("ALERT: Email successfully queued and sent to {$recipient} for Bin {$bin->name} at {$bin->level}% capacity.");
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Mail delivery failed: " . $e->getMessage());
-            }
-
-            // Semaphore SMS Alert
-            $semaphoreApiKey = config('services.semaphore.key');
-            $alertPhoneNumber = config('services.semaphore.number');
-
-            if (!empty($semaphoreApiKey) && !empty($alertPhoneNumber)) {
-                try {
-                    $smsResponse = \Illuminate\Support\Facades\Http::post('https://api.semaphore.co/api/v4/messages', [
-                        'apikey'  => $semaphoreApiKey,
-                        'number'  => $alertPhoneNumber,
-                        'message' => "CRITICAL ALERT: EcoSync {$bin->name} has reached {$bin->level}% capacity! Please evacuate the bin.",
-                    ]);
-
-                    if ($smsResponse->successful()) {
-                        \Illuminate\Support\Facades\Log::info("Semaphore SMS alert sent successfully to {$alertPhoneNumber} for Bin {$bin->name}.");
-                    } else {
-                        \Illuminate\Support\Facades\Log::warning("Semaphore SMS delivery failed: " . json_encode($smsResponse->json()));
-                    }
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Semaphore SMS error: " . $e->getMessage());
-                }
-            }
+            $this->dispatchCriticalAlert($bin);
         }
 
         return response()->json($bin->load(['items' => function($q) { $q->latest(); }]));
@@ -273,6 +204,7 @@ class BinController extends Controller
         if ($bin->level >= 85 && $previousLevel < 85) {
             $bin->alert_triggered_at = now();
             $bin->save();
+            $this->dispatchCriticalAlert($bin);
         }
 
         return response()->json([
@@ -815,5 +747,128 @@ class BinController extends Controller
                 'decrypted_payload' => $decryptedPayload,
             ],
         ]);
+    }
+
+    /**
+     * Ingest real-time telemetry from physical ESP32 and ultrasonic/optical sensors.
+     *
+     * Expected Payload:
+     * {
+     *   "bin_id": 1,
+     *   "distance_mm": 250,
+     *   "fullness_percent": 75
+     * }
+     */
+    public function updateTelemetry(UpdateBinTelemetryRequest $request)
+    {
+        $binIdentifier = $request->input('bin_id');
+
+        // Look up bin by ID first, then by slug
+        $bin = is_numeric($binIdentifier)
+            ? Bin::find($binIdentifier)
+            : Bin::where('slug', $binIdentifier)->first();
+
+        if (!$bin) {
+            $bin = Bin::where('id', $binIdentifier)->orWhere('slug', $binIdentifier)->first();
+        }
+
+        if (!$bin) {
+            return response()->json([
+                'status' => 'error',
+                'message' => "Bin identifier '{$binIdentifier}' not found in system.",
+            ], 404);
+        }
+
+        $previousLevel = $bin->level;
+
+        // Resolve fullness level
+        if ($request->has('fullness_percent')) {
+            $level = (int) round((float) $request->input('fullness_percent'));
+        } elseif ($request->has('level')) {
+            $level = (int) round((float) $request->input('level'));
+        } else {
+            $level = $bin->level;
+        }
+
+        // Clamp between 0% and 100%
+        $level = max(0, min(100, $level));
+        $bin->level = $level;
+
+        // Recalculate operational status
+        if ($bin->level === 0) {
+            $bin->status = 'Empty';
+            $bin->last_emptied_at = now();
+        } elseif ($bin->level < 30) {
+            $bin->status = 'Low';
+        } elseif ($bin->level < 60) {
+            $bin->status = 'Stable';
+        } elseif ($bin->level < 85) {
+            $bin->status = 'High';
+        } else {
+            $bin->status = 'Critical';
+        }
+
+        // Trigger critical threshold alert if crossing 85%
+        if ($bin->level >= 85 && $previousLevel < 85) {
+            $bin->alert_triggered_at = now();
+            $this->dispatchCriticalAlert($bin);
+        } elseif ($bin->level < 85 && $bin->alert_triggered_at) {
+            $bin->alert_triggered_at = null;
+        }
+
+        $bin->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Telemetry ingested and bin status updated successfully.',
+            'bin' => [
+                'id' => $bin->id,
+                'slug' => $bin->slug,
+                'name' => $bin->name,
+                'level' => $bin->level,
+                'status' => $bin->status,
+                'distance_mm' => $request->input('distance_mm'),
+                'updated_at' => $bin->updated_at?->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Dispatch email and SMS alerts when a bin reaches critical capacity.
+     */
+    protected function dispatchCriticalAlert(Bin $bin): void
+    {
+        try {
+            $recipient = 'kurtumali06@gmail.com';
+            \Illuminate\Support\Facades\Mail::send('emails.critical-alert', ['bin' => $bin], function ($message) use ($bin, $recipient) {
+                $message->to($recipient)
+                    ->subject("⚠️ CRITICAL ALERT: {$bin->name} has reached {$bin->level}% capacity!");
+            });
+            \Illuminate\Support\Facades\Log::info("ALERT: Email successfully queued and sent to {$recipient} for Bin {$bin->name} at {$bin->level}% capacity.");
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Mail delivery failed: " . $e->getMessage());
+        }
+
+        // Semaphore SMS Alert
+        $semaphoreApiKey = config('services.semaphore.key');
+        $alertPhoneNumber = config('services.semaphore.number');
+
+        if (!empty($semaphoreApiKey) && !empty($alertPhoneNumber)) {
+            try {
+                $smsResponse = \Illuminate\Support\Facades\Http::post('https://api.semaphore.co/api/v4/messages', [
+                    'apikey'  => $semaphoreApiKey,
+                    'number'  => $alertPhoneNumber,
+                    'message' => "CRITICAL ALERT: EcoSync {$bin->name} has reached {$bin->level}% capacity! Please evacuate the bin.",
+                ]);
+
+                if ($smsResponse->successful()) {
+                    \Illuminate\Support\Facades\Log::info("Semaphore SMS alert sent successfully to {$alertPhoneNumber} for Bin {$bin->name}.");
+                } else {
+                    \Illuminate\Support\Facades\Log::warning("Semaphore SMS delivery failed: " . json_encode($smsResponse->json()));
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Semaphore SMS error: " . $e->getMessage());
+            }
+        }
     }
 }
