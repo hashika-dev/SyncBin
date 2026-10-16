@@ -23,7 +23,7 @@ import socket
 import os
 
 # ── Configuration ────────────────────────────────────────────────────────────
-DASHBOARD_URL  = "http://192.168.1.183:8000/api/hardware/rpi-telemetry"
+DASHBOARD_URL  = "https://ecosync.me/api/hardware/rpi-telemetry"
 DEVICE_ID      = "rpi-primary"
 POLL_INTERVAL  = 5   # seconds between each POST
 # ─────────────────────────────────────────────────────────────────────────────
