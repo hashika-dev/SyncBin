@@ -837,13 +837,12 @@ class BinController extends Controller
      */
     public function rpiSnapshot()
     {
-        // Resolve the Pi's IP from the latest telemetry row, fallback to static
+        $cameraUrl = config('services.rpi.camera_url') ?: env('RPI_CAMERA_URL', 'https://camera.ecosync.me/snapshot');
         $telemetry = RpiTelemetry::latest_for('rpi-primary');
-        $piIp      = $telemetry?->ip_address ?? '192.168.1.229';
-        $url       = "http://{$piIp}:5050/snapshot";
+        $piIp      = $telemetry?->ip_address ?? 'camera.ecosync.me';
 
         try {
-            $response = Http::timeout(25)->post('http://192.168.1.229:5050/snapshot');
+            $response = Http::timeout(25)->post($cameraUrl);
 
             if ($response->successful()) {
                 $body = $response->json();
@@ -866,7 +865,7 @@ class BinController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Could not reach Pi snapshot server at ' . $piIp . ':5050 — ' . $e->getMessage(),
+                'message' => 'Could not reach Pi snapshot server at ' . $cameraUrl . ' — ' . $e->getMessage(),
             ], 503);
         }
     }

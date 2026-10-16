@@ -51,4 +51,8 @@ return [
         'number' => env('SEMAPHORE_ALERT_NUMBER'),
     ],
 
+    'rpi' => [
+        'camera_url' => env('RPI_CAMERA_URL', 'https://camera.ecosync.me/snapshot'),
+    ],
+
 ];
