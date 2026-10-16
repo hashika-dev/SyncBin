@@ -251,8 +251,24 @@
                                     <td class="py-4 px-4 font-bold text-slate-900 dark:text-white">
                                         {{ $clearance->bin ? $clearance->bin->name : 'Waste Containment' }}
                                     </td>
+                                    @php
+                                        $isAuto = ($clearance->clearance_type ?? 'manual') === 'sensor_auto' || str_contains($clearance->cleared_by_email, 'System') || str_contains($clearance->cleared_by_email, 'IoT');
+                                    @endphp
                                     <td class="py-4 px-4 font-mono text-slate-600 dark:text-slate-400">
-                                        {{ $clearance->cleared_by_email }}
+                                        <div class="flex items-center gap-2">
+                                            @if($isAuto)
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-400/30">
+                                                    <svg class="w-2.5 h-2.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd"/></svg>
+                                                    IoT Sensor
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-700 dark:text-sky-300 border border-sky-400/30">
+                                                    <svg class="w-2.5 h-2.5 text-sky-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/></svg>
+                                                    Supervisor
+                                                </span>
+                                            @endif
+                                            <span class="truncate max-w-[200px]" title="{{ $clearance->cleared_by_email }}">{{ $clearance->cleared_by_email }}</span>
+                                        </div>
                                     </td>
                                     <td class="py-4 px-4">
                                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md {{ $fillBadgeColor }}">

@@ -314,10 +314,11 @@
                             <span>Details</span>
                         </button>
 
-                        <!-- Empty Bin Direct Button -->
+                        <!-- Empty Bin Direct Button (Supervisor Override) -->
                         <button @click="emptyBinDirect('{{ $slug }}')" 
                                 :disabled="loadingAction !== null" 
                                 type="button"
+                                title="Supervisor Override: Manually clear containment"
                                 class="py-2.5 px-3 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/40 dark:border-rose-500/35 rounded-2xl transition-all shadow-[0_2px_8px_rgba(244,63,94,0.08)] backdrop-blur-md flex items-center justify-center gap-1.5 active:scale-95"
                                 :class="loadingAction ? 'opacity-60 cursor-not-allowed' : ''">
                             <svg x-show="loadingAction === '{{ $slug }}-empty'" class="animate-spin h-3.5 w-3.5 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
@@ -450,9 +451,10 @@
                     <span x-text="loadingAction === 'simulate-scan' ? 'Simulating...' : 'Simulate Scan'"></span>
                 </button>
                 <button type="button" @click="emptyBin()" :disabled="loadingAction !== null"
+                        title="Supervisor Override: Manually clear containment"
                         class="py-2.5 px-3 bg-rose-500/15 hover:bg-rose-500/25 text-rose-700 dark:text-rose-300 border border-rose-400/40 dark:border-rose-500/35 rounded-2xl text-xs font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                     <svg x-show="loadingAction === 'modal-empty'" class="animate-spin h-3.5 w-3.5 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                    <span x-text="loadingAction === 'modal-empty' ? 'Emptying...' : 'Empty Bin'"></span>
+                    <span x-text="loadingAction === 'modal-empty' ? 'Emptying...' : 'Empty Bin (Override)'"></span>
                 </button>
             </div>
         </div>
@@ -523,6 +525,9 @@
                         const data = response.data;
                         Object.keys(this.bins).forEach(key => {
                             if (data[key]) {
+                                if (this.bins[key].level > 0 && data[key].level === 0) {
+                                    this.showToast(`⚡ ${data[key].name} auto-cleared via IoT sensor detection!`, 'success');
+                                }
                                 this.bins[key].level = data[key].level;
                                 this.bins[key].status = data[key].status;
                                 this.bins[key].items = data[key].items || [];

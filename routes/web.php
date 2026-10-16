@@ -62,10 +62,25 @@ Route::middleware('auth')->group(function () {
     });
 });
 
+// Simple Sensor Endpoint — accepts hazardous, recyclable, non_bio fill levels in one POST
+// Compatible with Arduino / ESP32 / basic HTTP POST sensors (no auth required)
+Route::middleware('throttle:120,1')->post('/api/sensor/levels', [\App\Http\Controllers\BinController::class, 'updateSensorLevels'])->name('sensor.levels');
+
+// ESP32 Ultrasonic Sensor Endpoint — accepts raw distance readings in cm and converts to fill %
+// Matches the exact URL used in the ESP32 Arduino sketch: POST /api/update_bins
+Route::middleware('throttle:120,1')->post('/api/update_bins', [\App\Http\Controllers\BinController::class, 'updateBinsFromESP32'])->name('sensor.esp32');
+
 // Hardware & IoT Telemetry Endpoints (ESP32 / Ultrasonic / Microcontroller)
 Route::middleware(['throttle:120,1', 'hardware.crypto'])->group(function () {
     Route::post('/api/bins/telemetry', [\App\Http\Controllers\BinController::class, 'updateTelemetry'])->name('bins.telemetry');
     Route::post('/api/hardware/telemetry', [\App\Http\Controllers\BinController::class, 'updateTelemetry'])->name('hardware.telemetry');
 });
+
+// Raspberry Pi Telemetry — POST: Pi pushes stats (public), GET: dashboard polls latest (auth)
+Route::middleware('throttle:120,1')->post('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'updateRpiTelemetry'])->name('rpi.telemetry.update');
+Route::middleware(['auth', 'throttle:120,1'])->get('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'getRpiTelemetry'])->name('rpi.telemetry.get');
+
+// Raspberry Pi Camera Snapshot — superadmin triggers a single-frame capture (on-demand, no stream)
+Route::middleware(['auth', 'role:superadmin', 'throttle:30,1'])->post('/api/hardware/rpi-snapshot', [\App\Http\Controllers\BinController::class, 'rpiSnapshot'])->name('rpi.snapshot');
 
 require __DIR__.'/auth.php';

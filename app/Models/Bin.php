@@ -15,11 +15,14 @@ class Bin extends Model
         'status',
         'last_emptied_at',
         'alert_triggered_at',
+        'zero_level_since',
+        'pre_empty_level',
     ];
 
     protected $casts = [
         'last_emptied_at' => 'datetime',
         'alert_triggered_at' => 'datetime',
+        'zero_level_since' => 'datetime',
     ];
 
     /**

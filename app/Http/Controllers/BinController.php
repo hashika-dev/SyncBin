@@ -4,11 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Bin;
 use App\Models\WasteItem;
+use App\Models\RpiTelemetry;
 use App\Services\HardwareCryptoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Http\Requests\UpdateBinTelemetryRequest;
+use Illuminate\Support\Facades\Http;
 
 class BinController extends Controller
 {
@@ -21,7 +23,15 @@ class BinController extends Controller
             $query->latest();
         }])->get();
 
-        return response()->json($bins->keyBy('slug'));
+        foreach ($bins as $bin) {
+            if ($bin->level === 0 && $bin->zero_level_since) {
+                $this->checkAndProcessAutoClear($bin);
+            }
+        }
+
+        return response()->json($bins->fresh(['items' => function($query) {
+            $query->latest();
+        }])->keyBy('slug'));
     }
 
     /**
@@ -222,14 +232,15 @@ class BinController extends Controller
     {
         $bin = Bin::where('slug', $slug)->firstOrFail();
 
-        $levelBefore = $bin->level;
-        $responseTimeMinutes = $bin->alert_triggered_at ? (int) max(1, now()->diffInMinutes($bin->alert_triggered_at)) : null;
+        $levelBefore = $bin->level > 0 ? $bin->level : ($bin->pre_empty_level > 0 ? $bin->pre_empty_level : 0);
+        $responseTimeMinutes = $bin->alert_triggered_at ? (int) max(1, abs(now()->diffInMinutes($bin->alert_triggered_at))) : null;
 
         // Log clearance audit record
         \App\Models\BinClearanceLog::create([
             'bin_id' => $bin->id,
             'user_id' => auth()->id(),
             'cleared_by_email' => auth()->check() ? auth()->user()->email : 'admin@wastesync.com',
+            'clearance_type' => 'manual',
             'level_before_clearance' => $levelBefore,
             'alert_triggered_at' => $bin->alert_triggered_at,
             'cleared_at' => now(),
@@ -244,6 +255,8 @@ class BinController extends Controller
         $bin->status = 'Empty';
         $bin->alert_triggered_at = null;
         $bin->last_emptied_at = now();
+        $bin->zero_level_since = now();
+        $bin->pre_empty_level = 0;
         $bin->save();
 
         return response()->json($bin->load(['items' => function($q) { $q->latest(); }]));
@@ -701,6 +714,164 @@ class BinController extends Controller
     }
 
     /**
+     * Return the latest Raspberry Pi telemetry record as JSON (for live dashboard polling).
+     *
+     * Route: GET /api/hardware/rpi-telemetry
+     * Auth:  Authenticated users only (middleware: auth)
+     */
+    public function getRpiTelemetry()
+    {
+        $telemetry = RpiTelemetry::latest_for('rpi-primary');
+
+        if (!$telemetry) {
+            return response()->json([
+                'status'  => 'offline',
+                'message' => 'No telemetry received from Raspberry Pi yet.',
+                'data'    => null,
+            ]);
+        }
+
+        // Mark as offline if last update was more than 30 seconds ago
+        $isStale = $telemetry->updated_at->diffInSeconds(now()) > 30;
+
+        return response()->json([
+            'status' => $isStale ? 'stale' : 'live',
+            'data'   => [
+                'cpu_temp'          => round($telemetry->cpu_temp, 1),
+                'cpu_load'          => round($telemetry->cpu_load, 1),
+                'supply_voltage'    => round($telemetry->supply_voltage, 2),
+                'memory_used_mb'    => round($telemetry->memory_used_mb),
+                'memory_total_mb'   => round($telemetry->memory_total_mb),
+                'memory_percent'    => $telemetry->memory_percent,
+                'disk_used_gb'      => round($telemetry->disk_used_gb, 1),
+                'disk_total_gb'     => round($telemetry->disk_total_gb, 1),
+                'disk_percent'      => $telemetry->disk_percent,
+                'ip_address'        => $telemetry->ip_address,
+                'uptime'            => $telemetry->uptime,
+                'last_seen'         => $telemetry->updated_at->diffForHumans(),
+                'last_seen_iso'     => $telemetry->updated_at->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Ingest live hardware telemetry POSTed by the Raspberry Pi.
+     *
+     * Python Payload (form-encoded or JSON):
+     * {
+     *   "device_id":       "rpi-primary",    // optional
+     *   "cpu_temp":        42.3,
+     *   "cpu_load":        35.1,
+     *   "supply_voltage":  5.11,
+     *   "memory_used_mb":  1024,
+     *   "memory_total_mb": 4096,
+     *   "disk_used_gb":    8.2,
+     *   "disk_total_gb":   32.0,
+     *   "ip_address":      "192.168.1.50",
+     *   "uptime":          "2 days, 4:12:03"
+     * }
+     *
+     * Route: POST /api/hardware/rpi-telemetry
+     * Auth:  None (public endpoint, throttle-protected at 120 req/min)
+     */
+    public function updateRpiTelemetry(Request $request)
+    {
+        $request->validate([
+            'device_id'       => ['nullable', 'string', 'max:64'],
+            'cpu_temp'        => ['nullable', 'numeric'],
+            'cpu_load'        => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'supply_voltage'  => ['nullable', 'numeric', 'min:0'],
+            'memory_used_mb'  => ['nullable', 'numeric', 'min:0'],
+            'memory_total_mb' => ['nullable', 'numeric', 'min:0'],
+            'disk_used_gb'    => ['nullable', 'numeric', 'min:0'],
+            'disk_total_gb'   => ['nullable', 'numeric', 'min:0'],
+            'ip_address'      => ['nullable', 'string', 'max:45'],
+            'uptime'          => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $deviceId = $request->input('device_id', 'rpi-primary');
+
+        // Determine status from metrics
+        $cpuTemp = (float) $request->input('cpu_temp', 0);
+        $status  = $cpuTemp >= 80 ? 'warning' : 'online';
+
+        // Upsert: update today's record for this device or insert a new one
+        $telemetry = RpiTelemetry::updateOrCreate(
+            ['device_id' => $deviceId],
+            [
+                'cpu_temp'        => $request->input('cpu_temp'),
+                'cpu_load'        => $request->input('cpu_load'),
+                'supply_voltage'  => $request->input('supply_voltage'),
+                'memory_used_mb'  => $request->input('memory_used_mb'),
+                'memory_total_mb' => $request->input('memory_total_mb'),
+                'disk_used_gb'    => $request->input('disk_used_gb'),
+                'disk_total_gb'   => $request->input('disk_total_gb'),
+                'ip_address'      => $request->input('ip_address', $request->ip()),
+                'uptime'          => $request->input('uptime'),
+                'status'          => $status,
+            ]
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Raspberry Pi telemetry updated.',
+            'data'    => [
+                'device_id'      => $telemetry->device_id,
+                'cpu_temp'       => $telemetry->cpu_temp,
+                'cpu_load'       => $telemetry->cpu_load,
+                'supply_voltage' => $telemetry->supply_voltage,
+                'status'         => $telemetry->status,
+                'updated_at'     => $telemetry->updated_at?->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Proxy a single-frame camera snapshot from the Raspberry Pi.
+     *
+     * The Pi must be running the companion snapshot server (camera_server.py)
+     * on port 5050. This endpoint triggers libcamera-still, captures one JPEG
+     * frame, and returns it as a base64 data URI — no file storage needed.
+     *
+     * Route: POST /api/hardware/rpi-snapshot  (auth + superadmin only)
+     */
+    public function rpiSnapshot()
+    {
+        // Resolve the Pi's IP from the latest telemetry row, fallback to static
+        $telemetry = RpiTelemetry::latest_for('rpi-primary');
+        $piIp      = $telemetry?->ip_address ?? '192.168.1.229';
+        $url       = "http://{$piIp}:5050/snapshot";
+
+        try {
+            $response = Http::timeout(25)->post('http://192.168.1.229:5050/snapshot');
+
+            if ($response->successful()) {
+                $body = $response->json();
+
+                return response()->json([
+                    'status'    => 'ok',
+                    'image'     => $body['image'] ?? null,   // base64 data URI from Pi
+                    'width'     => $body['width']  ?? null,
+                    'height'    => $body['height'] ?? null,
+                    'captured'  => $body['captured_at'] ?? now()->toISOString(),
+                    'pi_ip'     => $piIp,
+                ]);
+            }
+
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Snapshot server returned HTTP ' . $response->status(),
+            ], 502);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Could not reach Pi snapshot server at ' . $piIp . ':5050 — ' . $e->getMessage(),
+            ], 503);
+        }
+    }
+
+    /**
      * Generate an ECDSA signature & AES-256-GCM encrypted payload demonstration.
      */
     public function cryptoDemo(HardwareCryptoService $crypto)
@@ -750,6 +921,199 @@ class BinController extends Controller
     }
 
     /**
+     * Ingest raw ultrasonic sensor distances (cm) from an ESP32 and convert to fill percentages.
+     *
+     * ESP32 Arduino Payload (form-encoded):
+     *   hazardous=12&recyclable=8&non_bio=20
+     *
+     * Conversion formula per bin:
+     *   fill% = clamp(round((1 - distance_cm / BIN_DEPTH_CM) * 100), 0, 100)
+     *
+     * Route: POST /api/update_bins  (matches the ESP32 sketch URL exactly)
+     * Auth:  None (public endpoint, throttle-protected at 120 req/min)
+     */
+    public function updateBinsFromESP32(Request $request)
+    {
+        $request->validate([
+            'hazardous'  => ['nullable', 'numeric', 'min:0'],
+            'recyclable' => ['nullable', 'numeric', 'min:0'],
+            'non_bio'    => ['nullable', 'numeric', 'min:0'],
+        ]);
+
+        // Configurable bin depth (cm) — set BIN_DEPTH_CM in .env (default: 30cm)
+        $binDepthCm = max(1, (float) env('BIN_DEPTH_CM', 30));
+
+        // Map POST field names → bin slugs
+        $fieldToSlug = [
+            'hazardous'  => 'hazardous',
+            'recyclable' => 'recyclable',
+            'non_bio'    => 'non-bio',
+        ];
+
+        $results = [];
+
+        foreach ($fieldToSlug as $field => $slug) {
+            if (!$request->has($field)) {
+                continue;
+            }
+
+            $bin = Bin::where('slug', $slug)->first();
+
+            if (!$bin) {
+                $results[$field] = ['status' => 'error', 'message' => "Bin '{$slug}' not found."];
+                continue;
+            }
+
+            $distanceCm  = max(0, (float) $request->input($field));
+            $previousLevel = $bin->level;
+
+            // Convert distance → fill percentage
+            // When distance = 0 cm (object right at sensor) → 100% full
+            // When distance = binDepthCm (empty bin floor) → 0% full
+            $fillPercent = (int) max(0, min(100, round((1 - $distanceCm / $binDepthCm) * 100)));
+            $bin->level  = $fillPercent;
+
+            // Recalculate status & zero-level debounce
+            if ($bin->level === 0) {
+                $bin->status = 'Empty';
+                if ($previousLevel > 0) {
+                    $bin->pre_empty_level = $previousLevel;
+                }
+                if ($bin->zero_level_since === null) {
+                    $bin->zero_level_since = now();
+                }
+                $this->checkAndProcessAutoClear($bin);
+            } else {
+                $bin->zero_level_since = null;
+                $bin->pre_empty_level  = $bin->level;
+
+                if ($bin->level < 30)      $bin->status = 'Low';
+                elseif ($bin->level < 60)  $bin->status = 'Stable';
+                elseif ($bin->level < 85)  $bin->status = 'High';
+                else                       $bin->status = 'Critical';
+            }
+
+            // Trigger critical alert when crossing 85% threshold
+            if ($bin->level >= 85 && $previousLevel < 85) {
+                $bin->alert_triggered_at = now();
+                $this->dispatchCriticalAlert($bin);
+            } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
+                $bin->alert_triggered_at = null;
+            }
+
+            $bin->save();
+
+            $results[$field] = [
+                'status'      => 'updated',
+                'bin'         => $bin->slug,
+                'distance_cm' => $distanceCm,
+                'fill_pct'    => $bin->level,
+                'state'       => $bin->status,
+            ];
+        }
+
+        return response()->json([
+            'status'       => 'success',
+            'message'      => 'ESP32 sensor data received and bins updated successfully.',
+            'bin_depth_cm' => $binDepthCm,
+            'updated'      => $results,
+        ]);
+    }
+
+    /**
+     * Ingest fill levels from 3 simple sensors in one POST.
+     *
+     * Simple Sensor Payload (form-encoded or JSON):
+     * {
+     *   "hazardous":  75,
+     *   "recyclable": 40,
+     *   "non_bio":    60
+     * }
+     *
+     * Route: POST /api/sensor/levels
+     * Auth:  None (public endpoint, throttle-protected)
+     */
+    public function updateSensorLevels(Request $request)
+    {
+        $request->validate([
+            'hazardous'  => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'recyclable' => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'non_bio'    => ['nullable', 'numeric', 'min:0', 'max:100'],
+        ]);
+
+        // Map incoming POST field names → bin slugs
+        $fieldToSlug = [
+            'hazardous'  => 'hazardous',
+            'recyclable' => 'recyclable',
+            'non_bio'    => 'non-bio',
+        ];
+
+        $results = [];
+
+        foreach ($fieldToSlug as $field => $slug) {
+            // Skip fields not present in this request
+            if (!$request->has($field)) {
+                continue;
+            }
+
+            $bin = Bin::where('slug', $slug)->first();
+
+            if (!$bin) {
+                $results[$field] = ['status' => 'error', 'message' => "Bin '{$slug}' not found."];
+                continue;
+            }
+
+            $previousLevel = $bin->level;
+            $level = max(0, min(100, (int) round((float) $request->input($field))));
+
+            $bin->level = $level;
+
+            // Recalculate status & zero-level debounce
+            if ($bin->level === 0) {
+                $bin->status = 'Empty';
+                if ($previousLevel > 0) {
+                    $bin->pre_empty_level = $previousLevel;
+                }
+                if ($bin->zero_level_since === null) {
+                    $bin->zero_level_since = now();
+                }
+                $this->checkAndProcessAutoClear($bin);
+            } else {
+                $bin->zero_level_since = null;
+                $bin->pre_empty_level  = $bin->level;
+
+                if ($bin->level < 30)      $bin->status = 'Low';
+                elseif ($bin->level < 60)  $bin->status = 'Stable';
+                elseif ($bin->level < 85)  $bin->status = 'High';
+                else                       $bin->status = 'Critical';
+            }
+
+            // Trigger critical alert if crossing 85% threshold
+            if ($bin->level >= 85 && $previousLevel < 85) {
+                $bin->alert_triggered_at = now();
+                $this->dispatchCriticalAlert($bin);
+            } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
+                $bin->alert_triggered_at = null;
+            }
+
+            $bin->save();
+
+            $results[$field] = [
+                'status' => 'updated',
+                'bin'    => $bin->slug,
+                'level'  => $bin->level,
+                'state'  => $bin->status,
+            ];
+        }
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Sensor levels received and bins updated successfully.',
+            'updated' => $results,
+        ]);
+    }
+
+    /**
      * Ingest real-time telemetry from physical ESP32 and ultrasonic/optical sensors.
      *
      * Expected Payload:
@@ -794,25 +1158,37 @@ class BinController extends Controller
         $level = max(0, min(100, $level));
         $bin->level = $level;
 
-        // Recalculate operational status
+        // Recalculate operational status & manage zero-level debounce
         if ($bin->level === 0) {
             $bin->status = 'Empty';
-            $bin->last_emptied_at = now();
-        } elseif ($bin->level < 30) {
-            $bin->status = 'Low';
-        } elseif ($bin->level < 60) {
-            $bin->status = 'Stable';
-        } elseif ($bin->level < 85) {
-            $bin->status = 'High';
+            if ($previousLevel > 0) {
+                $bin->pre_empty_level = $previousLevel;
+            }
+            if ($bin->zero_level_since === null) {
+                $bin->zero_level_since = now();
+            }
+            $this->checkAndProcessAutoClear($bin);
         } else {
-            $bin->status = 'Critical';
+            // Level is > 0: reset zero duration debounce
+            $bin->zero_level_since = null;
+            $bin->pre_empty_level = $bin->level;
+
+            if ($bin->level < 30) {
+                $bin->status = 'Low';
+            } elseif ($bin->level < 60) {
+                $bin->status = 'Stable';
+            } elseif ($bin->level < 85) {
+                $bin->status = 'High';
+            } else {
+                $bin->status = 'Critical';
+            }
         }
 
         // Trigger critical threshold alert if crossing 85%
         if ($bin->level >= 85 && $previousLevel < 85) {
             $bin->alert_triggered_at = now();
             $this->dispatchCriticalAlert($bin);
-        } elseif ($bin->level < 85 && $bin->alert_triggered_at) {
+        } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
             $bin->alert_triggered_at = null;
         }
 
@@ -827,10 +1203,67 @@ class BinController extends Controller
                 'name' => $bin->name,
                 'level' => $bin->level,
                 'status' => $bin->status,
+                'zero_level_since' => $bin->zero_level_since?->toISOString(),
                 'distance_mm' => $request->input('distance_mm'),
                 'updated_at' => $bin->updated_at?->toISOString(),
             ],
         ]);
+    }
+
+    /**
+     * Check if bin has sustained 0% level for required duration and process auto-clearance.
+     */
+    public function checkAndProcessAutoClear(Bin $bin): bool
+    {
+        // Must be at 0% and have a recorded zero_level_since
+        if ($bin->level !== 0 || !$bin->zero_level_since) {
+            return false;
+        }
+
+        // Configurable duration (default: 5 minutes / 300 seconds)
+        $requiredSeconds = (int) env('AUTOCLEAR_DURATION_SECONDS', 300);
+        $elapsedSeconds = (int) abs(now()->diffInSeconds($bin->zero_level_since));
+
+        if ($elapsedSeconds < $requiredSeconds) {
+            return false; // Still within stabilization window
+        }
+
+        // Check if already auto-cleared for this zero-level cycle
+        if ($bin->last_emptied_at && $bin->last_emptied_at->gte($bin->zero_level_since) && $bin->items()->count() === 0) {
+            return false;
+        }
+
+        $levelBefore = $bin->pre_empty_level > 0 ? $bin->pre_empty_level : 100;
+        $responseTimeMinutes = $bin->alert_triggered_at 
+            ? (int) max(1, abs(now()->diffInMinutes($bin->alert_triggered_at))) 
+            : null;
+
+        // Log automated clearance audit record
+        \App\Models\BinClearanceLog::create([
+            'bin_id' => $bin->id,
+            'user_id' => null,
+            'cleared_by_email' => 'System (IoT Sensor Auto-Detect)',
+            'clearance_type' => 'sensor_auto',
+            'level_before_clearance' => $levelBefore,
+            'alert_triggered_at' => $bin->alert_triggered_at,
+            'cleared_at' => now(),
+            'response_time_minutes' => $responseTimeMinutes,
+        ]);
+
+        // Delete items
+        $bin->items()->delete();
+
+        // Reset levels and timestamps
+        $bin->level = 0;
+        $bin->status = 'Empty';
+        $bin->alert_triggered_at = null;
+        $bin->last_emptied_at = now();
+        $bin->pre_empty_level = 0;
+        $bin->save();
+
+        \Illuminate\Support\Facades\Log::info("AUTO-CLEAR: Bin {$bin->name} sustained 0% for {$elapsedSeconds}s. Automatically cleared.");
+
+        return true;
     }
 
     /**

@@ -161,37 +161,112 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    <!-- Raspberry Pi 4 Node -->
-                    <div class="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-5 border border-white/70 dark:border-white/10 space-y-4 shadow-sm backdrop-blur-md">
+                    <!-- Raspberry Pi 4 Node — Live Telemetry (auto-polls every 5s) -->
+                    <div class="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-5 border border-white/70 dark:border-white/10 space-y-4 shadow-sm backdrop-blur-md"
+                         x-data="{
+                            rpi: null,
+                            rpiStatus: 'loading',
+                            rpiLastSeen: '—',
+                            async fetchRpiTelemetry() {
+                                try {
+                                    const res  = await fetch('{{ route('rpi.telemetry.get') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                                    const json = await res.json();
+                                    this.rpiStatus  = json.status;
+                                    this.rpi        = json.data ?? null;
+                                    this.rpiLastSeen = json.data?.last_seen ?? '—';
+                                } catch (e) {
+                                    this.rpiStatus = 'offline';
+                                }
+                            },
+                            init() {
+                                this.fetchRpiTelemetry();
+                                setInterval(() => this.fetchRpiTelemetry(), 5000);
+                            }
+                         }">
+
+                        <!-- Header -->
                         <div class="flex items-center justify-between">
                             <div>
                                 <h3 class="text-sm font-bold text-slate-900 dark:text-white">Raspberry Pi 4B (Vision Engine)</h3>
-                                <span class="text-xs text-slate-500 dark:text-slate-400">ARM Cortex-A72 &bull; 4GB LPDDR4</span>
+                                <span class="text-xs text-slate-500 dark:text-slate-400">Cortex-A72 &times; 4 @ 1.8GHz &bull; 8GB LPDDR4</span>
                             </div>
-                            <span class="px-2.5 py-0.5 bg-white/80 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">PRIMARY</span>
+                            <!-- Status badge -->
+                            <span x-show="rpiStatus === 'live'"
+                                  class="px-2.5 py-0.5 bg-white/80 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">
+                                LIVE
+                            </span>
+                            <span x-show="rpiStatus === 'stale'"
+                                  class="px-2.5 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">
+                                STALE
+                            </span>
+                            <span x-show="rpiStatus === 'offline' || rpiStatus === 'loading'"
+                                  class="px-2.5 py-0.5 bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm"
+                                  x-text="rpiStatus === 'loading' ? 'POLLING…' : 'OFFLINE'">
+                            </span>
                         </div>
 
+                        <!-- Primary stats row: CORE TEMP / CPU LOAD / SUPPLY -->
                         <div class="grid grid-cols-3 gap-3 text-center">
                             <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                 <span class="block text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CORE TEMP</span>
-                                <span class="text-base font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">42°C</span>
+                                <span class="text-base font-mono font-extrabold mt-1 block"
+                                      :class="rpi && rpi.cpu_temp >= 80 ? 'text-rose-600 dark:text-rose-400' : (rpi && rpi.cpu_temp >= 65 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')"
+                                      x-text="rpi ? rpi.cpu_temp + '°C' : '—'">
+                                    —
+                                </span>
                             </div>
                             <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                 <span class="block text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CPU LOAD</span>
-                                <span class="text-base font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">35%</span>
+                                <span class="text-base font-mono font-extrabold mt-1 block"
+                                      :class="rpi && rpi.cpu_load >= 90 ? 'text-rose-600 dark:text-rose-400' : (rpi && rpi.cpu_load >= 70 ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400')"
+                                      x-text="rpi ? rpi.cpu_load + '%' : '—'">
+                                    —
+                                </span>
                             </div>
                             <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                 <span class="block text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">SUPPLY</span>
-                                <span class="text-base font-mono font-extrabold text-emerald-600 dark:text-emerald-400 mt-1 block">5.11V</span>
+                                <span class="text-base font-mono font-extrabold mt-1 block"
+                                      :class="rpi && rpi.supply_voltage < 4.8 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'"
+                                      x-text="rpi ? rpi.supply_voltage + 'V' : '—'">
+                                    —
+                                </span>
                             </div>
                         </div>
-                    </div>
 
+                        <!-- Secondary stats: RAM / Disk / IP / Uptime -->
+                        <div class="grid grid-cols-2 gap-2.5 font-mono text-xs" x-show="rpi">
+                            <div class="p-2.5 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                <span class="text-[9px] uppercase text-slate-500 dark:text-slate-400 font-semibold block">RAM</span>
+                                <span class="text-slate-900 dark:text-slate-200 font-bold block mt-0.5"
+                                      x-text="rpi ? rpi.memory_percent + '% (' + rpi.memory_used_mb + ' / ' + rpi.memory_total_mb + ' MB)' : '—'"></span>
+                            </div>
+                            <div class="p-2.5 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                <span class="text-[9px] uppercase text-slate-500 dark:text-slate-400 font-semibold block">DISK</span>
+                                <span class="text-slate-900 dark:text-slate-200 font-bold block mt-0.5"
+                                      x-text="rpi ? rpi.disk_percent + '% (' + rpi.disk_used_gb + ' / ' + rpi.disk_total_gb + ' GB)' : '—'"></span>
+                            </div>
+                            <div class="p-2.5 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                <span class="text-[9px] uppercase text-slate-500 dark:text-slate-400 font-semibold block">IP ADDRESS</span>
+                                <span class="text-slate-900 dark:text-slate-200 font-bold block mt-0.5"
+                                      x-text="rpi?.ip_address ?? '—'"></span>
+                            </div>
+                            <div class="p-2.5 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                <span class="text-[9px] uppercase text-slate-500 dark:text-slate-400 font-semibold block">UPTIME</span>
+                                <span class="text-slate-900 dark:text-slate-200 font-bold block mt-0.5"
+                                      x-text="rpi?.uptime ?? '—'"></span>
+                            </div>
+                        </div>
+
+                        <!-- Last seen footer -->
+                        <p class="text-[10px] font-mono text-slate-400 dark:text-slate-500 text-right -mt-1">
+                            Last update: <span x-text="rpiLastSeen">—</span>
+                        </p>
+                    </div>
                     <!-- ESP32 Node -->
                     <div class="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-5 border border-white/70 dark:border-white/10 space-y-4 shadow-sm backdrop-blur-md">
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">ESP32-WROOM-32 (Sensor Controller)</h3>
+                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">ESP32 DevKitC (Sensor Controller)</h3>
                                 <span class="text-xs text-slate-500 dark:text-slate-400">Xtensa Dual-Core 240MHz &bull; UART Bus</span>
                             </div>
                             <span class="px-2.5 py-0.5 bg-white/80 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-white/80 dark:border-sky-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">NODE-01</span>
@@ -321,16 +396,168 @@
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Peripheral 1: Vision Camera -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
+                    <!-- Peripheral 1: Vision Camera — Snapshot on Demand -->
+                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md"
+                         x-data="{
+                            snapState: 'idle',
+                            snapImage: null,
+                            snapError: null,
+                            snapCapturedAt: null,
+                            snapWidth: null,
+                            snapHeight: null,
+                            lightboxOpen: false,
+                            openLightbox() { this.lightboxOpen = true; document.body.style.overflow = 'hidden'; },
+                            closeLightbox() { this.lightboxOpen = false; document.body.style.overflow = ''; },
+                            downloadSnap() {
+                                if (!this.snapImage) return;
+                                const a = document.createElement('a');
+                                a.href = this.snapImage;
+                                a.download = 'rpi-snapshot-' + Date.now() + '.jpg';
+                                a.click();
+                            },
+                            async takeSnapshot() {
+                                this.snapState = 'loading';
+                                this.snapError = null;
+                                this.lightboxOpen = false;
+                                try {
+                                    const res = await fetch('{{ route('rpi.snapshot') }}', {
+                                        method: 'POST',
+                                        headers: {
+                                            'Accept': 'application/json',
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                            'X-Requested-With': 'XMLHttpRequest'
+                                        }
+                                    });
+                                    const json = await res.json();
+                                    if (json.status === 'ok' && json.image) {
+                                        this.snapImage      = json.image;
+                                        this.snapCapturedAt = json.captured ? new Date(json.captured).toLocaleTimeString() : '—';
+                                        this.snapWidth      = json.width;
+                                        this.snapHeight     = json.height;
+                                        this.snapState      = 'done';
+                                    } else {
+                                        this.snapError = json.message ?? 'Unknown error from snapshot server.';
+                                        this.snapState = 'error';
+                                    }
+                                } catch (e) {
+                                    this.snapError = 'Network error — could not reach server.';
+                                    this.snapState = 'error';
+                                }
+                            }
+                         }"
+                         @keydown.escape.window="closeLightbox()">
+
+                        <!-- Header row -->
                         <div class="flex items-center justify-between">
                             <span class="text-xs font-bold text-slate-900 dark:text-white">Optical Vision Cam</span>
-                            <span class="px-2 py-0.5 bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-400/30 rounded-lg text-[9px] font-mono font-bold">LIVE</span>
+                            <span class="px-2 py-0.5 bg-sky-500/15 text-sky-700 dark:text-sky-400 border border-sky-400/30 rounded-lg text-[9px] font-mono font-bold">RPi CAM</span>
                         </div>
-                        <div class="aspect-video bg-white/80 dark:bg-black/50 rounded-xl border border-white/80 dark:border-white/10 flex flex-col items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm backdrop-blur-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
-                            <span class="text-[9px] font-mono mt-1 text-slate-500 dark:text-slate-400">720p @ 30 FPS</span>
+
+                        <!-- Viewport: idle placeholder / loading / snapshot image / error -->
+                        <div class="relative aspect-video bg-white/80 dark:bg-black/50 rounded-xl border border-white/80 dark:border-white/10 overflow-hidden shadow-sm group">
+
+                            <!-- IDLE state -->
+                            <div x-show="snapState === 'idle'" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400 dark:text-slate-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m22 8-6 4 6 4V8Z"/><rect width="14" height="12" x="2" y="6" rx="2"/></svg>
+                                <span class="text-[9px] font-mono">Press Snap Test to capture</span>
+                            </div>
+
+                            <!-- LOADING state -->
+                            <div x-show="snapState === 'loading'" class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-emerald-500 dark:text-emerald-400">
+                                <svg class="animate-spin" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>
+                                <span class="text-[9px] font-mono text-slate-400">Triggering rpicam-still…</span>
+                            </div>
+
+                            <!-- SNAPSHOT IMAGE -->
+                            <img x-show="snapState === 'done' && snapImage"
+                                 :src="snapImage"
+                                 alt="RPi Snapshot"
+                                 class="absolute inset-0 w-full h-full object-cover rounded-xl" />
+
+                            <!-- EXPAND button — hover overlay on image -->
+                            <div x-show="snapState === 'done' && snapImage"
+                                 class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-black/30 rounded-xl">
+                                <button type="button"
+                                        @click="openLightbox()"
+                                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/90 dark:bg-black/70 text-slate-800 dark:text-white text-[10px] font-bold font-mono uppercase tracking-wide shadow-lg hover:bg-white dark:hover:bg-black/90 transition-colors border border-white/60 dark:border-white/20">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
+                                    Expand
+                                </button>
+                            </div>
+
+                            <!-- ERROR state -->
+                            <div x-show="snapState === 'error'" class="absolute inset-0 flex flex-col items-center justify-center gap-1.5 px-3 text-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-rose-500"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                <span class="text-[9px] font-mono text-rose-500 dark:text-rose-400 leading-tight" x-text="snapError"></span>
+                            </div>
                         </div>
+
+                        <!-- Metadata row (only when image is shown) -->
+                        <div x-show="snapState === 'done'" class="flex items-center justify-between font-mono text-[9px] text-slate-500 dark:text-slate-400 px-0.5">
+                            <span x-text="(snapWidth && snapHeight) ? snapWidth + '×' + snapHeight + ' px' : '720p'"></span>
+                            <span>Captured <span class="text-slate-700 dark:text-slate-300 font-semibold" x-text="snapCapturedAt"></span></span>
+                        </div>
+
+                        <!-- Snap button -->
+                        <button type="button"
+                                @click="takeSnapshot()"
+                                :disabled="snapState === 'loading'"
+                                class="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-[10px] font-bold font-mono uppercase tracking-wider transition-all cursor-pointer active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed bg-sky-500/15 hover:bg-sky-500/25 text-sky-700 dark:text-sky-300 border border-sky-400/30 hover:border-sky-400/50 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
+                            <span x-text="snapState === 'loading' ? 'Capturing…' : (snapState === 'done' ? 'Snap Again' : 'Snap Test')"></span>
+                        </button>
+
+                        <!-- ── Lightbox Modal ── -->
+                        <template x-teleport="body">
+                            <div x-show="lightboxOpen"
+                                 x-transition:enter="transition ease-out duration-200"
+                                 x-transition:enter-start="opacity-0"
+                                 x-transition:enter-end="opacity-100"
+                                 x-transition:leave="transition ease-in duration-150"
+                                 x-transition:leave-start="opacity-100"
+                                 x-transition:leave-end="opacity-0"
+                                 class="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm"
+                                 @click.self="closeLightbox()">
+
+                                <div x-show="lightboxOpen"
+                                     x-transition:enter="transition ease-out duration-200"
+                                     x-transition:enter-start="opacity-0 scale-95"
+                                     x-transition:enter-end="opacity-100 scale-100"
+                                     x-transition:leave="transition ease-in duration-150"
+                                     x-transition:leave-start="opacity-100 scale-100"
+                                     x-transition:leave-end="opacity-0 scale-95"
+                                     class="relative max-w-5xl w-full rounded-2xl overflow-hidden shadow-2xl border border-white/10">
+
+                                    <!-- Image -->
+                                    <img :src="snapImage" alt="RPi Snapshot" class="w-full h-auto block max-h-[85vh] object-contain bg-black" />
+
+                                    <!-- Top-right controls -->
+                                    <div class="absolute top-3 right-3 flex items-center gap-2">
+                                        <!-- Download -->
+                                        <button type="button"
+                                                @click="downloadSnap()"
+                                                title="Download image"
+                                                class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-[10px] font-mono font-bold uppercase tracking-wide backdrop-blur-sm border border-white/20 transition-colors shadow">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                            Save
+                                        </button>
+                                        <!-- Close -->
+                                        <button type="button"
+                                                @click="closeLightbox()"
+                                                title="Close (Esc)"
+                                                class="flex items-center justify-center w-7 h-7 rounded-lg bg-white/10 hover:bg-rose-500/70 text-white backdrop-blur-sm border border-white/20 transition-colors shadow">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Bottom metadata bar -->
+                                    <div class="absolute bottom-0 inset-x-0 px-4 py-2 bg-black/60 backdrop-blur-sm flex items-center justify-between font-mono text-[10px] text-white/70">
+                                        <span x-text="(snapWidth && snapHeight) ? snapWidth + '×' + snapHeight + ' px' : 'RPi Snapshot'"></span>
+                                        <span>Captured <span class="text-white font-semibold" x-text="snapCapturedAt"></span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <!-- Peripheral 2: Main 5V DC Supply -->

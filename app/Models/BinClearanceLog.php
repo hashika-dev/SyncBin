@@ -10,6 +10,7 @@ class BinClearanceLog extends Model
         'bin_id',
         'user_id',
         'cleared_by_email',
+        'clearance_type',
         'level_before_clearance',
         'alert_triggered_at',
         'cleared_at',
