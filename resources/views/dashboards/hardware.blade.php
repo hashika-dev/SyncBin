@@ -169,7 +169,10 @@
                             rpiLastSeen: '—',
                             async fetchRpiTelemetry() {
                                 try {
-                                    const res  = await fetch('{{ route('rpi.telemetry.get') }}', { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                                    const res  = await fetch('{{ route('rpi.telemetry.get', [], false) }}', {
+                                        credentials: 'same-origin',
+                                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                    });
                                     const json = await res.json();
                                     this.rpiStatus  = json.status;
                                     this.rpi        = json.data ?? null;
@@ -420,14 +423,22 @@
                                 this.snapError = null;
                                 this.lightboxOpen = false;
                                 try {
-                                    const res = await fetch('{{ route('rpi.snapshot') }}', {
+                                    const res = await fetch('{{ route('rpi.snapshot', [], false) }}', {
                                         method: 'POST',
+                                        credentials: 'same-origin',
                                         headers: {
                                             'Accept': 'application/json',
-                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]')?.content || '',
                                             'X-Requested-With': 'XMLHttpRequest'
                                         }
                                     });
+
+                                    if (res.status === 401) {
+                                        this.snapError = 'Your session expired. Please refresh the page and sign in again.';
+                                        this.snapState = 'error';
+                                        return;
+                                    }
+
                                     const json = await res.json();
                                     if (json.status === 'ok' && json.image) {
                                         this.snapImage      = json.image;
