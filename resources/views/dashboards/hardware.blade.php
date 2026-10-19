@@ -296,7 +296,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <h3 class="text-sm font-bold text-slate-900 dark:text-white">ESP32 DevKitC (Sensor Controller)</h3>
-                                    <span class="text-xs text-slate-500 dark:text-slate-400">Xtensa Dual-Core 240MHz &bull; UART Bus</span>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">Xtensa Dual-Core 240MHz &bull; Wi-Fi / HTTPS</span>
                                 </div>
                                 <div class="flex items-center gap-2">
                                     <span class="px-2.5 py-0.5 bg-white/80 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-white/80 dark:border-sky-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">NODE-01</span>
@@ -319,19 +319,19 @@
                             <div class="grid grid-cols-2 gap-3 text-xs">
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                     <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">MAC ADDRESS</span>
-                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.mac_address ?? 'A4:CF:12:6E:3B:10'">A4:CF:12:6E:3B:10</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.mac_address ?? 'F4:65:0B:47:17:70'">F4:65:0B:47:17:70</span>
                                 </div>
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                     <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">FIRMWARE</span>
                                     <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.firmware ?? 'EcoSync-v2.1.4'">EcoSync-v2.1.4</span>
                                 </div>
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">PROTOCOL</span>
-                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.protocol ?? 'UART / Serial (115200)'">UART / Serial (115200)</span>
+                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">IP ADDRESS</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.ip_address ?? '—'">—</span>
                                 </div>
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">BUS IMPEDANCE</span>
-                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.bus_status ?? '1k Nominal'">1k Nominal</span>
+                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">WI-FI SIGNAL</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.wifi_rssi ? esp32.wifi_rssi + ' dBm' : '—'">—</span>
                                 </div>
                             </div>
                         </div>

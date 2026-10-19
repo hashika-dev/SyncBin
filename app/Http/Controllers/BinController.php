@@ -931,10 +931,10 @@ class BinController extends Controller
             'status' => $status,
             'data'   => [
                 'device_id'     => $telemetry->device_id,
-                'mac_address'   => $telemetry->mac_address ?? 'A4:CF:12:6E:3B:10',
+                'mac_address'   => $telemetry->mac_address ?? 'F4:65:0B:47:17:70',
                 'firmware'      => $telemetry->firmware ?? 'EcoSync-v2.1.4',
-                'protocol'      => $telemetry->protocol ?? 'UART / Serial (115200)',
-                'bus_status'    => $telemetry->bus_status ?? '1k Nominal',
+                'protocol'      => $telemetry->protocol ?? 'Wi-Fi / HTTPS',
+                'bus_status'    => $telemetry->bus_status ?? 'Connected',
                 'ip_address'    => $telemetry->ip_address,
                 'wifi_rssi'     => $telemetry->wifi_rssi,
                 'free_heap_kb'  => $telemetry->free_heap_bytes ? round($telemetry->free_heap_bytes / 1024, 1) : null,
@@ -1107,6 +1107,12 @@ class BinController extends Controller
             'recyclable'    => ['nullable', 'numeric', 'min:0'],
             'non_bio'       => ['nullable', 'numeric', 'min:0'],
             'biodegradable' => ['nullable', 'numeric', 'min:0'],
+            'wifi_rssi'     => ['nullable', 'numeric'],
+            'mac_address'   => ['nullable', 'string', 'max:32'],
+            'firmware'      => ['nullable', 'string', 'max:64'],
+            'protocol'      => ['nullable', 'string', 'max:64'],
+            'ip_address'    => ['nullable', 'string', 'max:45'],
+            'node_id'       => ['nullable', 'string', 'max:64'],
         ]);
 
         // Configurable bin depth (cm) — set BIN_DEPTH_CM in .env (default: 30cm)
@@ -1183,14 +1189,16 @@ class BinController extends Controller
         }
 
         try {
+            $deviceId = $request->input('node_id', $request->input('device_id', 'NODE-01'));
             Esp32Telemetry::updateOrCreate(
-                ['device_id' => 'NODE-01'],
+                ['device_id' => $deviceId],
                 [
-                    'mac_address' => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                    'mac_address' => $request->input('mac_address', 'F4:65:0B:47:17:70'),
                     'firmware'    => $request->input('firmware', 'EcoSync-v2.1.4'),
-                    'protocol'    => $request->input('protocol', 'UART / Serial (115200)'),
-                    'bus_status'  => '1k Nominal',
-                    'ip_address'  => $request->ip(),
+                    'protocol'    => $request->input('protocol', 'Wi-Fi / HTTPS'),
+                    'bus_status'  => 'Connected',
+                    'ip_address'  => $request->input('ip_address', $request->ip()),
+                    'wifi_rssi'   => $request->input('wifi_rssi'),
                     'status'      => 'online',
                     'updated_at'  => now(),
                 ]
@@ -1297,11 +1305,12 @@ class BinController extends Controller
             Esp32Telemetry::updateOrCreate(
                 ['device_id' => 'NODE-01'],
                 [
-                    'mac_address' => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                    'mac_address' => $request->input('mac_address', 'F4:65:0B:47:17:70'),
                     'firmware'    => $request->input('firmware', 'EcoSync-v2.1.4'),
-                    'protocol'    => $request->input('protocol', 'UART / Serial (115200)'),
-                    'bus_status'  => '1k Nominal',
+                    'protocol'    => $request->input('protocol', 'Wi-Fi / HTTPS'),
+                    'bus_status'  => 'Connected',
                     'ip_address'  => $request->ip(),
+                    'wifi_rssi'   => $request->input('wifi_rssi'),
                     'status'      => 'online',
                     'updated_at'  => now(),
                 ]
@@ -1400,11 +1409,12 @@ class BinController extends Controller
             Esp32Telemetry::updateOrCreate(
                 ['device_id' => 'NODE-01'],
                 [
-                    'mac_address' => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                    'mac_address' => $request->input('mac_address', 'F4:65:0B:47:17:70'),
                     'firmware'    => $request->input('firmware', 'EcoSync-v2.1.4'),
-                    'protocol'    => $request->input('protocol', 'UART / Serial (115200)'),
-                    'bus_status'  => '1k Nominal',
+                    'protocol'    => $request->input('protocol', 'Wi-Fi / HTTPS'),
+                    'bus_status'  => 'Connected',
                     'ip_address'  => $request->ip(),
+                    'wifi_rssi'   => $request->input('wifi_rssi'),
                     'status'      => 'online',
                     'updated_at'  => now(),
                 ]
