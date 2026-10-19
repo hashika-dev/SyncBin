@@ -357,75 +357,271 @@
                     <span class="px-3 py-1 bg-white/70 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md shadow-sm">4 / 4 Online</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <!-- Sensor 1: Ultrasonic -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white">Ultrasonic (HC-SR04)</span>
-                            <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
-                        </div>
-                        <div class="space-y-1.5 font-mono text-xs pt-1">
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Chamber Ping</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">18.3 cm</span>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
+                     x-data="{
+                        bins: @js($bins->keyBy('slug')),
+                        binDepthCm: {{ (float) env('BIN_DEPTH_CM', 30) }},
+                        async fetchBins() {
+                            try {
+                                const res = await fetch('{{ route('bins.index', [], false) }}', {
+                                    credentials: 'same-origin',
+                                    headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                });
+                                if (res.ok) {
+                                    this.bins = await res.json();
+                                }
+                            } catch (e) {}
+                        },
+                        init() {
+                            this.fetchBins();
+                            setInterval(() => this.fetchBins(), 5000);
+                        },
+                        calcDist(slug) {
+                            const bin = this.bins[slug] ?? (slug === 'non-bio' ? this.bins['non_bio'] : null);
+                            const lvl = bin?.level ?? 0;
+                            return (Math.max(0, this.binDepthCm * (1 - lvl / 100))).toFixed(1);
+                        },
+                        getBin(slug) {
+                            return this.bins[slug] ?? (slug === 'non-bio' ? this.bins['non_bio'] : null) ?? {};
+                        }
+                     }">
+
+                    <!-- Sensor 1: Hazardous HC-SR04 -->
+                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3.5 shadow-sm backdrop-blur-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
+                                    <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #1 &bull; HC-SR04</span>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Signal Quality</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">98.4%</span>
+                            <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 block mt-1">Hazardous Chamber</span>
+                        </div>
+
+                        <!-- Main Ping Reading & Level -->
+                        <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <div class="text-right">
+                                    <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('hazardous') + ' cm'">
+                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[10px] font-mono text-slate-600 dark:text-slate-400">
+                                    <span>Fill Level</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" x-text="(getBin('hazardous').level ?? 0) + '% (' + (getBin('hazardous').status ?? 'Empty') + ')'">
+                                        {{ $bins->firstWhere('slug', 'hazardous')->level ?? 0 }}% ({{ $bins->firstWhere('slug', 'hazardous')->status ?? 'Empty' }})
+                                    </span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-rose-500 transition-all duration-500 rounded-full"
+                                         :style="'width: ' + (getBin('hazardous').level ?? 0) + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Sensor Specs -->
+                        <div class="grid grid-cols-2 gap-2 font-mono text-[10px]">
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">TRIG PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 12</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">ECHO PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 13</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">FREQUENCY</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">40 kHz Sonar</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">BEAM CONE</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">15° Acoustic</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sensor 2: Proximity IR -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white">Proximity IR (PIR)</span>
-                            <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
-                        </div>
-                        <div class="space-y-1.5 font-mono text-xs pt-1">
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Intake Beam</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">Clear</span>
+                    <!-- Sensor 2: Recyclable HC-SR04 -->
+                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3.5 shadow-sm backdrop-blur-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
+                                    <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #2 &bull; HC-SR04</span>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Trigger Logic</span>
-                                <span class="text-slate-800 dark:text-slate-200 font-bold">Active LOW</span>
+                            <span class="text-[11px] font-semibold text-sky-600 dark:text-sky-400 block mt-1">Recyclable Chamber</span>
+                        </div>
+
+                        <!-- Main Ping Reading & Level -->
+                        <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <div class="text-right">
+                                    <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('recyclable') + ' cm'">
+                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[10px] font-mono text-slate-600 dark:text-slate-400">
+                                    <span>Fill Level</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" x-text="(getBin('recyclable').level ?? 0) + '% (' + (getBin('recyclable').status ?? 'Empty') + ')'">
+                                        {{ $bins->firstWhere('slug', 'recyclable')->level ?? 0 }}% ({{ $bins->firstWhere('slug', 'recyclable')->status ?? 'Empty' }})
+                                    </span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-sky-500 transition-all duration-500 rounded-full"
+                                         :style="'width: ' + (getBin('recyclable').level ?? 0) + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Sensor Specs -->
+                        <div class="grid grid-cols-2 gap-2 font-mono text-[10px]">
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">TRIG PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 27</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">ECHO PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 26</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">FREQUENCY</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">40 kHz Sonar</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">BEAM CONE</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">15° Acoustic</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sensor 3: NIR Moisture -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white">NIR Moisture (AS7263)</span>
-                            <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
-                        </div>
-                        <div class="space-y-1.5 font-mono text-xs pt-1">
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Absorption</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">1460nm (35%)</span>
+                    <!-- Sensor 3: Non-Bio HC-SR04 -->
+                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3.5 shadow-sm backdrop-blur-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
+                                    <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #3 &bull; HC-SR04</span>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Classification</span>
-                                <span class="text-slate-800 dark:text-slate-200 font-bold">Dry Intake</span>
+                            <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block mt-1">Non-Biodegradable Chamber</span>
+                        </div>
+
+                        <!-- Main Ping Reading & Level -->
+                        <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <div class="text-right">
+                                    <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('non-bio') + ' cm'">
+                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[10px] font-mono text-slate-600 dark:text-slate-400">
+                                    <span>Fill Level</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" x-text="(getBin('non-bio').level ?? 0) + '% (' + (getBin('non-bio').status ?? 'Empty') + ')'">
+                                        {{ $bins->firstWhere('slug', 'non-bio')->level ?? 0 }}% ({{ $bins->firstWhere('slug', 'non-bio')->status ?? 'Empty' }})
+                                    </span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-amber-500 transition-all duration-500 rounded-full"
+                                         :style="'width: ' + (getBin('non-bio').level ?? 0) + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Sensor Specs -->
+                        <div class="grid grid-cols-2 gap-2 font-mono text-[10px]">
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">TRIG PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 25</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">ECHO PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 33</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">FREQUENCY</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">40 kHz Sonar</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">BEAM CONE</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">15° Acoustic</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Sensor 4: Metal Proximity -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs font-bold text-slate-900 dark:text-white">Inductive (LJ12A3)</span>
-                            <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
-                        </div>
-                        <div class="space-y-1.5 font-mono text-xs pt-1">
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Eddy Current</span>
-                                <span class="text-slate-800 dark:text-slate-200 font-bold">Standby</span>
+                    <!-- Sensor 4: Biodegradable HC-SR04 -->
+                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3.5 shadow-sm backdrop-blur-md flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
+                                    <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #4 &bull; HC-SR04</span>
+                                </div>
+                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Ferrous Detect</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">0 Active</span>
+                            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block mt-1">Biodegradable Chamber</span>
+                        </div>
+
+                        <!-- Main Ping Reading & Level -->
+                        <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
+                            <div class="flex items-baseline justify-between">
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <div class="text-right">
+                                    <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('biodegradable') + ' cm'">
+                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress bar -->
+                            <div class="space-y-1">
+                                <div class="flex justify-between text-[10px] font-mono text-slate-600 dark:text-slate-400">
+                                    <span>Fill Level</span>
+                                    <span class="font-bold text-slate-900 dark:text-white" x-text="(getBin('biodegradable').level ?? 0) + '% (' + (getBin('biodegradable').status ?? 'Empty') + ')'">
+                                        {{ $bins->firstWhere('slug', 'biodegradable')->level ?? 0 }}% ({{ $bins->firstWhere('slug', 'biodegradable')->status ?? 'Empty' }})
+                                    </span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden">
+                                    <div class="h-full bg-emerald-500 transition-all duration-500 rounded-full"
+                                         :style="'width: ' + (getBin('biodegradable').level ?? 0) + '%'"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Sensor Specs -->
+                        <div class="grid grid-cols-2 gap-2 font-mono text-[10px]">
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">TRIG PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 32</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">ECHO PIN</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">GPIO 35</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">FREQUENCY</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">40 kHz Sonar</span>
+                            </div>
+                            <div class="p-2 bg-white/50 dark:bg-white/[0.02] rounded-lg border border-white/60 dark:border-white/5">
+                                <span class="text-[8px] uppercase text-slate-400 block font-semibold">BEAM CONE</span>
+                                <span class="font-bold text-slate-800 dark:text-slate-200 block mt-0.5">15° Acoustic</span>
                             </div>
                         </div>
                     </div>
