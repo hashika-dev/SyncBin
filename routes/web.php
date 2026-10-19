@@ -47,10 +47,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/dashboard/history', [\App\Http\Controllers\BinController::class, 'history'])->name('dashboard.history');
     });
 
-    // Hardware Scanning Endpoints with Cryptographic Payload & Signature Verification (ECDSA / AES-256-GCM)
-    Route::middleware(['throttle:60,1', 'hardware.crypto'])->group(function () {
+    // Manual Dashboard Simulation Endpoint
+    Route::middleware(['throttle:60,1'])->group(function () {
         Route::post('/api/bins/{slug}/scan', [\App\Http\Controllers\BinController::class, 'simulateScan'])->name('bins.scan');
-        Route::post('/api/bins/camera-scan', [\App\Http\Controllers\BinController::class, 'cameraScan'])->name('bins.camera-scan');
     });
 
     // SuperAdmin Only Routes (Hardware Monitoring & System Maintenance)
@@ -70,8 +69,9 @@ Route::middleware('throttle:120,1')->post('/api/sensor/levels', [\App\Http\Contr
 // Matches the exact URL used in the ESP32 Arduino sketch: POST /api/update_bins
 Route::middleware('throttle:120,1')->post('/api/update_bins', [\App\Http\Controllers\BinController::class, 'updateBinsFromESP32'])->name('sensor.esp32');
 
-// Hardware & IoT Telemetry Endpoints (ESP32 / Ultrasonic / Microcontroller)
+// Hardware & IoT Telemetry Endpoints (ESP32 / Ultrasonic / Microcontroller / Raspberry Pi Vision)
 Route::middleware(['throttle:120,1', 'hardware.crypto'])->group(function () {
+    Route::post('/api/bins/camera-scan', [\App\Http\Controllers\BinController::class, 'cameraScan'])->name('bins.camera-scan');
     Route::post('/api/bins/telemetry', [\App\Http\Controllers\BinController::class, 'updateTelemetry'])->name('bins.telemetry');
     Route::post('/api/hardware/telemetry', [\App\Http\Controllers\BinController::class, 'updateTelemetry'])->name('hardware.telemetry');
 });
@@ -79,6 +79,10 @@ Route::middleware(['throttle:120,1', 'hardware.crypto'])->group(function () {
 // Raspberry Pi Telemetry — POST: Pi pushes stats (public), GET: dashboard polls latest (auth)
 Route::middleware('throttle:120,1')->post('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'updateRpiTelemetry'])->name('rpi.telemetry.update');
 Route::middleware(['auth', 'throttle:120,1'])->get('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'getRpiTelemetry'])->name('rpi.telemetry.get');
+
+// ESP32 Telemetry — POST: ESP32 pushes stats (public), GET: dashboard polls latest (auth)
+Route::middleware('throttle:120,1')->post('/api/hardware/esp32-telemetry', [\App\Http\Controllers\BinController::class, 'updateEsp32Telemetry'])->name('esp32.telemetry.update');
+Route::middleware(['auth', 'throttle:120,1'])->get('/api/hardware/esp32-telemetry', [\App\Http\Controllers\BinController::class, 'getEsp32Telemetry'])->name('esp32.telemetry.get');
 
 // Raspberry Pi Camera Snapshot — superadmin triggers a single-frame capture (on-demand, no stream)
 Route::middleware(['auth', 'role:superadmin', 'throttle:30,1'])->post('/api/hardware/rpi-snapshot', [\App\Http\Controllers\BinController::class, 'rpiSnapshot'])->name('rpi.snapshot');

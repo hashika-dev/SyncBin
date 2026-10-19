@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Bin;
 use App\Models\WasteItem;
 use App\Models\RpiTelemetry;
+use App\Models\Esp32Telemetry;
 use App\Services\HardwareCryptoService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -132,38 +133,82 @@ class BinController extends Controller
 
         // Waste item mapping registry
         $mapping = [
-            'plastic bottle' => ['slug' => 'recyclable', 'icon' => '🍼'],
+            'plastic bottle'       => ['slug' => 'recyclable', 'icon' => '🍼'],
             'plastic water bottle' => ['slug' => 'recyclable', 'icon' => '🍼'],
-            'soda can' => ['slug' => 'recyclable', 'icon' => '🥤'],
-            'aluminum can' => ['slug' => 'recyclable', 'icon' => '🥫'],
-            'paper box' => ['slug' => 'recyclable', 'icon' => '📄'],
-            'cardboard box' => ['slug' => 'recyclable', 'icon' => '📦'],
-            'glass jar' => ['slug' => 'recyclable', 'icon' => '🫙'],
+            'bottle'               => ['slug' => 'recyclable', 'icon' => '🍼'],
+            'soda can'             => ['slug' => 'recyclable', 'icon' => '🥤'],
+            'aluminum can'         => ['slug' => 'recyclable', 'icon' => '🥫'],
+            'can'                  => ['slug' => 'recyclable', 'icon' => '🥫'],
+            'cup'                  => ['slug' => 'recyclable', 'icon' => '🥤'],
+            'paper box'            => ['slug' => 'recyclable', 'icon' => '📄'],
+            'cardboard box'        => ['slug' => 'recyclable', 'icon' => '📦'],
+            'box'                  => ['slug' => 'recyclable', 'icon' => '📦'],
+            'paper'                => ['slug' => 'recyclable', 'icon' => '📄'],
+            'glass jar'            => ['slug' => 'recyclable', 'icon' => '🫙'],
 
-            'used battery' => ['slug' => 'hazardous', 'icon' => '🔋'],
-            'battery' => ['slug' => 'hazardous', 'icon' => '🔋'],
-            'expired medicine' => ['slug' => 'hazardous', 'icon' => '💊'],
-            'light bulb' => ['slug' => 'hazardous', 'icon' => '💡'],
-            'aerosol can' => ['slug' => 'hazardous', 'icon' => '🧴'],
+            'used battery'         => ['slug' => 'hazardous', 'icon' => '🔋'],
+            'battery'              => ['slug' => 'hazardous', 'icon' => '🔋'],
+            'expired medicine'     => ['slug' => 'hazardous', 'icon' => '💊'],
+            'medicine'             => ['slug' => 'hazardous', 'icon' => '💊'],
+            'light bulb'           => ['slug' => 'hazardous', 'icon' => '💡'],
+            'aerosol can'          => ['slug' => 'hazardous', 'icon' => '🧴'],
 
-            'banana peel' => ['slug' => 'biodegradable', 'icon' => '🍌'],
-            'apple core' => ['slug' => 'biodegradable', 'icon' => '🍎'],
-            'orange peel' => ['slug' => 'biodegradable', 'icon' => '🍊'],
-            'food scrap' => ['slug' => 'biodegradable', 'icon' => '🥬'],
+            'onion'                => ['slug' => 'biodegradable', 'icon' => '🧅'],
+            'banana peel'          => ['slug' => 'biodegradable', 'icon' => '🍌'],
+            'banana'               => ['slug' => 'biodegradable', 'icon' => '🍌'],
+            'apple core'           => ['slug' => 'biodegradable', 'icon' => '🍎'],
+            'apple'                => ['slug' => 'biodegradable', 'icon' => '🍎'],
+            'orange peel'          => ['slug' => 'biodegradable', 'icon' => '🍊'],
+            'orange'               => ['slug' => 'biodegradable', 'icon' => '🍊'],
+            'food scrap'           => ['slug' => 'biodegradable', 'icon' => '🥬'],
+            'food'                 => ['slug' => 'biodegradable', 'icon' => '🍲'],
+            'vegetable'            => ['slug' => 'biodegradable', 'icon' => '🥕'],
+            'carrot'               => ['slug' => 'biodegradable', 'icon' => '🥕'],
+            'potato'               => ['slug' => 'biodegradable', 'icon' => '🥔'],
+            'tomato'               => ['slug' => 'biodegradable', 'icon' => '🍅'],
+            'bread'                => ['slug' => 'biodegradable', 'icon' => '🍞'],
+            'egg shell'            => ['slug' => 'biodegradable', 'icon' => '🥚'],
+            'egg'                  => ['slug' => 'biodegradable', 'icon' => '🥚'],
+            'leaf'                 => ['slug' => 'biodegradable', 'icon' => '🍃'],
+            'plant'                => ['slug' => 'biodegradable', 'icon' => '🌱'],
 
-            'styrofoam piece' => ['slug' => 'non-bio', 'icon' => '📦'],
-            'plastic wrap' => ['slug' => 'non-bio', 'icon' => '🍬'],
-            'chip bag' => ['slug' => 'non-bio', 'icon' => '🍿'],
-            'face mask' => ['slug' => 'non-bio', 'icon' => '😷'],
+            'styrofoam piece'      => ['slug' => 'non-bio', 'icon' => '📦'],
+            'styrofoam'            => ['slug' => 'non-bio', 'icon' => '📦'],
+            'plastic wrap'         => ['slug' => 'non-bio', 'icon' => '🍬'],
+            'chip bag'             => ['slug' => 'non-bio', 'icon' => '🍿'],
+            'face mask'            => ['slug' => 'non-bio', 'icon' => '😷'],
         ];
 
         $itemName = $request->input('item_name', 'Plastic Water Bottle');
         $lowerName = strtolower(trim($itemName));
 
-        $matchedInfo = $mapping[$lowerName] ?? [
-            'slug' => $request->input('bin_slug', 'recyclable'),
-            'icon' => '♻️',
-        ];
+        // 1. Direct match
+        $matchedInfo = $mapping[$lowerName] ?? null;
+
+        // 2. Partial / keyword match fallback
+        if (!$matchedInfo) {
+            foreach ($mapping as $key => $info) {
+                if (str_contains($lowerName, $key) || str_contains($key, $lowerName)) {
+                    $matchedInfo = $info;
+                    break;
+                }
+            }
+        }
+
+        // 3. Fallback defaults
+        if (!$matchedInfo) {
+            $defaultSlug = $request->input('bin_slug', 'recyclable');
+            $defaultIcon = match($defaultSlug) {
+                'biodegradable' => '🌿',
+                'hazardous'     => '⚠️',
+                'non-bio'       => '🗑️',
+                default         => '♻️',
+            };
+            $matchedInfo = [
+                'slug' => $defaultSlug,
+                'icon' => $defaultIcon,
+            ];
+        }
 
         $targetSlug = $request->input('bin_slug', $matchedInfo['slug']);
         $bin = Bin::where('slug', $targetSlug)->first() ?? Bin::first();
@@ -577,6 +622,40 @@ class BinController extends Controller
             ]);
         }
 
+        // Seed live mock telemetry for both Raspberry Pi and ESP32 DevKitC
+        RpiTelemetry::updateOrCreate(
+            ['device_id' => 'rpi-primary'],
+            [
+                'cpu_temp'        => rand(42, 53) + (rand(0, 9) / 10),
+                'cpu_load'        => rand(18, 38) + (rand(0, 9) / 10),
+                'supply_voltage'  => 5.12,
+                'memory_used_mb'  => 1420,
+                'memory_total_mb' => 7851,
+                'disk_used_gb'    => 14.2,
+                'disk_total_gb'   => 59.1,
+                'ip_address'      => '192.168.1.104',
+                'uptime'          => '3 days, 14:22:05',
+                'status'          => 'online',
+                'updated_at'      => now(),
+            ]
+        );
+
+        Esp32Telemetry::updateOrCreate(
+            ['device_id' => 'NODE-01'],
+            [
+                'mac_address'     => 'A4:CF:12:6E:3B:10',
+                'firmware'        => 'EcoSync-v2.1.4',
+                'protocol'        => 'UART / Serial (115200)',
+                'bus_status'      => '1k Nominal',
+                'ip_address'      => '192.168.1.105',
+                'wifi_rssi'       => -58,
+                'free_heap_bytes' => 284160,
+                'uptime'          => '5 days, 08:14:12',
+                'status'          => 'online',
+                'updated_at'      => now(),
+            ]
+        );
+
         return response()->json(['message' => 'Demo data seeded successfully.']);
     }
 
@@ -827,6 +906,96 @@ class BinController extends Controller
     }
 
     /**
+     * Return the latest ESP32 telemetry record as JSON (for live dashboard polling).
+     *
+     * Route: GET /api/hardware/esp32-telemetry
+     * Auth:  Authenticated users only (middleware: auth)
+     */
+    public function getEsp32Telemetry()
+    {
+        $telemetry = Esp32Telemetry::latest_for('NODE-01');
+
+        if (!$telemetry) {
+            return response()->json([
+                'status'  => 'offline',
+                'message' => 'No telemetry received from ESP32 DevKitC yet.',
+                'data'    => null,
+            ]);
+        }
+
+        // Stale if > 30 seconds, offline if > 90 seconds
+        $diffSeconds = abs($telemetry->updated_at->diffInSeconds(now()));
+        $status = $diffSeconds <= 30 ? 'live' : ($diffSeconds <= 90 ? 'stale' : 'offline');
+
+        return response()->json([
+            'status' => $status,
+            'data'   => [
+                'device_id'     => $telemetry->device_id,
+                'mac_address'   => $telemetry->mac_address ?? 'A4:CF:12:6E:3B:10',
+                'firmware'      => $telemetry->firmware ?? 'EcoSync-v2.1.4',
+                'protocol'      => $telemetry->protocol ?? 'UART / Serial (115200)',
+                'bus_status'    => $telemetry->bus_status ?? '1k Nominal',
+                'ip_address'    => $telemetry->ip_address,
+                'wifi_rssi'     => $telemetry->wifi_rssi,
+                'free_heap_kb'  => $telemetry->free_heap_bytes ? round($telemetry->free_heap_bytes / 1024, 1) : null,
+                'uptime'        => $telemetry->uptime,
+                'last_seen'     => $telemetry->updated_at->diffForHumans(),
+                'last_seen_iso' => $telemetry->updated_at->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
+     * Ingest live hardware telemetry POSTed by the ESP32 controller.
+     *
+     * Route: POST /api/hardware/esp32-telemetry
+     * Auth:  None (public endpoint, throttle-protected at 120 req/min)
+     */
+    public function updateEsp32Telemetry(Request $request)
+    {
+        $request->validate([
+            'device_id'       => ['nullable', 'string', 'max:64'],
+            'mac_address'     => ['nullable', 'string', 'max:32'],
+            'firmware'        => ['nullable', 'string', 'max:64'],
+            'protocol'        => ['nullable', 'string', 'max:64'],
+            'bus_status'      => ['nullable', 'string', 'max:64'],
+            'ip_address'      => ['nullable', 'string', 'max:45'],
+            'wifi_rssi'       => ['nullable', 'numeric'],
+            'free_heap_bytes' => ['nullable', 'integer'],
+            'uptime'          => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $deviceId = $request->input('device_id', 'NODE-01');
+
+        $telemetry = Esp32Telemetry::updateOrCreate(
+            ['device_id' => $deviceId],
+            [
+                'mac_address'     => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                'firmware'        => $request->input('firmware', 'EcoSync-v2.1.4'),
+                'protocol'        => $request->input('protocol', 'UART / Serial (115200)'),
+                'bus_status'      => $request->input('bus_status', '1k Nominal'),
+                'ip_address'      => $request->input('ip_address', $request->ip()),
+                'wifi_rssi'       => $request->input('wifi_rssi'),
+                'free_heap_bytes' => $request->input('free_heap_bytes'),
+                'uptime'          => $request->input('uptime'),
+                'status'          => 'online',
+                'updated_at'      => now(),
+            ]
+        );
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'ESP32 telemetry updated.',
+            'data'    => [
+                'device_id'   => $telemetry->device_id,
+                'mac_address' => $telemetry->mac_address,
+                'status'      => $telemetry->status,
+                'updated_at'  => $telemetry->updated_at?->toISOString(),
+            ],
+        ]);
+    }
+
+    /**
      * Proxy a single-frame camera snapshot from the Raspberry Pi.
      *
      * The Pi must be running the companion snapshot server (camera_server.py)
@@ -934,9 +1103,10 @@ class BinController extends Controller
     public function updateBinsFromESP32(Request $request)
     {
         $request->validate([
-            'hazardous'  => ['nullable', 'numeric', 'min:0'],
-            'recyclable' => ['nullable', 'numeric', 'min:0'],
-            'non_bio'    => ['nullable', 'numeric', 'min:0'],
+            'hazardous'     => ['nullable', 'numeric', 'min:0'],
+            'recyclable'    => ['nullable', 'numeric', 'min:0'],
+            'non_bio'       => ['nullable', 'numeric', 'min:0'],
+            'biodegradable' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         // Configurable bin depth (cm) — set BIN_DEPTH_CM in .env (default: 30cm)
@@ -944,9 +1114,10 @@ class BinController extends Controller
 
         // Map POST field names → bin slugs
         $fieldToSlug = [
-            'hazardous'  => 'hazardous',
-            'recyclable' => 'recyclable',
-            'non_bio'    => 'non-bio',
+            'hazardous'     => 'hazardous',
+            'recyclable'    => 'recyclable',
+            'non_bio'       => 'non-bio',
+            'biodegradable' => 'biodegradable',
         ];
 
         $results = [];
@@ -1011,6 +1182,21 @@ class BinController extends Controller
             ];
         }
 
+        try {
+            Esp32Telemetry::updateOrCreate(
+                ['device_id' => 'NODE-01'],
+                [
+                    'mac_address' => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                    'firmware'    => $request->input('firmware', 'EcoSync-v2.1.4'),
+                    'protocol'    => $request->input('protocol', 'UART / Serial (115200)'),
+                    'bus_status'  => '1k Nominal',
+                    'ip_address'  => $request->ip(),
+                    'status'      => 'online',
+                    'updated_at'  => now(),
+                ]
+            );
+        } catch (\Throwable $e) {}
+
         return response()->json([
             'status'       => 'success',
             'message'      => 'ESP32 sensor data received and bins updated successfully.',
@@ -1035,16 +1221,18 @@ class BinController extends Controller
     public function updateSensorLevels(Request $request)
     {
         $request->validate([
-            'hazardous'  => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'recyclable' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'non_bio'    => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'hazardous'     => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'recyclable'    => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'non_bio'       => ['nullable', 'numeric', 'min:0', 'max:100'],
+            'biodegradable' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
 
         // Map incoming POST field names → bin slugs
         $fieldToSlug = [
-            'hazardous'  => 'hazardous',
-            'recyclable' => 'recyclable',
-            'non_bio'    => 'non-bio',
+            'hazardous'     => 'hazardous',
+            'recyclable'    => 'recyclable',
+            'non_bio'       => 'non-bio',
+            'biodegradable' => 'biodegradable',
         ];
 
         $results = [];
@@ -1104,6 +1292,21 @@ class BinController extends Controller
                 'state'  => $bin->status,
             ];
         }
+
+        try {
+            Esp32Telemetry::updateOrCreate(
+                ['device_id' => 'NODE-01'],
+                [
+                    'mac_address' => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                    'firmware'    => $request->input('firmware', 'EcoSync-v2.1.4'),
+                    'protocol'    => $request->input('protocol', 'UART / Serial (115200)'),
+                    'bus_status'  => '1k Nominal',
+                    'ip_address'  => $request->ip(),
+                    'status'      => 'online',
+                    'updated_at'  => now(),
+                ]
+            );
+        } catch (\Throwable $e) {}
 
         return response()->json([
             'status'  => 'success',
@@ -1192,6 +1395,21 @@ class BinController extends Controller
         }
 
         $bin->save();
+
+        try {
+            Esp32Telemetry::updateOrCreate(
+                ['device_id' => 'NODE-01'],
+                [
+                    'mac_address' => $request->input('mac_address', 'A4:CF:12:6E:3B:10'),
+                    'firmware'    => $request->input('firmware', 'EcoSync-v2.1.4'),
+                    'protocol'    => $request->input('protocol', 'UART / Serial (115200)'),
+                    'bus_status'  => '1k Nominal',
+                    'ip_address'  => $request->ip(),
+                    'status'      => 'online',
+                    'updated_at'  => now(),
+                ]
+            );
+        } catch (\Throwable $e) {}
 
         return response()->json([
             'status' => 'success',

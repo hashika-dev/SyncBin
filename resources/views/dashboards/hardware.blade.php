@@ -265,34 +265,81 @@
                             Last update: <span x-text="rpiLastSeen">—</span>
                         </p>
                     </div>
-                    <!-- ESP32 Node -->
-                    <div class="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-5 border border-white/70 dark:border-white/10 space-y-4 shadow-sm backdrop-blur-md">
-                        <div class="flex items-center justify-between">
-                            <div>
-                                <h3 class="text-sm font-bold text-slate-900 dark:text-white">ESP32 DevKitC (Sensor Controller)</h3>
-                                <span class="text-xs text-slate-500 dark:text-slate-400">Xtensa Dual-Core 240MHz &bull; UART Bus</span>
+                    <!-- ESP32 Node — Live Telemetry (auto-polls every 5s) -->
+                    <div class="bg-white/60 dark:bg-white/[0.04] rounded-2xl p-5 border border-white/70 dark:border-white/10 space-y-4 shadow-sm backdrop-blur-md flex flex-col justify-between"
+                         x-data="{
+                            esp32: null,
+                            esp32Status: 'loading',
+                            esp32LastSeen: '—',
+                            async fetchEsp32Telemetry() {
+                                try {
+                                    const res  = await fetch('{{ route('esp32.telemetry.get', [], false) }}', {
+                                        credentials: 'same-origin',
+                                        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+                                    });
+                                    const json = await res.json();
+                                    this.esp32Status   = json.status;
+                                    this.esp32         = json.data ?? null;
+                                    this.esp32LastSeen = json.data?.last_seen ?? '—';
+                                } catch (e) {
+                                    this.esp32Status = 'offline';
+                                }
+                            },
+                            init() {
+                                this.fetchEsp32Telemetry();
+                                setInterval(() => this.fetchEsp32Telemetry(), 5000);
+                            }
+                         }">
+
+                        <div class="space-y-4">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h3 class="text-sm font-bold text-slate-900 dark:text-white">ESP32 DevKitC (Sensor Controller)</h3>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">Xtensa Dual-Core 240MHz &bull; UART Bus</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2.5 py-0.5 bg-white/80 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-white/80 dark:border-sky-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">NODE-01</span>
+                                    <!-- Status badge -->
+                                    <span x-show="esp32Status === 'live'"
+                                          class="px-2.5 py-0.5 bg-white/80 dark:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">
+                                        LIVE
+                                    </span>
+                                    <span x-show="esp32Status === 'stale'"
+                                          class="px-2.5 py-0.5 bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">
+                                        STALE
+                                    </span>
+                                    <span x-show="esp32Status === 'offline' || esp32Status === 'loading'"
+                                          class="px-2.5 py-0.5 bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm"
+                                          x-text="esp32Status === 'loading' ? 'POLLING…' : 'OFFLINE'">
+                                    </span>
+                                </div>
                             </div>
-                            <span class="px-2.5 py-0.5 bg-white/80 dark:bg-sky-500/20 text-sky-800 dark:text-sky-300 border border-white/80 dark:border-sky-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm">NODE-01</span>
+
+                            <div class="grid grid-cols-2 gap-3 text-xs">
+                                <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">MAC ADDRESS</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.mac_address ?? 'A4:CF:12:6E:3B:10'">A4:CF:12:6E:3B:10</span>
+                                </div>
+                                <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">FIRMWARE</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.firmware ?? 'EcoSync-v2.1.4'">EcoSync-v2.1.4</span>
+                                </div>
+                                <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">PROTOCOL</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.protocol ?? 'UART / Serial (115200)'">UART / Serial (115200)</span>
+                                </div>
+                                <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
+                                    <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">BUS IMPEDANCE</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.bus_status ?? '1k Nominal'">1k Nominal</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-3 text-xs">
-                            <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">MAC ADDRESS</span>
-                                <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5">A4:CF:12:6E:3B:10</span>
-                            </div>
-                            <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">FIRMWARE</span>
-                                <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5">EcoSync-v2.1.4</span>
-                            </div>
-                            <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">PROTOCOL</span>
-                                <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5">UART / Serial (115200)</span>
-                            </div>
-                            <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">BUS IMPEDANCE</span>
-                                <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5">1k Nominal</span>
-                            </div>
-                        </div>
+                        <!-- Last seen footer -->
+                        <p class="text-[10px] font-mono text-slate-400 dark:text-slate-500 text-right -mt-1">
+                            Last update: <span x-text="esp32LastSeen">—</span>
+                        </p>
                     </div>
                 </div>
             </div>
