@@ -1,0 +1,17 @@
+[Unit]
+Description=SyncBin AI Trash Vision Detector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=raspberrypi4
+WorkingDirectory=/home/raspberrypi4/pi-offline-ai
+ExecStart=/home/raspberrypi4/pi-offline-ai/venv/bin/python3 /home/raspberrypi4/pi-offline-ai/yolo_detector.py
+Restart=always
+RestartSec=5s
+Environment=PYTHONUNBUFFERED=1
+Environment=DISPLAY=:0
+
+[Install]
+WantedBy=multi-user.target
