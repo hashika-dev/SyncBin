@@ -278,22 +278,23 @@ class GeminiClassifier:
 
                 prompt = (
                     "You are the real-time AI Vision Engine for the SyncBin Smart Waste System.\n"
-                    "Analyze this camera frame and identify the primary trash / waste item in view.\n"
-                    "Focus particularly on the object held in the center of the frame.\n"
+                    "Analyze this camera frame and identify the primary object held in the center reticle.\n"
+                    "Assume any object held towards the camera is being presented for disposal / sorting.\n"
                     "Classify it strictly into ONE of these 4 bin streams:\n"
                     "  1. 'recyclable' (plastic bottles, clean paper, soda cans, cardboard, glass)\n"
-                    "  2. 'biodegradable' (fruit peels, food scraps, leaves, vegetables, coffee grounds)\n"
-                    "  3. 'non-bio' (chip bags, plastic wrappers, styrofoam, dirty plastics, masks)\n"
-                    "  4. 'hazardous' (batteries, medicine, bulbs, electronics, chemicals)\n\n"
-                    "If there is NO trash item in view (e.g. empty background, room ceiling, only a bare hand),\n"
-                    "set 'is_trash': false, 'item_name': 'No Waste Detected', 'bin_slug': 'unknown'.\n\n"
+                    "  2. 'biodegradable' (fruit peels, food scraps, leaves, vegetables, organic food)\n"
+                    "  3. 'non-bio' (ceramics, mugs, eyeglasses, chip bags, wrappers, styrofoam, masks)\n"
+                    "  4. 'hazardous' (batteries, medicine, bulbs, electronics, phones, chemicals)\n\n"
+                    "Rules:\n"
+                    "- If an object is being held in view (even a reusable item like a mug or eyeglasses), set 'is_trash': true and classify it (e.g. ceramics/mugs go to 'non-bio').\n"
+                    "- ONLY set 'is_trash': false if there is NO object presented at all (e.g. empty background, room ceiling, or a bare face/hand with nothing in it).\n\n"
                     "Output ONLY a raw valid JSON object with these exact keys:\n"
                     "{\n"
                     '  "is_trash": true,\n'
-                    '  "item_name": "Plastic Bottle",\n'
-                    '  "bin_slug": "recyclable",\n'
-                    '  "confidence": 92,\n'
-                    '  "explanation": "Clear PET plastic bottle suitable for container recycling."\n'
+                    '  "item_name": "Ceramic Mug",\n'
+                    '  "bin_slug": "non-bio",\n'
+                    '  "confidence": 95,\n'
+                    '  "explanation": "Ceramic material cannot be recycled in standard facilities and belongs in non-biodegradable waste."\n'
                     "}"
                 )
 
