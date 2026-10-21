@@ -170,10 +170,39 @@ class GeminiClassifier:
         self.last_result = None
         self.last_scan_time = 0
         self.cooldown_until = 0
-        self.active_model = FALLBACK_MODELS[0]
+
+        # Discover available models for this specific API key
+        self.models_to_try = ["gemini-3.8-flash"]
+        self.active_model = "gemini-3.8-flash"
+        if self.client:
+            self._discover_models()
 
         self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
         self.worker_thread.start()
+
+    def _discover_models(self):
+        """Discovers valid active Flash models available on your Google account."""
+        found = []
+        try:
+            for m in self.client.models.list():
+                clean = getattr(m, "name", "").replace("models/", "").strip()
+                # Look for text/multimodal generation flash models
+                if "flash" in clean.lower() and not any(k in clean.lower() for k in ["embed", "aqa", "imagen"]):
+                    found.append(clean)
+        except Exception as e:
+            print(f"[Model Discovery Notice]: {e}")
+
+        if found:
+            print(f"[Gemini] Active Flash models detected on your account: {', '.join(found)}")
+            # Put gemini-3.8-flash first if available, followed by other flash variants
+            if "gemini-3.8-flash" in found:
+                self.models_to_try = ["gemini-3.8-flash"] + [m for m in found if m != "gemini-3.8-flash"]
+            else:
+                self.models_to_try = found
+        else:
+            self.models_to_try = ["gemini-3.8-flash"]
+
+        self.active_model = self.models_to_try[0]
 
     def submit_request(self, frame_bgr, trigger_mode="manual"):
         now = time.time()
@@ -241,40 +270,54 @@ class GeminiClassifier:
                     "}"
                 )
 
-                # Try primary model and fallback if needed
+                # Try primary model with automatic backoff retry on temporary 503 spikes
                 response = None
                 last_err = None
 
-                for model_candidate in FALLBACK_MODELS:
-                    try:
-                        print(f"[Gemini] Requesting analysis via {model_candidate}...")
-                        response = self.client.models.generate_content(
-                            model=model_candidate,
-                            contents=[
-                                prompt,
-                                types.Part.from_bytes(
-                                    data=img_bytes,
-                                    mime_type="image/jpeg",
-                                )
-                            ]
-                        )
-                        self.active_model = model_candidate
+                for model_candidate in self.models_to_try:
+                    for attempt in range(1, 4):
+                        try:
+                            print(f"[Gemini] Requesting analysis via {model_candidate} (attempt {attempt}/3)...")
+                            response = self.client.models.generate_content(
+                                model=model_candidate,
+                                contents=[
+                                    prompt,
+                                    types.Part.from_bytes(
+                                        data=img_bytes,
+                                        mime_type="image/jpeg",
+                                    )
+                                ]
+                            )
+                            self.active_model = model_candidate
+                            break
+                        except Exception as err:
+                            err_str = str(err)
+                            last_err = err_str
+                            # If 503 High Demand spike, wait and retry this model up to 3 times
+                            if ("503" in err_str or "UNAVAILABLE" in err_str) and attempt < 3:
+                                wait_sec = attempt * 1.5
+                                print(f"  [Demand Spike 503] {model_candidate} busy. Retrying in {wait_sec}s (attempt {attempt+1}/3)...")
+                                time.sleep(wait_sec)
+                                continue
+                            # If 404 Not Found or other error, fallback to next discovered model if available
+                            if ("404" in err_str or "503" in err_str) and model_candidate != self.models_to_try[-1]:
+                                print(f"  [Model Warning] {model_candidate} unavailable ({err_str[:60]}). Falling back...")
+                                break
+                            raise err
+
+                    if response:
                         break
-                    except Exception as err:
-                        err_str = str(err)
-                        last_err = err_str
-                        # If model is unavailable (503) or rate-limited (429), try next model
-                        if ("503" in err_str or "UNAVAILABLE" in err_str or "404" in err_str) and model_candidate != FALLBACK_MODELS[-1]:
-                            print(f"  [Model Warning] {model_candidate} busy ({err_str[:60]}). Falling back to next model...")
-                            continue
-                        raise err
 
                 if not response:
                     raise Exception(last_err or "No response from Gemini.")
 
                 raw_text = (response.text or "").strip()
-                if raw_text.startswith("```"):
-                    raw_text = raw_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+                if "```json" in raw_text:
+                    raw_text = raw_text.split("```json", 1)[1].split("```", 1)[0].strip()
+                elif "```" in raw_text:
+                    raw_text = raw_text.split("```", 1)[1].split("```", 1)[0].strip()
+                elif "{" in raw_text and "}" in raw_text:
+                    raw_text = raw_text[raw_text.find("{"):raw_text.rfind("}")+1]
 
                 parsed = json.loads(raw_text)
                 bin_slug = parsed.get("bin_slug", "recyclable").lower().strip()
@@ -422,18 +465,18 @@ def draw_hud(frame, classifier, auto_scan_enabled):
 
 # ── 5. MAIN APPLICATION LOOP ─────────────────────────────────────────────────
 def main():
+    cam_type, cam_obj = init_camera()
+    classifier = GeminiClassifier(api_key=GEMINI_API_KEY)
+
     print("=" * 65)
     print("       SyncBin GEMINI AI Vision — Live Trash Classifier")
     print("=" * 65)
     print(f"Target Server   : {DASHBOARD_URL}")
-    print(f"Models Priority : {' -> '.join(FALLBACK_MODELS)}")
+    print(f"Active Model    : {classifier.active_model}")
     print(f"Autofocus       : Continuous Hardware AF Active (Tap [F] to refocus)")
     print("Default Mode    : ON-DEMAND [SPACEBAR] to avoid free-tier quota limits")
     print("Controls        : [SPACE] = Scan Item | [F] = Refocus | [A] = Toggle Auto-Scan | [Q] = Quit")
     print("-" * 65)
-
-    cam_type, cam_obj = init_camera()
-    classifier = GeminiClassifier(api_key=GEMINI_API_KEY)
 
     auto_scan_enabled = False  # Disabled by default to protect free-tier 5 RPM limit
     last_auto_scan = time.time()
