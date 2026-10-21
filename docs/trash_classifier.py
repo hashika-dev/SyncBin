@@ -56,12 +56,8 @@ def load_api_key():
 
 GEMINI_API_KEY = load_api_key()
 
-# List of models in order of priority (falls back if one is experiencing a 503/429 spike)
-FALLBACK_MODELS = [
-    os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
-    "gemini-2.0-flash",
-    "gemini-1.5-flash"
-]
+# Default vision model (can be overridden via GEMINI_MODEL in .env)
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
 
 # Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
@@ -172,8 +168,8 @@ class GeminiClassifier:
         self.cooldown_until = 0
 
         # Discover available models for this specific API key
-        self.models_to_try = ["gemini-3.8-flash"]
-        self.active_model = "gemini-3.8-flash"
+        self.models_to_try = [DEFAULT_MODEL]
+        self.active_model = DEFAULT_MODEL
         if self.client:
             self._discover_models()
 
@@ -181,28 +177,57 @@ class GeminiClassifier:
         self.worker_thread.start()
 
     def _discover_models(self):
-        """Discovers valid active Flash models available on your Google account."""
+        """Discovers valid active multimodal Flash models available on your Google account."""
         found = []
         try:
             for m in self.client.models.list():
                 clean = getattr(m, "name", "").replace("models/", "").strip()
-                # Look for text/multimodal generation flash models
-                if "flash" in clean.lower() and not any(k in clean.lower() for k in ["embed", "aqa", "imagen"]):
-                    found.append(clean)
+                # Must be a flash model
+                if "flash" not in clean.lower():
+                    continue
+                # Exclude audio, tts, live, and embed models
+                if any(k in clean.lower() for k in ["tts", "audio", "embed", "aqa", "imagen", "live"]):
+                    continue
+                # Exclude image generation models (not image input comprehension)
+                if clean.endswith("-image") or clean.endswith("-image-preview"):
+                    continue
+                # Exclude retired models known to return 404
+                if clean == "gemini-2.5-flash":
+                    continue
+                found.append(clean)
         except Exception as e:
             print(f"[Model Discovery Notice]: {e}")
 
-        if found:
-            print(f"[Gemini] Active Flash models detected on your account: {', '.join(found)}")
-            # Put gemini-3.8-flash first if available, followed by other flash variants
-            if "gemini-3.8-flash" in found:
-                self.models_to_try = ["gemini-3.8-flash"] + [m for m in found if m != "gemini-3.8-flash"]
-            else:
-                self.models_to_try = found
-        else:
-            self.models_to_try = ["gemini-3.8-flash"]
+        # Stable priority order:
+        # 'gemini-flash-latest' is Google's primary production vision model with the highest capacity & no 503 spikes.
+        PREFERRED_ORDER = [
+            os.environ.get("GEMINI_MODEL", "").strip(),
+            "gemini-flash-latest",
+            "gemini-3.7-flash",
+            "gemini-3.5-flash",
+            "gemini-3.8-flash",
+            "gemini-flash-lite-latest",
+            "gemini-3.6-flash",
+            "gemini-3.1-flash-lite",
+            "gemini-2.5-flash-lite"
+        ]
 
+        ordered_models = []
+        for p in PREFERRED_ORDER:
+            if p and p in found and p not in ordered_models:
+                ordered_models.append(p)
+
+        # Append any remaining discovered multimodal flash models
+        for f in found:
+            if f not in ordered_models:
+                ordered_models.append(f)
+
+        if not ordered_models:
+            ordered_models = ["gemini-flash-latest", "gemini-3.7-flash", "gemini-3.5-flash"]
+
+        self.models_to_try = ordered_models
         self.active_model = self.models_to_try[0]
+        print(f"[Gemini] Vision Models Priority: {' -> '.join(self.models_to_try[:4])}")
 
     def submit_request(self, frame_bgr, trigger_mode="manual"):
         now = time.time()
@@ -293,16 +318,23 @@ class GeminiClassifier:
                         except Exception as err:
                             err_str = str(err)
                             last_err = err_str
+
+                            # If project quota is exhausted (429), trigger the 15s cooldown immediately
+                            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                                raise err
+
                             # If 503 High Demand spike, wait and retry this model up to 3 times
                             if ("503" in err_str or "UNAVAILABLE" in err_str) and attempt < 3:
                                 wait_sec = attempt * 1.5
                                 print(f"  [Demand Spike 503] {model_candidate} busy. Retrying in {wait_sec}s (attempt {attempt+1}/3)...")
                                 time.sleep(wait_sec)
                                 continue
-                            # If 404 Not Found or other error, fallback to next discovered model if available
-                            if ("404" in err_str or "503" in err_str) and model_candidate != self.models_to_try[-1]:
-                                print(f"  [Model Warning] {model_candidate} unavailable ({err_str[:60]}). Falling back...")
+
+                            # For 400 (unsupported modality), 404 (retired), or exhausted 503, fallback to next model
+                            if model_candidate != self.models_to_try[-1]:
+                                print(f"  [Model Fallback] {model_candidate} returned error ({err_str[:60]}...). Trying next candidate...")
                                 break
+
                             raise err
 
                     if response:
