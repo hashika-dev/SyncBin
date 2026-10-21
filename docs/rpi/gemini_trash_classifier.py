@@ -3,11 +3,11 @@
 SyncBin Gemini Vision AI — trash_classifier.py
 =============================================
 Runs Google Gemini Multimodal Vision on Raspberry Pi 4/5.
-- Provides real-time camera preview (CSI Pi Camera Module 3 or USB Webcam).
-- Uses asynchronous background processing so the video preview never lags.
-- High-tech HUD overlay showing target reticle, item classification, and bin assignment.
-- Both auto-scan mode (with debounce) and manual [SPACEBAR] trigger.
-- Syncs live detections and snapshots to https://ecosync.me/api/bins/camera-scan.
+- Real-time smooth camera feed with HUD overlays (CSI or USB).
+- Non-blocking async background thread for Gemini API inference.
+- Color-coded bin classification readout and 1-sentence explanation.
+- Auto-scan with debounce + manual [SPACEBAR] trigger.
+- Live dashboard sync to https://ecosync.me.
 """
 
 import os
@@ -18,28 +18,34 @@ import queue
 import threading
 import cv2
 import requests
+
+# Ensure system Picamera2 can be loaded inside virtual environment (venv)
+for p in ["/usr/lib/python3/dist-packages", "/usr/local/lib/python3/dist-packages"]:
+    if os.path.exists(p) and p not in sys.path:
+        sys.path.append(p)
+
 from google import genai
 
-# ── 1. CONFIGURATION & CONSTANTS ──────────────────────────────────────────────
+# ── 1. CONFIGURATION ──────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyC-CsPBpthyvuLKGt7gKkmU06QUuGB2c74")
 GEMINI_MODEL   = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
 
-# Live SyncBin Dashboard endpoint (can be overridden with DASHBOARD_URL)
+# Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
 
-# Auto-scan cooldown in seconds (time to wait before scanning the next item)
+# Auto-scan cooldown in seconds
 AUTO_SCAN_INTERVAL = float(os.environ.get("AUTO_SCAN_INTERVAL", 4.0))
 
-# Path for web snapshot server conflict-free frame sharing
+# Path for conflict-free web snapshot server
 SHARED_FRAME_PATH = "/tmp/syncbin_latest.jpg"
 
-# Stream Color Codes (BGR format for OpenCV)
+# Stream Colors (BGR for OpenCV)
 BIN_COLORS = {
     "recyclable":    (235, 165, 14),   # Sky Blue / Cyan
     "biodegradable": (46, 185, 16),    # Emerald Green
     "non-bio":       (11, 158, 245),   # Amber / Orange
     "hazardous":     (94, 63, 244),    # Rose / Red
-    "unknown":       (160, 160, 160),  # Slate Grey
+    "unknown":       (160, 160, 160),  # Grey
 }
 
 BIN_TITLES = {
@@ -52,32 +58,50 @@ BIN_TITLES = {
 
 # ── 2. CAMERA INITIALIZATION (CSI OR USB) ────────────────────────────────────
 def init_camera():
-    """Tries Pi Camera Module 3 via Picamera2, falls back to USB webcam."""
+    """Initializes Raspberry Pi Camera Module 3 (CSI via Picamera2) or fallback USB Webcam."""
+    # 1. Try Official Pi Camera Module via Picamera2
     try:
-        from picam2 import Picamera2
-        print("[Camera] Attempting Raspberry Pi Camera Module 3 (CSI)...")
+        try:
+            from picamera2 import Picamera2
+        except ImportError:
+            from picam2 import Picamera2
+
+        print("[Camera] Initializing Raspberry Pi Camera Module 3 (Picamera2)...")
         cam = Picamera2()
         config = cam.create_preview_configuration(main={"size": (640, 480), "format": "BGR888"})
         cam.configure(config)
         cam.start()
-        print("[Camera] CSI Camera Module 3 initialized successfully.")
+        print("[Camera] Pi Camera Module 3 ready!")
         return ("csi", cam)
     except Exception as e:
-        print(f"[Camera] Picamera2 not available ({e}). Falling back to USB webcam...")
+        print(f"[Camera] Picamera2 notice: {e}")
+        print("[Camera] Checking for USB webcam (/dev/video0)...")
 
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    if not cap.isOpened():
-        print("[Error] Could not access any camera (CSI or USB /dev/video0).")
-        sys.exit(1)
+    # 2. Try USB Webcam with validation to prevent V4L2 timeout hangs
+    try:
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        if cap.isOpened():
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            ret, test_frame = cap.read()
+            if ret and test_frame is not None:
+                print("[Camera] USB Webcam ready!")
+                return ("usb", cap)
+            cap.release()
+    except Exception:
+        pass
 
-    print("[Camera] USB Webcam opened successfully on /dev/video0.")
-    return ("usb", cap)
+    print("\n[Error] Could not initialize any camera feed!")
+    print("  Troubleshooting steps:")
+    print("  1. Stop background camera services that may hold the device:")
+    print("     sudo systemctl stop syncbin-detector")
+    print("     pkill -f yolo_detector")
+    print("  2. If using Camera Module 3 ribbon, verify with:")
+    print("     rpicam-hello -t 2000")
+    sys.exit(1)
 
 
 def read_frame(cam_type, cam_obj):
-    """Fetches a single frame from the active camera source."""
     if cam_type == "csi":
         return True, cam_obj.capture_array()
     return cam_obj.read()
@@ -85,7 +109,7 @@ def read_frame(cam_type, cam_obj):
 
 # ── 3. ASYNC CLASSIFICATION WORKER ───────────────────────────────────────────
 class GeminiClassifier:
-    """Handles background API calls to Gemini so the video feed never freezes."""
+    """Handles background API calls to Gemini so the video preview never freezes."""
 
     def __init__(self, api_key: str, model_name: str):
         self.client = genai.Client(api_key=api_key)
@@ -95,17 +119,14 @@ class GeminiClassifier:
         self.last_result = None
         self.last_scan_time = 0
 
-        # Start background worker thread
         self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
         self.worker_thread.start()
 
     def submit_request(self, frame_bgr, trigger_mode="auto"):
-        """Submits a frame for Gemini analysis if worker is idle."""
         if self.is_busy:
             return False
 
         try:
-            # Drop older task if any
             if not self.request_queue.empty():
                 try:
                     self.request_queue.get_nowait()
@@ -128,7 +149,6 @@ class GeminiClassifier:
             start_t = time.time()
 
             try:
-                # Convert BGR to RGB for Gemini
                 rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
                 success, encoded = cv2.imencode(".jpg", rgb, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
                 if not success:
@@ -137,7 +157,6 @@ class GeminiClassifier:
 
                 img_bytes = encoded.tobytes()
 
-                # Optimized waste classification prompt with strict JSON output
                 prompt = (
                     "You are the real-time AI Vision Engine for the SyncBin Smart Waste System.\n"
                     "Analyze this camera frame and identify the primary trash / waste item in view.\n"
@@ -148,7 +167,7 @@ class GeminiClassifier:
                     "  4. 'hazardous' (batteries, medicine, bulbs, electronics, chemicals)\n\n"
                     "If there is NO trash item in view (e.g. empty background, room ceiling, only a hand),\n"
                     "set 'is_trash': false, 'item_name': 'No Waste Detected', 'bin_slug': 'unknown'.\n\n"
-                    "Output ONLY a raw valid JSON object with these keys:\n"
+                    "Output ONLY a raw valid JSON object with these exact keys:\n"
                     "{\n"
                     '  "is_trash": true,\n'
                     '  "item_name": "Plastic Bottle",\n'
@@ -158,7 +177,6 @@ class GeminiClassifier:
                     "}"
                 )
 
-                # Call Gemini API
                 response = self.client.models.generate_content(
                     model=self.model_name,
                     contents=[
@@ -171,7 +189,6 @@ class GeminiClassifier:
                 )
 
                 raw_text = (response.text or "").strip()
-                # Strip markdown json code fences if model wrapped them
                 if raw_text.startswith("```"):
                     raw_text = raw_text.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
@@ -193,10 +210,9 @@ class GeminiClassifier:
                 self.last_result = result_data
                 self.last_scan_time = time.time()
 
-                print(f"\n[GEMINI RESULT] {result_data['item_name']} ({result_data['confidence']}%) -> [{bin_slug.upper()}] ({result_data['elapsed_sec']}s)")
-                print(f"               Why: {result_data['explanation']}")
+                print(f"\n[GEMINI] {result_data['item_name']} ({result_data['confidence']}%) -> [{bin_slug.upper()}] in {result_data['elapsed_sec']}s")
+                print(f"         Reason: {result_data['explanation']}")
 
-                # If item is valid trash, sync to live EcoSync dashboard
                 if result_data["is_trash"] and bin_slug != "unknown":
                     self._sync_to_dashboard(frame_bgr, result_data)
 
@@ -216,7 +232,6 @@ class GeminiClassifier:
                 self.request_queue.task_done()
 
     def _sync_to_dashboard(self, frame_bgr, result):
-        """Asynchronously posts detection to https://ecosync.me/api/bins/camera-scan"""
         def upload_task():
             try:
                 _, img_encoded = cv2.imencode(".jpg", frame_bgr, [int(cv2.IMWRITE_JPEG_QUALITY), 85])
@@ -233,96 +248,75 @@ class GeminiClassifier:
                 else:
                     print(f"  [CLOUD SYNC] Server response ({resp.status_code}): {resp.text[:80]}")
             except Exception as e:
-                print(f"  [CLOUD SYNC] Offline / Network Error: {e}")
+                print(f"  [CLOUD SYNC] Network Error: {e}")
 
         threading.Thread(target=upload_task, daemon=True).start()
 
 
 # ── 4. HUD OVERLAY RENDERING ─────────────────────────────────────────────────
 def draw_hud(frame, classifier):
-    """Draws a professional, high-visibility HUD overlay on the live preview."""
     h, w, _ = frame.shape
     overlay = frame.copy()
 
-    # 1. Semi-transparent header banner
+    # Top Header Banner
     cv2.rectangle(overlay, (0, 0), (w, 42), (15, 23, 20), -1)
-
-    # Header text
     cv2.putText(overlay, "SYNCBIN GEMINI VISION AI", (14, 26),
                 cv2.FONT_HERSHEY_DUPLEX, 0.65, (52, 211, 153), 1, cv2.LINE_AA)
 
-    # Status tag (right corner)
+    # Status readout
     if classifier.is_busy:
-        status_text = "ANALYZING..."
-        status_color = (0, 215, 255)  # Yellow/Gold
+        status_text, status_color = "ANALYZING...", (0, 215, 255)
     else:
-        status_text = "READY [SPACE=SCAN]"
-        status_color = (52, 211, 153)  # Green
+        status_text, status_color = "READY [SPACE=SCAN]", (52, 211, 153)
 
     cv2.putText(overlay, status_text, (w - 230, 26),
                 cv2.FONT_HERSHEY_SIMPLEX, 0.55, status_color, 2, cv2.LINE_AA)
 
-    # 2. Central target reticle (Guides user where to hold the trash)
+    # Central Target Reticle
     box_w, box_h = int(w * 0.55), int(h * 0.55)
-    x1 = (w - box_w) // 2
-    y1 = (h - box_h) // 2 + 15
+    x1, y1 = (w - box_w) // 2, (h - box_h) // 2 + 15
     x2, y2 = x1 + box_w, y1 + box_h
-
     reticle_color = (0, 215, 255) if classifier.is_busy else (180, 180, 180)
-    # Target corner brackets
-    corner_len = 25
-    t = 2
-    # Top-Left
+    corner_len, t = 25, 2
     cv2.line(overlay, (x1, y1), (x1 + corner_len, y1), reticle_color, t)
     cv2.line(overlay, (x1, y1), (x1, y1 + corner_len), reticle_color, t)
-    # Top-Right
     cv2.line(overlay, (x2, y1), (x2 - corner_len, y1), reticle_color, t)
     cv2.line(overlay, (x2, y1), (x2, y1 + corner_len), reticle_color, t)
-    # Bottom-Left
     cv2.line(overlay, (x1, y2), (x1 + corner_len, y2), reticle_color, t)
-    cv2.line(overlay, (x1, y2), (x1, y2 - corner_len), reticle_color, t)
-    # Bottom-Right
+    cv2.line(overlay, (x1, y2), (x1, y2 - corner_len, y2), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2 - corner_len, y2), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2, y2 - corner_len), reticle_color, t)
 
-    # 3. Bottom Classification Readout
+    # Bottom Classification Readout
     res = classifier.last_result
     if res and res.get("is_trash"):
         slug = res.get("bin_slug", "recyclable")
         color = BIN_COLORS.get(slug, (160, 160, 160))
         bin_label = BIN_TITLES.get(slug, slug.upper())
 
-        # Bottom result box
         cv2.rectangle(overlay, (10, h - 90), (w - 10, h - 10), (10, 15, 12), -1)
         cv2.rectangle(overlay, (10, h - 90), (w - 10, h - 10), color, 2)
-
-        # Category indicator bar
         cv2.rectangle(overlay, (10, h - 90), (20, h - 10), color, -1)
 
-        # Primary item title & confidence
         title_str = f"{res['item_name']} ({res['confidence']}%) --> {bin_label}"
         cv2.putText(overlay, title_str, (30, h - 62),
                     cv2.FONT_HERSHEY_DUPLEX, 0.60, (255, 255, 255), 1, cv2.LINE_AA)
 
-        # Explanation sentence
         expl_str = res.get("explanation", "")
         if len(expl_str) > 65:
             expl_str = expl_str[:62] + "..."
         cv2.putText(overlay, expl_str, (30, h - 38),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.42, (180, 200, 190), 1, cv2.LINE_AA)
 
-        # Elapsed latency badge
         time_badge = f"{res.get('elapsed_sec', 0)}s"
         cv2.putText(overlay, time_badge, (w - 75, h - 62),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (140, 140, 140), 1, cv2.LINE_AA)
 
     elif res and not res.get("is_trash"):
-        # No item in view notice
         cv2.rectangle(overlay, (10, h - 55), (w - 10, h - 10), (10, 15, 12), -1)
         cv2.putText(overlay, "No item recognized. Place trash in the center reticle.", (30, h - 28),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.50, (160, 160, 160), 1, cv2.LINE_AA)
 
-    # Alpha blend overlay for modern frosted aesthetic
     cv2.addWeighted(overlay, 0.88, frame, 0.12, 0, frame)
     return frame
 
@@ -330,7 +324,7 @@ def draw_hud(frame, classifier):
 # ── 5. MAIN APPLICATION LOOP ─────────────────────────────────────────────────
 def main():
     print("=" * 65)
-    print("       SyncBin GEMINI AI Vision — Live Waste Classifier")
+    print("       SyncBin GEMINI AI Vision — Live Trash Classifier")
     print("=" * 65)
     print(f"Target Server   : {DASHBOARD_URL}")
     print(f"Gemini Model    : {GEMINI_MODEL}")
@@ -353,7 +347,7 @@ def main():
 
             now = time.time()
 
-            # 1. Share fresh frame to /tmp/syncbin_latest.jpg every 1s for web snapshot server
+            # Share frame for web snapshot server
             if now - last_snapshot_write >= 1.0:
                 try:
                     cv2.imwrite(SHARED_FRAME_PATH, frame, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
@@ -361,31 +355,22 @@ def main():
                 except Exception:
                     pass
 
-            # 2. Periodic Auto-Scan Trigger
+            # Auto-Scan Trigger
             if (now - last_auto_scan >= AUTO_SCAN_INTERVAL) and not classifier.is_busy:
                 classifier.submit_request(frame, trigger_mode="auto")
                 last_auto_scan = now
 
-            # 3. Draw live HUD overlay
+            # Draw HUD & show live preview
             display = frame.copy()
             draw_hud(display, classifier)
-
-            # 4. Display live window
             cv2.imshow("SyncBin Gemini Vision — Live Trash Classifier", display)
 
-            # 5. Keyboard input handling
             key = cv2.waitKey(1) & 0xFF
-
-            # [SPACEBAR] -> Force Instant Scan
             if key == ord(' '):
                 print("\n[SPACEBAR] Instant scan triggered by user!")
                 if not classifier.is_busy:
                     classifier.submit_request(frame, trigger_mode="manual")
                     last_auto_scan = now
-                else:
-                    print("Classifier is already analyzing a frame, please wait...")
-
-            # [Q] or [ESC] -> Exit
             elif key in (ord('q'), ord('Q'), 27):
                 print("\nExiting program...")
                 break

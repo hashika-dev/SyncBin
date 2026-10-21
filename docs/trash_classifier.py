@@ -18,6 +18,12 @@ import queue
 import threading
 import cv2
 import requests
+
+# Ensure system Picamera2 can be loaded inside virtual environment (venv)
+for p in ["/usr/lib/python3/dist-packages", "/usr/local/lib/python3/dist-packages"]:
+    if os.path.exists(p) and p not in sys.path:
+        sys.path.append(p)
+
 from google import genai
 
 # ── 1. CONFIGURATION ──────────────────────────────────────────────────────────
@@ -52,28 +58,48 @@ BIN_TITLES = {
 
 # ── 2. CAMERA INITIALIZATION (CSI OR USB) ────────────────────────────────────
 def init_camera():
-    """Tries Pi Camera Module via Picamera2, falls back to USB webcam."""
+    """Initializes Raspberry Pi Camera Module 3 (CSI via Picamera2) or fallback USB Webcam."""
+    # 1. Try Official Pi Camera Module via Picamera2
     try:
-        from picam2 import Picamera2
-        print("[Camera] Initializing Raspberry Pi Camera Module 3 (CSI)...")
+        try:
+            from picamera2 import Picamera2
+        except ImportError:
+            from picam2 import Picamera2
+
+        print("[Camera] Initializing Raspberry Pi Camera Module 3 (Picamera2)...")
         cam = Picamera2()
         config = cam.create_preview_configuration(main={"size": (640, 480), "format": "BGR888"})
         cam.configure(config)
         cam.start()
-        print("[Camera] Pi Camera Module ready.")
+        print("[Camera] Pi Camera Module 3 ready!")
         return ("csi", cam)
     except Exception as e:
-        print(f"[Camera] Picamera2 not detected ({e}). Trying USB webcam...")
+        print(f"[Camera] Picamera2 notice: {e}")
+        print("[Camera] Checking for USB webcam (/dev/video0)...")
 
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    if not cap.isOpened():
-        print("[Error] No camera found on CSI or USB (/dev/video0). Check connections.")
-        sys.exit(1)
+    # 2. Try USB Webcam with validation to prevent V4L2 timeout hangs
+    try:
+        cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
+        if cap.isOpened():
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+            # Quick check if camera actually returns frames
+            ret, test_frame = cap.read()
+            if ret and test_frame is not None:
+                print("[Camera] USB Webcam ready!")
+                return ("usb", cap)
+            cap.release()
+    except Exception:
+        pass
 
-    print("[Camera] USB Webcam opened successfully.")
-    return ("usb", cap)
+    print("\n[Error] Could not initialize any camera feed!")
+    print("  Troubleshooting steps:")
+    print("  1. Stop background camera services that may hold the device:")
+    print("     sudo systemctl stop syncbin-detector")
+    print("     pkill -f yolo_detector")
+    print("  2. If using Camera Module 3 ribbon, verify with:")
+    print("     rpicam-hello -t 2000")
+    sys.exit(1)
 
 
 def read_frame(cam_type, cam_obj):
