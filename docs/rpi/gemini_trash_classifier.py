@@ -5,9 +5,10 @@ SyncBin Gemini Vision AI — trash_classifier.py
 Runs Google Gemini Multimodal Vision on Raspberry Pi 4/5.
 - Real-time smooth camera feed with HUD overlays (CSI or USB).
 - Motorized Continuous Autofocus enabled for Camera Module 3.
-- Non-blocking async background thread for Gemini API inference.
+- On-Demand scanning with [SPACEBAR] to avoid free-tier quota exhaustion (429/503).
+- Optional Auto-Scan toggle ([A] key) with safe rate-limiting.
+- Smart model fallback (gemini-2.0-flash -> gemini-1.5-flash -> gemini-3.8-flash).
 - Color-coded bin classification readout and 1-sentence explanation.
-- Auto-scan with debounce + manual [SPACEBAR] trigger + [F] to refocus.
 - Live dashboard sync to https://ecosync.me.
 """
 
@@ -54,13 +55,19 @@ def load_api_key():
     return ""
 
 GEMINI_API_KEY = load_api_key()
-GEMINI_MODEL   = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
+
+# List of models in order of priority (falls back if one is experiencing a 503/429 spike)
+FALLBACK_MODELS = [
+    os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
+    "gemini-1.5-flash",
+    "gemini-3.8-flash"
+]
 
 # Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
 
-# Auto-scan cooldown in seconds
-AUTO_SCAN_INTERVAL = float(os.environ.get("AUTO_SCAN_INTERVAL", 4.0))
+# Auto-scan cooldown in seconds (minimum 13s to stay within 5 requests/min free tier)
+AUTO_SCAN_INTERVAL = float(os.environ.get("AUTO_SCAN_INTERVAL", 14.0))
 
 # Path for conflict-free web snapshot server
 SHARED_FRAME_PATH = "/tmp/syncbin_latest.jpg"
@@ -111,7 +118,7 @@ def init_camera():
                 cam.set_controls({"AfMode": 2})
                 print("[Camera] Continuous Autofocus active (code 2)!")
             except Exception as afe:
-                print(f"[Camera] Autofocus control notice: {afe}")
+                print(f"[Camera] Autofocus notice: {afe}")
 
         print("[Camera] Pi Camera Module 3 ready!")
         return ("csi", cam)
@@ -150,39 +157,36 @@ def read_frame(cam_type, cam_obj):
 
 # ── 3. ASYNC CLASSIFICATION WORKER ───────────────────────────────────────────
 class GeminiClassifier:
-    """Handles background API calls to Gemini so the video preview never freezes."""
+    """Handles background API calls to Gemini with automatic model fallback."""
 
-    def __init__(self, api_key: str, model_name: str):
+    def __init__(self, api_key: str):
         if not api_key:
-            print("\n[WARNING] No GEMINI_API_KEY detected!")
-            print("Please set your new key with: export GEMINI_API_KEY='your_api_key_here'")
-            print("Or add it to /home/raspberrypi4/pi-offline-ai/GEMINI-AI/.env\n")
+            print("\n[WARNING] No GEMINI_API_KEY detected in .env!")
+            print("Please set your key in /home/raspberrypi4/pi-offline-ai/GEMINI-AI/.env\n")
 
         self.client = genai.Client(api_key=api_key) if api_key else None
-        self.model_name = model_name
         self.request_queue = queue.Queue(maxsize=1)
         self.is_busy = False
         self.last_result = None
         self.last_scan_time = 0
+        self.cooldown_until = 0
+        self.active_model = FALLBACK_MODELS[0]
 
         self.worker_thread = threading.Thread(target=self._worker_loop, daemon=True)
         self.worker_thread.start()
 
-    def submit_request(self, frame_bgr, trigger_mode="auto"):
+    def submit_request(self, frame_bgr, trigger_mode="manual"):
+        now = time.time()
+        if now < self.cooldown_until:
+            wait_s = int(self.cooldown_until - now)
+            print(f"[Rate Limit] Rate limit active. Ready in {wait_s}s...")
+            return False
+
         if self.is_busy:
             return False
 
         if not self.client:
-            print("[Gemini] Cannot scan: No API key configured. Check GEMINI_API_KEY.")
-            self.last_result = {
-                "is_trash": False,
-                "item_name": "API Key Missing",
-                "bin_slug": "unknown",
-                "confidence": 0,
-                "explanation": "Set your new key via export GEMINI_API_KEY='...'",
-                "elapsed_sec": 0,
-                "trigger_mode": trigger_mode,
-            }
+            print("[Gemini] Cannot scan: No API key configured. Check .env")
             return False
 
         try:
@@ -219,7 +223,7 @@ class GeminiClassifier:
                 prompt = (
                     "You are the real-time AI Vision Engine for the SyncBin Smart Waste System.\n"
                     "Analyze this camera frame and identify the primary trash / waste item in view.\n"
-                    "Focus particularly on whatever object is centered in the frame.\n"
+                    "Focus particularly on the object held in the center of the frame.\n"
                     "Classify it strictly into ONE of these 4 bin streams:\n"
                     "  1. 'recyclable' (plastic bottles, clean paper, soda cans, cardboard, glass)\n"
                     "  2. 'biodegradable' (fruit peels, food scraps, leaves, vegetables, coffee grounds)\n"
@@ -237,16 +241,36 @@ class GeminiClassifier:
                     "}"
                 )
 
-                response = self.client.models.generate_content(
-                    model=self.model_name,
-                    contents=[
-                        prompt,
-                        types.Part.from_bytes(
-                            data=img_bytes,
-                            mime_type="image/jpeg",
+                # Try primary model and fallback if needed
+                response = None
+                last_err = None
+
+                for model_candidate in FALLBACK_MODELS:
+                    try:
+                        print(f"[Gemini] Requesting analysis via {model_candidate}...")
+                        response = self.client.models.generate_content(
+                            model=model_candidate,
+                            contents=[
+                                prompt,
+                                types.Part.from_bytes(
+                                    data=img_bytes,
+                                    mime_type="image/jpeg",
+                                )
+                            ]
                         )
-                    ]
-                )
+                        self.active_model = model_candidate
+                        break
+                    except Exception as err:
+                        err_str = str(err)
+                        last_err = err_str
+                        # If model is unavailable (503) or rate-limited (429), try next model
+                        if ("503" in err_str or "UNAVAILABLE" in err_str or "404" in err_str) and model_candidate != FALLBACK_MODELS[-1]:
+                            print(f"  [Model Warning] {model_candidate} busy ({err_str[:60]}). Falling back to next model...")
+                            continue
+                        raise err
+
+                if not response:
+                    raise Exception(last_err or "No response from Gemini.")
 
                 raw_text = (response.text or "").strip()
                 if raw_text.startswith("```"):
@@ -270,20 +294,29 @@ class GeminiClassifier:
                 self.last_result = result_data
                 self.last_scan_time = time.time()
 
-                print(f"\n[GEMINI] {result_data['item_name']} ({result_data['confidence']}%) -> [{bin_slug.upper()}] in {result_data['elapsed_sec']}s")
-                print(f"         Reason: {result_data['explanation']}")
+                print(f"\n[GEMINI SUCCESS] {result_data['item_name']} ({result_data['confidence']}%) -> [{bin_slug.upper()}] in {result_data['elapsed_sec']}s")
+                print(f"                 Reason: {result_data['explanation']}\n")
 
                 if result_data["is_trash"] and bin_slug != "unknown":
                     self._sync_to_dashboard(frame_bgr, result_data)
 
             except Exception as err:
-                print(f"[Gemini Error]: {err}")
+                err_msg = str(err)
+                print(f"\n[Gemini Error]: {err_msg}")
+
+                # If rate limited (429) or high demand (503), set a 15-second cooldown
+                if "429" in err_msg or "RESOURCE_EXHAUSTED" in err_msg or "503" in err_msg:
+                    self.cooldown_until = time.time() + 15.0
+                    explanation = "Rate limit reached. Cooldown 15s (Tap Space when ready)."
+                else:
+                    explanation = err_msg[:60]
+
                 self.last_result = {
                     "is_trash": False,
-                    "item_name": "API Connection Error",
+                    "item_name": "API Service Busy",
                     "bin_slug": "unknown",
                     "confidence": 0,
-                    "explanation": str(err)[:60],
+                    "explanation": explanation,
                     "elapsed_sec": round(time.time() - start_t, 2),
                     "trigger_mode": trigger_mode,
                 }
@@ -304,33 +337,38 @@ class GeminiClassifier:
                 files = {"image": ("gemini_scan.jpg", img_encoded.tobytes(), "image/jpeg")}
                 resp = requests.post(DASHBOARD_URL, data=payload, files=files, timeout=6)
                 if resp.status_code == 200:
-                    print(f"  [CLOUD SYNC] Successfully updated live bins on {DASHBOARD_URL}")
+                    print(f"  [CLOUD SYNC] Updated live bin: https://ecosync.me")
                 else:
                     print(f"  [CLOUD SYNC] Server response ({resp.status_code}): {resp.text[:80]}")
             except Exception as e:
-                print(f"  [CLOUD SYNC] Network Error: {e}")
+                print(f"  [CLOUD SYNC] Network Notice: {e}")
 
         threading.Thread(target=upload_task, daemon=True).start()
 
 
 # ── 4. HUD OVERLAY RENDERING ─────────────────────────────────────────────────
-def draw_hud(frame, classifier):
+def draw_hud(frame, classifier, auto_scan_enabled):
     h, w, _ = frame.shape
     overlay = frame.copy()
 
     # Top Header Banner
     cv2.rectangle(overlay, (0, 0), (w, 42), (15, 23, 20), -1)
-    cv2.putText(overlay, "SYNCBIN GEMINI VISION AI", (14, 26),
-                cv2.FONT_HERSHEY_DUPLEX, 0.65, (52, 211, 153), 1, cv2.LINE_AA)
+    cv2.putText(overlay, f"SYNCBIN GEMINI AI [{classifier.active_model}]", (14, 26),
+                cv2.FONT_HERSHEY_DUPLEX, 0.55, (52, 211, 153), 1, cv2.LINE_AA)
 
-    # Status readout
+    now = time.time()
     if classifier.is_busy:
         status_text, status_color = "ANALYZING...", (0, 215, 255)
+    elif now < classifier.cooldown_until:
+        remaining = int(classifier.cooldown_until - now)
+        status_text, status_color = f"RATE LIMIT COOLDOWN: {remaining}s", (0, 165, 255)
+    elif auto_scan_enabled:
+        status_text, status_color = "AUTO-SCAN ON [A=OFF | SPACE=SCAN]", (52, 211, 153)
     else:
-        status_text, status_color = "READY [SPACE=SCAN | F=FOCUS]", (52, 211, 153)
+        status_text, status_color = "PRESS [SPACE] TO SCAN ITEM", (52, 211, 153)
 
-    cv2.putText(overlay, status_text, (w - 300, 26),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.48, status_color, 1, cv2.LINE_AA)
+    cv2.putText(overlay, status_text, (w - 330, 26),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.45, status_color, 1, cv2.LINE_AA)
 
     # Central Target Reticle
     box_w, box_h = int(w * 0.55), int(h * 0.55)
@@ -345,7 +383,7 @@ def draw_hud(frame, classifier):
     cv2.line(overlay, (x1, y2), (x1 + corner_len, y2), reticle_color, t)
     cv2.line(overlay, (x1, y2), (x1, y2 - corner_len), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2 - corner_len, y2), reticle_color, t)
-    cv2.line(overlay, (x2, y2), (x2, y2 - corner_len), reticle_color, t)
+    cv2.line(overlay, (x2, y2), (x2 - corner_len, y2), reticle_color, t)
 
     # Bottom Classification Readout
     res = classifier.last_result
@@ -388,15 +426,16 @@ def main():
     print("       SyncBin GEMINI AI Vision — Live Trash Classifier")
     print("=" * 65)
     print(f"Target Server   : {DASHBOARD_URL}")
-    print(f"Gemini Model    : {GEMINI_MODEL}")
+    print(f"Models Priority : {' -> '.join(FALLBACK_MODELS)}")
     print(f"Autofocus       : Continuous Hardware AF Active (Tap [F] to refocus)")
-    print(f"Auto-Scan Delay : {AUTO_SCAN_INTERVAL}s (or tap SPACEBAR anytime)")
-    print("Controls        : [SPACE] = Scan | [F] = Refocus | [Q]/[ESC] = Quit")
+    print("Default Mode    : ON-DEMAND [SPACEBAR] to avoid free-tier quota limits")
+    print("Controls        : [SPACE] = Scan Item | [F] = Refocus | [A] = Toggle Auto-Scan | [Q] = Quit")
     print("-" * 65)
 
     cam_type, cam_obj = init_camera()
-    classifier = GeminiClassifier(api_key=GEMINI_API_KEY, model_name=GEMINI_MODEL)
+    classifier = GeminiClassifier(api_key=GEMINI_API_KEY)
 
+    auto_scan_enabled = False  # Disabled by default to protect free-tier 5 RPM limit
     last_auto_scan = time.time()
     last_snapshot_write = 0
 
@@ -417,22 +456,26 @@ def main():
                 except Exception:
                     pass
 
-            # Auto-Scan Trigger
-            if (now - last_auto_scan >= AUTO_SCAN_INTERVAL) and not classifier.is_busy:
+            # Optional Auto-Scan (if toggled on with [A])
+            if auto_scan_enabled and (now - last_auto_scan >= AUTO_SCAN_INTERVAL) and not classifier.is_busy:
                 classifier.submit_request(frame, trigger_mode="auto")
                 last_auto_scan = now
 
             # Draw HUD & show live preview
             display = frame.copy()
-            draw_hud(display, classifier)
+            draw_hud(display, classifier, auto_scan_enabled)
             cv2.imshow("SyncBin Gemini Vision — Live Trash Classifier", display)
 
             key = cv2.waitKey(1) & 0xFF
+
+            # [SPACEBAR] -> Instant On-Demand Scan
             if key == ord(' '):
-                print("\n[SPACEBAR] Instant scan triggered by user!")
+                print("\n[SPACEBAR] Scan requested!")
                 if not classifier.is_busy:
                     classifier.submit_request(frame, trigger_mode="manual")
                     last_auto_scan = now
+                else:
+                    print("Gemini is currently analyzing a frame, please wait...")
 
             # [F] -> Force Autofocus Cycle on Camera Module 3
             elif key in (ord('f'), ord('F')):
@@ -447,6 +490,13 @@ def main():
                         except Exception:
                             pass
 
+            # [A] -> Toggle Auto-Scan Mode
+            elif key in (ord('a'), ord('A')):
+                auto_scan_enabled = not auto_scan_enabled
+                state_str = "ENABLED (Interval: 14s)" if auto_scan_enabled else "DISABLED (On-Demand SPACEBAR mode)"
+                print(f"\n[AUTO-SCAN] Mode toggled: {state_str}")
+
+            # [Q] or [ESC] -> Quit
             elif key in (ord('q'), ord('Q'), 27):
                 print("\nExiting program...")
                 break
