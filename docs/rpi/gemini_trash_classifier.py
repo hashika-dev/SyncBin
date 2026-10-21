@@ -4,9 +4,10 @@ SyncBin Gemini Vision AI — trash_classifier.py
 =============================================
 Runs Google Gemini Multimodal Vision on Raspberry Pi 4/5.
 - Real-time smooth camera feed with HUD overlays (CSI or USB).
+- Motorized Continuous Autofocus enabled for Camera Module 3.
 - Non-blocking async background thread for Gemini API inference.
 - Color-coded bin classification readout and 1-sentence explanation.
-- Auto-scan with debounce + manual [SPACEBAR] trigger.
+- Auto-scan with debounce + manual [SPACEBAR] trigger + [F] to refocus.
 - Live dashboard sync to https://ecosync.me.
 """
 
@@ -28,7 +29,31 @@ from google import genai
 from google.genai import types
 
 # ── 1. CONFIGURATION ──────────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyC-CsPBpthyvuLKGt7gKkmU06QUuGB2c74")
+def load_api_key():
+    """Loads Gemini API key from environment or local .env file."""
+    key = os.environ.get("GEMINI_API_KEY", "").strip()
+    if key:
+        return key
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    search_paths = [
+        os.path.join(script_dir, ".env"),
+        ".env",
+        os.path.expanduser("~/.gemini_key")
+    ]
+    for env_path in search_paths:
+        if os.path.exists(env_path):
+            try:
+                with open(env_path, "r") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line.startswith("GEMINI_API_KEY="):
+                            return line.split("=", 1)[1].strip().strip('"').strip("'")
+            except Exception:
+                pass
+    return ""
+
+GEMINI_API_KEY = load_api_key()
 GEMINI_MODEL   = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
 # Live SyncBin Dashboard endpoint
@@ -60,7 +85,6 @@ BIN_TITLES = {
 # ── 2. CAMERA INITIALIZATION (CSI OR USB) ────────────────────────────────────
 def init_camera():
     """Initializes Raspberry Pi Camera Module 3 (CSI via Picamera2) or fallback USB Webcam."""
-    # 1. Try Official Pi Camera Module via Picamera2
     try:
         try:
             from picamera2 import Picamera2
@@ -72,13 +96,29 @@ def init_camera():
         config = cam.create_preview_configuration(main={"size": (640, 480), "format": "BGR888"})
         cam.configure(config)
         cam.start()
+
+        # Enable Continuous Hardware Autofocus for Camera Module 3
+        try:
+            from libcamera import controls
+            cam.set_controls({
+                "AfMode": controls.AfModeEnum.Continuous,
+                "AfRange": controls.AfRangeEnum.Full,
+                "AfSpeed": controls.AfSpeedEnum.Fast
+            })
+            print("[Camera] Continuous Hardware Autofocus enabled on Camera Module 3!")
+        except Exception:
+            try:
+                cam.set_controls({"AfMode": 2})
+                print("[Camera] Continuous Autofocus active (code 2)!")
+            except Exception as afe:
+                print(f"[Camera] Autofocus control notice: {afe}")
+
         print("[Camera] Pi Camera Module 3 ready!")
         return ("csi", cam)
     except Exception as e:
         print(f"[Camera] Picamera2 notice: {e}")
         print("[Camera] Checking for USB webcam (/dev/video0)...")
 
-    # 2. Try USB Webcam with validation to prevent V4L2 timeout hangs
     try:
         cap = cv2.VideoCapture(0, cv2.CAP_V4L2)
         if cap.isOpened():
@@ -113,7 +153,12 @@ class GeminiClassifier:
     """Handles background API calls to Gemini so the video preview never freezes."""
 
     def __init__(self, api_key: str, model_name: str):
-        self.client = genai.Client(api_key=api_key)
+        if not api_key:
+            print("\n[WARNING] No GEMINI_API_KEY detected!")
+            print("Please set your new key with: export GEMINI_API_KEY='your_api_key_here'")
+            print("Or add it to /home/raspberrypi4/pi-offline-ai/GEMINI-AI/.env\n")
+
+        self.client = genai.Client(api_key=api_key) if api_key else None
         self.model_name = model_name
         self.request_queue = queue.Queue(maxsize=1)
         self.is_busy = False
@@ -125,6 +170,19 @@ class GeminiClassifier:
 
     def submit_request(self, frame_bgr, trigger_mode="auto"):
         if self.is_busy:
+            return False
+
+        if not self.client:
+            print("[Gemini] Cannot scan: No API key configured. Check GEMINI_API_KEY.")
+            self.last_result = {
+                "is_trash": False,
+                "item_name": "API Key Missing",
+                "bin_slug": "unknown",
+                "confidence": 0,
+                "explanation": "Set your new key via export GEMINI_API_KEY='...'",
+                "elapsed_sec": 0,
+                "trigger_mode": trigger_mode,
+            }
             return False
 
         try:
@@ -161,12 +219,13 @@ class GeminiClassifier:
                 prompt = (
                     "You are the real-time AI Vision Engine for the SyncBin Smart Waste System.\n"
                     "Analyze this camera frame and identify the primary trash / waste item in view.\n"
+                    "Focus particularly on whatever object is centered in the frame.\n"
                     "Classify it strictly into ONE of these 4 bin streams:\n"
                     "  1. 'recyclable' (plastic bottles, clean paper, soda cans, cardboard, glass)\n"
                     "  2. 'biodegradable' (fruit peels, food scraps, leaves, vegetables, coffee grounds)\n"
                     "  3. 'non-bio' (chip bags, plastic wrappers, styrofoam, dirty plastics, masks)\n"
                     "  4. 'hazardous' (batteries, medicine, bulbs, electronics, chemicals)\n\n"
-                    "If there is NO trash item in view (e.g. empty background, room ceiling, only a hand),\n"
+                    "If there is NO trash item in view (e.g. empty background, room ceiling, only a bare hand),\n"
                     "set 'is_trash': false, 'item_name': 'No Waste Detected', 'bin_slug': 'unknown'.\n\n"
                     "Output ONLY a raw valid JSON object with these exact keys:\n"
                     "{\n"
@@ -268,10 +327,10 @@ def draw_hud(frame, classifier):
     if classifier.is_busy:
         status_text, status_color = "ANALYZING...", (0, 215, 255)
     else:
-        status_text, status_color = "READY [SPACE=SCAN]", (52, 211, 153)
+        status_text, status_color = "READY [SPACE=SCAN | F=FOCUS]", (52, 211, 153)
 
-    cv2.putText(overlay, status_text, (w - 230, 26),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.55, status_color, 2, cv2.LINE_AA)
+    cv2.putText(overlay, status_text, (w - 300, 26),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.48, status_color, 1, cv2.LINE_AA)
 
     # Central Target Reticle
     box_w, box_h = int(w * 0.55), int(h * 0.55)
@@ -284,7 +343,7 @@ def draw_hud(frame, classifier):
     cv2.line(overlay, (x2, y1), (x2 - corner_len, y1), reticle_color, t)
     cv2.line(overlay, (x2, y1), (x2, y1 + corner_len), reticle_color, t)
     cv2.line(overlay, (x1, y2), (x1 + corner_len, y2), reticle_color, t)
-    cv2.line(overlay, (x1, y2), (x1, y2 - corner_len, y2), reticle_color, t)
+    cv2.line(overlay, (x1, y2), (x1, y2 - corner_len), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2 - corner_len, y2), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2, y2 - corner_len), reticle_color, t)
 
@@ -315,8 +374,9 @@ def draw_hud(frame, classifier):
 
     elif res and not res.get("is_trash"):
         cv2.rectangle(overlay, (10, h - 55), (w - 10, h - 10), (10, 15, 12), -1)
-        cv2.putText(overlay, "No item recognized. Place trash in the center reticle.", (30, h - 28),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.50, (160, 160, 160), 1, cv2.LINE_AA)
+        notice_text = res.get("explanation") or "No item recognized. Place trash in center reticle."
+        cv2.putText(overlay, notice_text[:65], (30, h - 28),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.45, (160, 160, 160), 1, cv2.LINE_AA)
 
     cv2.addWeighted(overlay, 0.88, frame, 0.12, 0, frame)
     return frame
@@ -329,8 +389,9 @@ def main():
     print("=" * 65)
     print(f"Target Server   : {DASHBOARD_URL}")
     print(f"Gemini Model    : {GEMINI_MODEL}")
+    print(f"Autofocus       : Continuous Hardware AF Active (Tap [F] to refocus)")
     print(f"Auto-Scan Delay : {AUTO_SCAN_INTERVAL}s (or tap SPACEBAR anytime)")
-    print("Controls        : [SPACE] = Instant Scan | [Q] or [ESC] = Quit")
+    print("Controls        : [SPACE] = Scan | [F] = Refocus | [Q]/[ESC] = Quit")
     print("-" * 65)
 
     cam_type, cam_obj = init_camera()
@@ -372,6 +433,20 @@ def main():
                 if not classifier.is_busy:
                     classifier.submit_request(frame, trigger_mode="manual")
                     last_auto_scan = now
+
+            # [F] -> Force Autofocus Cycle on Camera Module 3
+            elif key in (ord('f'), ord('F')):
+                if cam_type == "csi":
+                    print("\n[AUTOFOCUS] Triggering hardware autofocus cycle...")
+                    try:
+                        cam_obj.autofocus_cycle()
+                    except Exception:
+                        try:
+                            from libcamera import controls
+                            cam_obj.set_controls({"AfTrigger": controls.AfTriggerEnum.Start})
+                        except Exception:
+                            pass
+
             elif key in (ord('q'), ord('Q'), 27):
                 print("\nExiting program...")
                 break
