@@ -430,10 +430,10 @@ class GeminiClassifier:
 class SmartWasteDetector:
     """
     Watches the reticle area for newly presented trash items using robust frame differencing.
-    Enforces a strict 'One Scan Per Item' policy with an explicit 6-second post-scan cooldown pause
-    so duplicate scans are completely eliminated.
+    Enforces a smooth 'One Scan Per Item' policy with an active 3.0s disposal pause.
+    Detects hand/item movements during the pause so you don't need to shake or re-move the item!
     """
-    def __init__(self, settle_seconds=0.85, cooldown_seconds=6.0, motion_threshold=0.06):
+    def __init__(self, settle_seconds=0.75, cooldown_seconds=3.0, motion_threshold=0.05):
         self.prev_roi = None
         self.motion_detected = False
         self.motion_settled_start = None
@@ -447,7 +447,7 @@ class SmartWasteDetector:
         self._was_busy = False
 
     def notify_scan_finished(self):
-        """Called as soon as AI inference completes to start the guaranteed post-scan pause."""
+        """Called as soon as AI inference completes to start the 3.0s post-scan pause."""
         self.cooldown_until = time.time() + self.cooldown_seconds
         self.motion_detected = False
         self.motion_settled_start = None
@@ -468,12 +468,12 @@ class SmartWasteDetector:
         diff = cv2.absdiff(self.prev_roi, gray)
         self.prev_roi = gray
 
-        thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)[1]
+        thresh = cv2.threshold(diff, 28, 255, cv2.THRESH_BINARY)[1]
         motion_score = cv2.countNonZero(thresh)
         total_pixels = (x2 - x1) * (y2 - y1)
         motion_ratio = motion_score / float(total_pixels) if total_pixels > 0 else 0
 
-        # Detect completion of AI inference and activate full post-scan pause
+        # Detect completion of AI inference and activate post-scan pause
         if self._was_busy and not classifier_busy:
             self.notify_scan_finished()
         self._was_busy = classifier_busy
@@ -486,17 +486,16 @@ class SmartWasteDetector:
         if classifier_busy:
             self.state = "BUSY"
             self.status_msg = "ANALYZING ITEM..."
-            self.motion_detected = False
-            self.motion_settled_start = None
             return False
 
-        # Guaranteed post-scan pause: give the user time to view the result and drop the trash
+        # Post-scan pause (3.0 seconds to view result and drop in bin)
         if now < self.cooldown_until:
             self.state = "PAUSE"
             remaining = int(self.cooldown_until - now) + 1
             self.status_msg = f"PAUSE ({remaining}s) — DISPOSE IN BIN"
-            self.motion_detected = False
-            self.motion_settled_start = None
+            # If the user moves their hand or presents the next item during the pause, capture that motion!
+            if motion_ratio >= self.motion_threshold:
+                self.motion_detected = True
             return False
 
         # Clear intentional movement (user bringing a new item into view)
@@ -514,7 +513,7 @@ class SmartWasteDetector:
                 self.motion_settled_start = now
                 self.state = "STABILIZING"
                 self.status_msg = "HOLDING STEADY..."
-                self.stabilize_pct = 10
+                self.stabilize_pct = 15
                 return False
 
             elapsed = now - self.motion_settled_start
@@ -639,7 +638,7 @@ def draw_hud(frame, classifier, detector, auto_detect_enabled):
 def main():
     cam_type, cam_obj = init_camera()
     classifier = GeminiClassifier(api_key=GEMINI_API_KEY)
-    detector = SmartWasteDetector(settle_seconds=0.85, cooldown_seconds=6.0, motion_threshold=0.06)
+    detector = SmartWasteDetector(settle_seconds=0.75, cooldown_seconds=3.0, motion_threshold=0.05)
 
     WINDOW_NAME = "SyncBin Gemini AI — Hands-Free Trash Classifier"
     # WINDOW_GUI_NORMAL disables Qt status bar and toolbar to prevent QFont crashes
