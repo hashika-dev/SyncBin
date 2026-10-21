@@ -57,7 +57,7 @@ def load_api_key():
 GEMINI_API_KEY = load_api_key()
 
 # Default vision model (can be overridden via GEMINI_MODEL in .env)
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash")
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
 
 # Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
@@ -199,11 +199,11 @@ class GeminiClassifier:
             print(f"[Model Discovery Notice]: {e}")
 
         # Stable priority order:
-        # Prioritize 3.7 and 3.5 which have fresh independent daily quotas on Google free tier
+        # Prioritize 3.5 which has proven fast, accurate, and generous quota on your account
         PREFERRED_ORDER = [
             os.environ.get("GEMINI_MODEL", "").strip(),
-            "gemini-3.7-flash",
             "gemini-3.5-flash",
+            "gemini-3.7-flash",
             "gemini-3.6-flash",
             "gemini-3.1-flash-lite",
             "gemini-flash-lite-latest",
@@ -315,6 +315,10 @@ class GeminiClassifier:
                                 ]
                             )
                             self.active_model = model_candidate
+                            # Keep the working model at index 0 to avoid trying exhausted models on next scan
+                            if model_candidate in self.models_to_try and model_candidate != self.models_to_try[0]:
+                                self.models_to_try.remove(model_candidate)
+                                self.models_to_try.insert(0, model_candidate)
                             break
                         except Exception as err:
                             err_str = str(err)
@@ -422,15 +426,114 @@ class GeminiClassifier:
         threading.Thread(target=upload_task, daemon=True).start()
 
 
-# ── 4. HUD OVERLAY RENDERING ─────────────────────────────────────────────────
-def draw_hud(frame, classifier, auto_scan_enabled):
+# ── 4. SMART HANDS-FREE PRESENCE DETECTOR ─────────────────────────────────────
+class SmartWasteDetector:
+    """
+    Watches the reticle area for newly presented trash items using lightweight frame differencing.
+    When a user brings a piece of trash into view and holds it steady for ~0.6s,
+    it automatically triggers AI vision classification without requiring any keypresses!
+    """
+    def __init__(self, settle_seconds=0.65, cooldown_seconds=4.5):
+        self.prev_roi = None
+        self.motion_detected = False
+        self.motion_settled_start = None
+        self.settle_seconds = settle_seconds
+        self.cooldown_seconds = cooldown_seconds
+        self.last_trigger_time = 0
+        self.state = "IDLE"  # "IDLE", "PRESENT", "STABILIZING", "BUSY", "COOLDOWN"
+        self.status_msg = "HANDS-FREE: HOLD ITEM IN RETICLE"
+        self.stabilize_pct = 0
+
+    def update(self, frame, x1, y1, x2, y2, classifier_busy, auto_enabled=True):
+        now = time.time()
+
+        if not auto_enabled:
+            self.state = "MANUAL"
+            self.status_msg = "MANUAL MODE [TAP SPACE TO SCAN]"
+            self.motion_detected = False
+            self.motion_settled_start = None
+            return False
+
+        if classifier_busy:
+            self.state = "BUSY"
+            self.status_msg = "AI ANALYZING..."
+            self.motion_detected = False
+            self.motion_settled_start = None
+            return False
+
+        if now - self.last_trigger_time < self.cooldown_seconds:
+            self.state = "COOLDOWN"
+            remaining = int(self.cooldown_seconds - (now - self.last_trigger_time)) + 1
+            self.status_msg = f"READY IN {remaining}s (NEXT ITEM)..."
+            return False
+
+        # Extract and analyze the reticle Region of Interest (ROI)
+        roi = frame[y1:y2, x1:x2]
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (15, 15), 0)
+
+        if self.prev_roi is None:
+            self.prev_roi = gray
+            self.state = "IDLE"
+            self.status_msg = "HANDS-FREE: HOLD ITEM IN RETICLE"
+            return False
+
+        diff = cv2.absdiff(self.prev_roi, gray)
+        self.prev_roi = gray
+        thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
+        motion_score = cv2.countNonZero(thresh)
+        total_pixels = (x2 - x1) * (y2 - y1)
+        motion_ratio = motion_score / float(total_pixels)
+
+        # Above 2.5% motion indicates an object / hand entered the reticle
+        if motion_ratio > 0.025:
+            self.motion_detected = True
+            self.motion_settled_start = None
+            self.state = "PRESENT"
+            self.status_msg = "ITEM DETECTED — HOLD STEADY..."
+            self.stabilize_pct = 0
+            return False
+
+        # If motion was detected and has now calmed down (held steady)
+        if self.motion_detected:
+            if self.motion_settled_start is None:
+                self.motion_settled_start = now
+                self.state = "STABILIZING"
+                self.status_msg = "HOLDING STEADY..."
+                self.stabilize_pct = 10
+                return False
+
+            elapsed = now - self.motion_settled_start
+            self.stabilize_pct = min(100, int((elapsed / self.settle_seconds) * 100))
+
+            if elapsed >= self.settle_seconds:
+                # Trigger automatic inference!
+                self.last_trigger_time = now
+                self.motion_detected = False
+                self.motion_settled_start = None
+                self.state = "BUSY"
+                self.status_msg = "AUTO SCANNING..."
+                return True
+            else:
+                self.state = "STABILIZING"
+                self.status_msg = f"HOLD STEADY... {self.stabilize_pct}%"
+                return False
+
+        self.state = "IDLE"
+        self.status_msg = "HANDS-FREE: HOLD ITEM IN RETICLE"
+        self.stabilize_pct = 0
+        return False
+
+
+# ── 5. HUD OVERLAY RENDERING ─────────────────────────────────────────────────
+def draw_hud(frame, classifier, detector, auto_detect_enabled):
     h, w, _ = frame.shape
     overlay = frame.copy()
 
     # Top Header Banner
     cv2.rectangle(overlay, (0, 0), (w, 42), (15, 23, 20), -1)
     cv2.putText(overlay, f"SYNCBIN GEMINI AI [{classifier.active_model}]", (14, 26),
-                cv2.FONT_HERSHEY_DUPLEX, 0.55, (52, 211, 153), 1, cv2.LINE_AA)
+                cv2.FONT_HERSHEY_DUPLEX, 0.52, (52, 211, 153), 1, cv2.LINE_AA)
 
     now = time.time()
     if classifier.is_busy:
@@ -438,19 +541,38 @@ def draw_hud(frame, classifier, auto_scan_enabled):
     elif now < classifier.cooldown_until:
         remaining = int(classifier.cooldown_until - now)
         status_text, status_color = f"RATE LIMIT COOLDOWN: {remaining}s", (0, 165, 255)
-    elif auto_scan_enabled:
-        status_text, status_color = "AUTO-SCAN ON [A=OFF | SPACE=SCAN]", (52, 211, 153)
+    elif detector.state == "PRESENT":
+        status_text, status_color = detector.status_msg, (11, 158, 245)  # Orange
+    elif detector.state == "STABILIZING":
+        status_text, status_color = detector.status_msg, (0, 240, 255)   # Bright Yellow
+    elif detector.state == "COOLDOWN":
+        status_text, status_color = detector.status_msg, (160, 160, 160)
+    elif not auto_detect_enabled:
+        status_text, status_color = "MANUAL [SPACE = SCAN | A = AUTO]", (180, 180, 180)
     else:
-        status_text, status_color = "PRESS [SPACE] TO SCAN ITEM", (52, 211, 153)
+        status_text, status_color = "AUTO-DETECT READY [HOLD ITEM IN BOX]", (52, 211, 153)
 
-    cv2.putText(overlay, status_text, (w - 330, 26),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.45, status_color, 1, cv2.LINE_AA)
+    cv2.putText(overlay, status_text, (w - 365, 26),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.44, status_color, 1, cv2.LINE_AA)
 
-    # Central Target Reticle
+    # Central Target Reticle Coordinates
     box_w, box_h = int(w * 0.55), int(h * 0.55)
-    x1, y1 = (w - box_w) // 2, (h - box_h) // 2 + 15
+    x1, y1 = (w - box_w) // 2, (h - box_h) // 2 + 12
     x2, y2 = x1 + box_w, y1 + box_h
-    reticle_color = (0, 215, 255) if classifier.is_busy else (180, 180, 180)
+
+    # Color code reticle dynamically based on state
+    res = classifier.last_result
+    if classifier.is_busy:
+        reticle_color = (0, 215, 255)
+    elif detector.state == "STABILIZING":
+        reticle_color = (0, 240, 255)
+    elif detector.state == "PRESENT":
+        reticle_color = (11, 158, 245)
+    elif res and res.get("is_trash") and (now - classifier.last_scan_time < 4.0):
+        reticle_color = BIN_COLORS.get(res.get("bin_slug"), (52, 211, 153))
+    else:
+        reticle_color = (52, 211, 153) if auto_detect_enabled else (150, 150, 150)
+
     corner_len, t = 25, 2
     cv2.line(overlay, (x1, y1), (x1 + corner_len, y1), reticle_color, t)
     cv2.line(overlay, (x1, y1), (x1, y1 + corner_len), reticle_color, t)
@@ -461,8 +583,12 @@ def draw_hud(frame, classifier, auto_scan_enabled):
     cv2.line(overlay, (x2, y2), (x2 - corner_len, y2), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2, y2 - corner_len), reticle_color, t)
 
+    # If stabilizing, draw a progress indicator bar on top of the reticle
+    if detector.state == "STABILIZING" and detector.stabilize_pct > 0:
+        bar_w = int((x2 - x1) * (detector.stabilize_pct / 100.0))
+        cv2.rectangle(overlay, (x1, y1 - 8), (x1 + bar_w, y1 - 4), (0, 240, 255), -1)
+
     # Bottom Classification Readout
-    res = classifier.last_result
     if res and res.get("is_trash"):
         slug = res.get("bin_slug", "recyclable")
         color = BIN_COLORS.get(slug, (160, 160, 160))
@@ -493,26 +619,31 @@ def draw_hud(frame, classifier, auto_scan_enabled):
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (160, 160, 160), 1, cv2.LINE_AA)
 
     cv2.addWeighted(overlay, 0.88, frame, 0.12, 0, frame)
-    return frame
+    return frame, (x1, y1, x2, y2)
 
 
-# ── 5. MAIN APPLICATION LOOP ─────────────────────────────────────────────────
+# ── 6. MAIN APPLICATION LOOP ─────────────────────────────────────────────────
 def main():
     cam_type, cam_obj = init_camera()
     classifier = GeminiClassifier(api_key=GEMINI_API_KEY)
+    detector = SmartWasteDetector(settle_seconds=0.65, cooldown_seconds=4.5)
+
+    WINDOW_NAME = "SyncBin Gemini AI — Hands-Free Trash Classifier"
+    # WINDOW_GUI_NORMAL disables Qt status bar and toolbar to prevent QFont crashes
+    cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_GUI_NORMAL)
+    cv2.resizeWindow(WINDOW_NAME, 640, 480)
 
     print("=" * 65)
-    print("       SyncBin GEMINI AI Vision — Live Trash Classifier")
+    print("       SyncBin GEMINI AI Vision — Hands-Free Classifier")
     print("=" * 65)
     print(f"Target Server   : {DASHBOARD_URL}")
     print(f"Active Model    : {classifier.active_model}")
     print(f"Autofocus       : Continuous Hardware AF Active (Tap [F] to refocus)")
-    print("Default Mode    : ON-DEMAND [SPACEBAR] to avoid free-tier quota limits")
-    print("Controls        : [SPACE] = Scan Item | [F] = Refocus | [A] = Toggle Auto-Scan | [Q] = Quit")
+    print("Auto-Trigger    : ACTIVE — Hold trash item steady in box to scan")
+    print("Controls        : [SPACE] = Manual Scan | [A] = Toggle Auto | [F] = Refocus | [Q] = Quit")
     print("-" * 65)
 
-    auto_scan_enabled = False  # Disabled by default to protect free-tier 5 RPM limit
-    last_auto_scan = time.time()
+    auto_detect_enabled = True
     last_snapshot_write = 0
 
     try:
@@ -532,24 +663,30 @@ def main():
                 except Exception:
                     pass
 
-            # Optional Auto-Scan (if toggled on with [A])
-            if auto_scan_enabled and (now - last_auto_scan >= AUTO_SCAN_INTERVAL) and not classifier.is_busy:
-                classifier.submit_request(frame, trigger_mode="auto")
-                last_auto_scan = now
+            # Pre-calculate reticle box coordinates for detection
+            h, w, _ = frame.shape
+            box_w, box_h = int(w * 0.55), int(h * 0.55)
+            x1, y1 = (w - box_w) // 2, (h - box_h) // 2 + 12
+            x2, y2 = x1 + box_w, y1 + box_h
+
+            # Hands-Free Presence & Stability Detection
+            should_scan = detector.update(frame, x1, y1, x2, y2, classifier.is_busy, auto_detect_enabled)
+            if should_scan and not classifier.is_busy:
+                print(f"\n[AUTO-TRIGGER] Trash item held steady! Auto-scanning with {classifier.active_model}...")
+                classifier.submit_request(frame, trigger_mode="auto_hands_free")
 
             # Draw HUD & show live preview
             display = frame.copy()
-            draw_hud(display, classifier, auto_scan_enabled)
-            cv2.imshow("SyncBin Gemini Vision — Live Trash Classifier", display)
+            draw_hud(display, classifier, detector, auto_detect_enabled)
+            cv2.imshow(WINDOW_NAME, display)
 
             key = cv2.waitKey(1) & 0xFF
 
-            # [SPACEBAR] -> Instant On-Demand Scan
+            # [SPACEBAR] -> Instant Manual Scan
             if key == ord(' '):
-                print("\n[SPACEBAR] Scan requested!")
+                print("\n[SPACEBAR] Manual scan requested!")
                 if not classifier.is_busy:
                     classifier.submit_request(frame, trigger_mode="manual")
-                    last_auto_scan = now
                 else:
                     print("Gemini is currently analyzing a frame, please wait...")
 
@@ -566,11 +703,11 @@ def main():
                         except Exception:
                             pass
 
-            # [A] -> Toggle Auto-Scan Mode
+            # [A] -> Toggle Auto-Detect Mode
             elif key in (ord('a'), ord('A')):
-                auto_scan_enabled = not auto_scan_enabled
-                state_str = "ENABLED (Interval: 14s)" if auto_scan_enabled else "DISABLED (On-Demand SPACEBAR mode)"
-                print(f"\n[AUTO-SCAN] Mode toggled: {state_str}")
+                auto_detect_enabled = not auto_detect_enabled
+                state_str = "ENABLED (Hands-Free)" if auto_detect_enabled else "DISABLED (Manual Spacebar only)"
+                print(f"\n[AUTO-DETECT] Mode toggled: {state_str}")
 
             # [Q] or [ESC] -> Quit
             elif key in (ord('q'), ord('Q'), 27):
