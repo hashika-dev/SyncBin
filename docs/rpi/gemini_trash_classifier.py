@@ -429,72 +429,86 @@ class GeminiClassifier:
 # ── 4. SMART HANDS-FREE PRESENCE DETECTOR ─────────────────────────────────────
 class SmartWasteDetector:
     """
-    Watches the reticle area for newly presented trash items using lightweight frame differencing.
-    When a user brings a piece of trash into view and holds it steady for ~0.6s,
-    it automatically triggers AI vision classification without requiring any keypresses!
+    Watches the reticle area for newly presented trash items using robust frame differencing.
+    Enforces a strict 'One Scan Per Item' policy with an explicit 6-second post-scan cooldown pause
+    so duplicate scans are completely eliminated.
     """
-    def __init__(self, settle_seconds=0.65, cooldown_seconds=4.5):
+    def __init__(self, settle_seconds=0.85, cooldown_seconds=6.0, motion_threshold=0.06):
         self.prev_roi = None
         self.motion_detected = False
         self.motion_settled_start = None
         self.settle_seconds = settle_seconds
         self.cooldown_seconds = cooldown_seconds
-        self.last_trigger_time = 0
-        self.state = "IDLE"  # "IDLE", "PRESENT", "STABILIZING", "BUSY", "COOLDOWN"
-        self.status_msg = "HANDS-FREE: HOLD ITEM IN RETICLE"
+        self.motion_threshold = motion_threshold
+        self.cooldown_until = 0
+        self.state = "IDLE"  # "IDLE", "MOTION", "STABILIZING", "BUSY", "PAUSE"
+        self.status_msg = "HANDS-FREE: PRESENT ITEM IN RETICLE"
         self.stabilize_pct = 0
+        self._was_busy = False
+
+    def notify_scan_finished(self):
+        """Called as soon as AI inference completes to start the guaranteed post-scan pause."""
+        self.cooldown_until = time.time() + self.cooldown_seconds
+        self.motion_detected = False
+        self.motion_settled_start = None
+        self.state = "PAUSE"
 
     def update(self, frame, x1, y1, x2, y2, classifier_busy, auto_enabled=True):
         now = time.time()
 
-        if not auto_enabled:
-            self.state = "MANUAL"
-            self.status_msg = "MANUAL MODE [TAP SPACE TO SCAN]"
-            self.motion_detected = False
-            self.motion_settled_start = None
-            return False
-
-        if classifier_busy:
-            self.state = "BUSY"
-            self.status_msg = "AI ANALYZING..."
-            self.motion_detected = False
-            self.motion_settled_start = None
-            return False
-
-        if now - self.last_trigger_time < self.cooldown_seconds:
-            self.state = "COOLDOWN"
-            remaining = int(self.cooldown_seconds - (now - self.last_trigger_time)) + 1
-            self.status_msg = f"READY IN {remaining}s (NEXT ITEM)..."
-            return False
-
-        # Extract and analyze the reticle Region of Interest (ROI)
+        # Always maintain a rolling ROI reference every frame to prevent comparing against stale frames
         roi = frame[y1:y2, x1:x2]
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        gray = cv2.GaussianBlur(gray, (15, 15), 0)
+        gray = cv2.GaussianBlur(gray, (21, 21), 0)
 
         if self.prev_roi is None:
             self.prev_roi = gray
-            self.state = "IDLE"
-            self.status_msg = "HANDS-FREE: HOLD ITEM IN RETICLE"
             return False
 
         diff = cv2.absdiff(self.prev_roi, gray)
         self.prev_roi = gray
-        thresh = cv2.threshold(diff, 25, 255, cv2.THRESH_BINARY)[1]
+
+        thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)[1]
         motion_score = cv2.countNonZero(thresh)
         total_pixels = (x2 - x1) * (y2 - y1)
-        motion_ratio = motion_score / float(total_pixels)
+        motion_ratio = motion_score / float(total_pixels) if total_pixels > 0 else 0
 
-        # Above 2.5% motion indicates an object / hand entered the reticle
-        if motion_ratio > 0.025:
+        # Detect completion of AI inference and activate full post-scan pause
+        if self._was_busy and not classifier_busy:
+            self.notify_scan_finished()
+        self._was_busy = classifier_busy
+
+        if not auto_enabled:
+            self.state = "MANUAL"
+            self.status_msg = "MANUAL MODE [TAP SPACE TO SCAN]"
+            return False
+
+        if classifier_busy:
+            self.state = "BUSY"
+            self.status_msg = "ANALYZING ITEM..."
+            self.motion_detected = False
+            self.motion_settled_start = None
+            return False
+
+        # Guaranteed post-scan pause: give the user time to view the result and drop the trash
+        if now < self.cooldown_until:
+            self.state = "PAUSE"
+            remaining = int(self.cooldown_until - now) + 1
+            self.status_msg = f"PAUSE ({remaining}s) — DISPOSE IN BIN"
+            self.motion_detected = False
+            self.motion_settled_start = None
+            return False
+
+        # Clear intentional movement (user bringing a new item into view)
+        if motion_ratio >= self.motion_threshold:
             self.motion_detected = True
             self.motion_settled_start = None
-            self.state = "PRESENT"
+            self.state = "MOTION"
             self.status_msg = "ITEM DETECTED — HOLD STEADY..."
             self.stabilize_pct = 0
             return False
 
-        # If motion was detected and has now calmed down (held steady)
+        # Once motion was seen, wait for the user to hold it steady
         if self.motion_detected:
             if self.motion_settled_start is None:
                 self.motion_settled_start = now
@@ -507,12 +521,11 @@ class SmartWasteDetector:
             self.stabilize_pct = min(100, int((elapsed / self.settle_seconds) * 100))
 
             if elapsed >= self.settle_seconds:
-                # Trigger automatic inference!
-                self.last_trigger_time = now
+                # Trigger exactly ONE scan
                 self.motion_detected = False
                 self.motion_settled_start = None
                 self.state = "BUSY"
-                self.status_msg = "AUTO SCANNING..."
+                self.status_msg = "SCAN TRIGGERED!"
                 return True
             else:
                 self.state = "STABILIZING"
@@ -520,7 +533,7 @@ class SmartWasteDetector:
                 return False
 
         self.state = "IDLE"
-        self.status_msg = "HANDS-FREE: HOLD ITEM IN RETICLE"
+        self.status_msg = "HANDS-FREE: PRESENT ITEM IN RETICLE"
         self.stabilize_pct = 0
         return False
 
@@ -541,12 +554,12 @@ def draw_hud(frame, classifier, detector, auto_detect_enabled):
     elif now < classifier.cooldown_until:
         remaining = int(classifier.cooldown_until - now)
         status_text, status_color = f"RATE LIMIT COOLDOWN: {remaining}s", (0, 165, 255)
-    elif detector.state == "PRESENT":
+    elif detector.state in ("MOTION", "PRESENT"):
         status_text, status_color = detector.status_msg, (11, 158, 245)  # Orange
     elif detector.state == "STABILIZING":
         status_text, status_color = detector.status_msg, (0, 240, 255)   # Bright Yellow
-    elif detector.state == "COOLDOWN":
-        status_text, status_color = detector.status_msg, (160, 160, 160)
+    elif detector.state in ("COOLDOWN", "PAUSE"):
+        status_text, status_color = detector.status_msg, (200, 200, 100) # Soft Gold
     elif not auto_detect_enabled:
         status_text, status_color = "MANUAL [SPACE = SCAN | A = AUTO]", (180, 180, 180)
     else:
@@ -566,9 +579,9 @@ def draw_hud(frame, classifier, detector, auto_detect_enabled):
         reticle_color = (0, 215, 255)
     elif detector.state == "STABILIZING":
         reticle_color = (0, 240, 255)
-    elif detector.state == "PRESENT":
+    elif detector.state in ("MOTION", "PRESENT"):
         reticle_color = (11, 158, 245)
-    elif res and res.get("is_trash") and (now - classifier.last_scan_time < 4.0):
+    elif res and res.get("is_trash") and (now - classifier.last_scan_time < 6.0):
         reticle_color = BIN_COLORS.get(res.get("bin_slug"), (52, 211, 153))
     else:
         reticle_color = (52, 211, 153) if auto_detect_enabled else (150, 150, 150)
@@ -626,7 +639,7 @@ def draw_hud(frame, classifier, detector, auto_detect_enabled):
 def main():
     cam_type, cam_obj = init_camera()
     classifier = GeminiClassifier(api_key=GEMINI_API_KEY)
-    detector = SmartWasteDetector(settle_seconds=0.65, cooldown_seconds=4.5)
+    detector = SmartWasteDetector(settle_seconds=0.85, cooldown_seconds=6.0, motion_threshold=0.06)
 
     WINDOW_NAME = "SyncBin Gemini AI — Hands-Free Trash Classifier"
     # WINDOW_GUI_NORMAL disables Qt status bar and toolbar to prevent QFont crashes
