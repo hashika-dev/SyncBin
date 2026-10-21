@@ -360,7 +360,12 @@
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
                      x-data="{
                         bins: @js($bins->keyBy('slug')),
-                        binDepthCm: {{ (float) env('BIN_DEPTH_CM', 30) }},
+                        binDepths: {
+                            'hazardous': {{ (float) config('bins.dimensions.hazardous.height_cm', 60) }},
+                            'recyclable': {{ (float) config('bins.dimensions.recyclable.height_cm', 60) }},
+                            'non-bio': {{ (float) config('bins.dimensions.non-bio.height_cm', 60) }},
+                            'biodegradable': {{ (float) config('bins.dimensions.biodegradable.height_cm', 60) }},
+                        },
                         async fetchBins() {
                             try {
                                 const res = await fetch('{{ route('bins.index', [], false) }}', {
@@ -379,7 +384,8 @@
                         calcDist(slug) {
                             const bin = this.bins[slug] ?? (slug === 'non-bio' ? this.bins['non_bio'] : null);
                             const lvl = bin?.level ?? 0;
-                            return (Math.max(0, this.binDepthCm * (1 - lvl / 100))).toFixed(1);
+                            const depth = this.binDepths[slug] ?? (bin?.chamber_height_cm ?? 60);
+                            return (Math.max(0, depth * (1 - lvl / 100))).toFixed(1);
                         },
                         getBin(slug) {
                             return this.bins[slug] ?? (slug === 'non-bio' ? this.bins['non_bio'] : null) ?? {};
@@ -396,7 +402,10 @@
                                 </div>
                                 <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 block mt-1">Hazardous Chamber</span>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 block">Hazardous Chamber</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-semibold">60H &times; 34L &times; 51W cm &bull; 104L</span>
+                            </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
@@ -405,7 +414,7 @@
                                 <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('hazardous') + ' cm'">
-                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
+                                        {{ round(max(0, ($bins->firstWhere('slug', 'hazardous')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>
@@ -456,7 +465,10 @@
                                 </div>
                                 <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <span class="text-[11px] font-semibold text-sky-600 dark:text-sky-400 block mt-1">Recyclable Chamber</span>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-[11px] font-semibold text-sky-600 dark:text-sky-400 block">Recyclable Chamber</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold">60H &times; 34L &times; 51W cm &bull; 104L</span>
+                            </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
@@ -465,7 +477,7 @@
                                 <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('recyclable') + ' cm'">
-                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
+                                        {{ round(max(0, ($bins->firstWhere('slug', 'recyclable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>
@@ -516,7 +528,10 @@
                                 </div>
                                 <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block mt-1">Non-Biodegradable Chamber</span>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block">Non-Biodegradable Chamber</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">60H &times; 34L &times; 51W cm &bull; 104L</span>
+                            </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
@@ -525,7 +540,7 @@
                                 <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('non-bio') + ' cm'">
-                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
+                                        {{ round(max(0, ($bins->firstWhere('slug', 'non-bio')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>
@@ -576,7 +591,10 @@
                                 </div>
                                 <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
                             </div>
-                            <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block mt-1">Biodegradable Chamber</span>
+                            <div class="flex items-center justify-between mt-1">
+                                <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block">Biodegradable Chamber</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">Custom Chamber (Pending)</span>
+                            </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
@@ -585,7 +603,7 @@
                                 <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('biodegradable') + ' cm'">
-                                        {{ round(max(0, 30 * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
+                                        {{ round(max(0, ($bins->firstWhere('slug', 'biodegradable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>

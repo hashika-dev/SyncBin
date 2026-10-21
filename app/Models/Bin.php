@@ -25,6 +25,42 @@ class Bin extends Model
         'zero_level_since' => 'datetime',
     ];
 
+    protected $appends = [
+        'chamber_height_cm',
+        'chamber_volume_liters',
+        'dimensions',
+    ];
+
+    /**
+     * Get the physical dimensions for this bin stream.
+     */
+    public function getDimensionsAttribute(): array
+    {
+        return config("bins.dimensions.{$this->slug}", [
+            'height_cm'     => (float) config('bins.default_depth_cm', 60.0),
+            'length_cm'     => null,
+            'width_cm'      => null,
+            'volume_liters' => null,
+            'is_custom'     => false,
+        ]);
+    }
+
+    /**
+     * Get the chamber depth/height in centimeters.
+     */
+    public function getChamberHeightCmAttribute(): float
+    {
+        return (float) (config("bins.dimensions.{$this->slug}.height_cm") ?? config('bins.default_depth_cm', 60.0));
+    }
+
+    /**
+     * Get the chamber volume in Liters.
+     */
+    public function getChamberVolumeLitersAttribute(): ?float
+    {
+        return config("bins.dimensions.{$this->slug}.volume_liters");
+    }
+
     /**
      * Get the waste items for this bin.
      */

@@ -1086,7 +1086,7 @@ class BinController extends Controller
         ]);
 
         // Configurable bin depth (cm) — set BIN_DEPTH_CM in .env (default: 30cm)
-        $binDepthCm = max(1, (float) env('BIN_DEPTH_CM', 30));
+        $defaultBinDepthCm = max(1, (float) (config('bins.default_depth_cm') ?? env('BIN_DEPTH_CM', 60)));
 
         // Map POST field names → bin slugs
         $fieldToSlug = [
@@ -1116,6 +1116,7 @@ class BinController extends Controller
             // Convert distance → fill percentage
             // When distance = 0 cm (object right at sensor) → 100% full
             // When distance = binDepthCm (empty bin floor) → 0% full
+            $binDepthCm  = $bin->chamber_height_cm ?? $defaultBinDepthCm;
             $fillPercent = (int) max(0, min(100, round((1 - $distanceCm / $binDepthCm) * 100)));
             $bin->level  = $fillPercent;
 
@@ -1178,7 +1179,7 @@ class BinController extends Controller
         return response()->json([
             'status'       => 'success',
             'message'      => 'ESP32 sensor data received and bins updated successfully.',
-            'bin_depth_cm' => $binDepthCm,
+            'bin_depth_cm' => $defaultBinDepthCm,
             'updated'      => $results,
         ]);
     }

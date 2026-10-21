@@ -27,6 +27,11 @@
 
 ### 🛠️ SuperAdmin & Hardware System Tools
 - [x] **Hardware Monitoring Dashboard:** Real-time hardware status metrics (`/dashboard/hardware`).
+- [x] **Chamber Dimensions & Calibration:**
+  - Hazardous: 60 cm (H) &times; 34 cm (L) &times; 51 cm (W) = 104.04 L
+  - Recyclable: 60 cm (H) &times; 34 cm (L) &times; 51 cm (W) = 104.04 L
+  - Non-Biodegradable: 60 cm (H) &times; 34 cm (L) &times; 51 cm (W) = 104.04 L
+  - Biodegradable: Custom enclosure (dimensions pending physical measurement)
 - [x] **Hardware Cryptography Engine:** ECDSA (prime256v1) signature verification and AES-256-GCM encrypted payload decryption (`HardwareCryptoService`, `VerifyHardwareSignature`).
 - [x] **Mock Data Seeding:** System maintenance utility to populate test metrics (`/api/system/seed-mock-data`).
 
