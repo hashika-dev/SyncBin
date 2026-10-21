@@ -381,7 +381,7 @@ def draw_hud(frame, classifier, auto_scan_enabled):
     cv2.line(overlay, (x2, y1), (x2 - corner_len, y1), reticle_color, t)
     cv2.line(overlay, (x2, y1), (x2, y1 + corner_len), reticle_color, t)
     cv2.line(overlay, (x1, y2), (x1 + corner_len, y2), reticle_color, t)
-    cv2.line(overlay, (x1, y2), (x1, y2 - corner_len, y2), reticle_color, t)
+    cv2.line(overlay, (x1, y2), (x1, y2 - corner_len), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2 - corner_len, y2), reticle_color, t)
     cv2.line(overlay, (x2, y2), (x2, y2 - corner_len), reticle_color, t)
 
