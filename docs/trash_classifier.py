@@ -57,7 +57,7 @@ def load_api_key():
 GEMINI_API_KEY = load_api_key()
 
 # Default vision model (can be overridden via GEMINI_MODEL in .env)
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.7-flash")
 
 # Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
@@ -199,17 +199,18 @@ class GeminiClassifier:
             print(f"[Model Discovery Notice]: {e}")
 
         # Stable priority order:
-        # 'gemini-flash-latest' is Google's primary production vision model with the highest capacity & no 503 spikes.
+        # Prioritize 3.7 and 3.5 which have fresh independent daily quotas on Google free tier
         PREFERRED_ORDER = [
             os.environ.get("GEMINI_MODEL", "").strip(),
-            "gemini-flash-latest",
             "gemini-3.7-flash",
             "gemini-3.5-flash",
-            "gemini-3.8-flash",
-            "gemini-flash-lite-latest",
             "gemini-3.6-flash",
             "gemini-3.1-flash-lite",
-            "gemini-2.5-flash-lite"
+            "gemini-flash-lite-latest",
+            "gemini-2.5-flash-lite",
+            "gemini-3-flash-preview",
+            "gemini-flash-latest",
+            "gemini-3.8-flash"
         ]
 
         ordered_models = []
@@ -223,7 +224,7 @@ class GeminiClassifier:
                 ordered_models.append(f)
 
         if not ordered_models:
-            ordered_models = ["gemini-flash-latest", "gemini-3.7-flash", "gemini-3.5-flash"]
+            ordered_models = ["gemini-3.7-flash", "gemini-3.5-flash", "gemini-flash-latest"]
 
         self.models_to_try = ordered_models
         self.active_model = self.models_to_try[0]
@@ -319,10 +320,6 @@ class GeminiClassifier:
                             err_str = str(err)
                             last_err = err_str
 
-                            # If project quota is exhausted (429), trigger the 15s cooldown immediately
-                            if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                                raise err
-
                             # If 503 High Demand spike, wait and retry this model up to 3 times
                             if ("503" in err_str or "UNAVAILABLE" in err_str) and attempt < 3:
                                 wait_sec = attempt * 1.5
@@ -330,9 +327,13 @@ class GeminiClassifier:
                                 time.sleep(wait_sec)
                                 continue
 
-                            # For 400 (unsupported modality), 404 (retired), or exhausted 503, fallback to next model
+                            # For 429 (per-model quota limit), 400 (unsupported modality), 404, or 503:
+                            # If there are other model candidates available, cascade to the next model
                             if model_candidate != self.models_to_try[-1]:
-                                print(f"  [Model Fallback] {model_candidate} returned error ({err_str[:60]}...). Trying next candidate...")
+                                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
+                                    print(f"  [Quota 429] {model_candidate} quota reached. Cascading to next model in line...")
+                                else:
+                                    print(f"  [Model Fallback] {model_candidate} unavailable ({err_str[:60]}...). Cascading to next candidate...")
                                 break
 
                             raise err
