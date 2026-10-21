@@ -58,9 +58,9 @@ GEMINI_API_KEY = load_api_key()
 
 # List of models in order of priority (falls back if one is experiencing a 503/429 spike)
 FALLBACK_MODELS = [
-    os.environ.get("GEMINI_MODEL", "gemini-2.0-flash"),
-    "gemini-1.5-flash",
-    "gemini-3.8-flash"
+    os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
+    "gemini-2.0-flash",
+    "gemini-1.5-flash"
 ]
 
 # Live SyncBin Dashboard endpoint
