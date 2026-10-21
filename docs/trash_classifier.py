@@ -29,7 +29,7 @@ from google.genai import types
 
 # ── 1. CONFIGURATION ──────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyC-CsPBpthyvuLKGt7gKkmU06QUuGB2c74")
-GEMINI_MODEL   = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL   = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
 
 # Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
