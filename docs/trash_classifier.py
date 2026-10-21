@@ -57,7 +57,8 @@ def load_api_key():
 GEMINI_API_KEY = load_api_key()
 
 # Default vision model (can be overridden via GEMINI_MODEL in .env)
-DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.5-flash")
+# 'gemini-flash-lite-latest' is ultra-fast (~1.9s) and has fresh daily quota on Google's free tier
+DEFAULT_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-lite-latest")
 
 # Live SyncBin Dashboard endpoint
 DASHBOARD_URL  = os.environ.get("DASHBOARD_URL", "https://ecosync.me/api/bins/camera-scan")
@@ -82,6 +83,7 @@ BIN_TITLES = {
     "biodegradable": "BIODEGRADABLE BIN",
     "non-bio":       "NON-BIODEGRADABLE BIN",
     "hazardous":     "HAZARDOUS BIN",
+    "unknown":       "NO WASTE DETECTED",
 }
 
 
@@ -199,18 +201,17 @@ class GeminiClassifier:
             print(f"[Model Discovery Notice]: {e}")
 
         # Stable priority order:
-        # Prioritize 3.5 which has proven fast, accurate, and generous quota on your account
+        # Prioritize flash-lite models which have proven fastest (~1.9s) and have fresh quota
         PREFERRED_ORDER = [
             os.environ.get("GEMINI_MODEL", "").strip(),
-            "gemini-3.5-flash",
-            "gemini-3.7-flash",
-            "gemini-3.6-flash",
-            "gemini-3.1-flash-lite",
             "gemini-flash-lite-latest",
+            "gemini-3.1-flash-lite",
             "gemini-2.5-flash-lite",
-            "gemini-3-flash-preview",
-            "gemini-flash-latest",
-            "gemini-3.8-flash"
+            "gemini-3.5-flash-lite",
+            "gemini-3.5-flash",
+            "gemini-3.6-flash",
+            "gemini-3.7-flash",
+            "gemini-flash-latest"
         ]
 
         ordered_models = []
@@ -335,7 +336,9 @@ class GeminiClassifier:
                             # If there are other model candidates available, cascade to the next model
                             if model_candidate != self.models_to_try[-1]:
                                 if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str:
-                                    print(f"  [Quota 429] {model_candidate} quota reached. Cascading to next model in line...")
+                                    print(f"  [Quota 429] {model_candidate} daily quota reached. Pruning from active models...")
+                                    if model_candidate in self.models_to_try:
+                                        self.models_to_try.remove(model_candidate)
                                 else:
                                     print(f"  [Model Fallback] {model_candidate} unavailable ({err_str[:60]}...). Cascading to next candidate...")
                                 break
@@ -357,13 +360,19 @@ class GeminiClassifier:
                     raw_text = raw_text[raw_text.find("{"):raw_text.rfind("}")+1]
 
                 parsed = json.loads(raw_text)
+                is_trash = parsed.get("is_trash", True)
+                item_name = parsed.get("item_name", "Unknown Item")
                 bin_slug = parsed.get("bin_slug", "recyclable").lower().strip()
-                if bin_slug not in BIN_TITLES:
-                    bin_slug = "recyclable"
+
+                if not is_trash or bin_slug not in BIN_TITLES:
+                    if not is_trash:
+                        bin_slug = "unknown"
+                    else:
+                        bin_slug = "recyclable"
 
                 result_data = {
-                    "is_trash": parsed.get("is_trash", True),
-                    "item_name": parsed.get("item_name", "Unknown Item"),
+                    "is_trash": is_trash,
+                    "item_name": item_name,
                     "bin_slug": bin_slug,
                     "confidence": int(parsed.get("confidence", 85)),
                     "explanation": parsed.get("explanation", ""),
@@ -379,6 +388,8 @@ class GeminiClassifier:
 
                 if result_data["is_trash"] and bin_slug != "unknown":
                     self._sync_to_dashboard(frame_bgr, result_data)
+                else:
+                    print(f"  [Notice] Non-waste frame (not synced to dashboard).\n")
 
             except Exception as err:
                 err_msg = str(err)
