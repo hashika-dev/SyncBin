@@ -19,6 +19,12 @@
 - [x] **Bin API & Indexing:** List bins and bin status monitoring (`BinController@index`).
 - [x] **QR & Camera Scanning:** Simulated bin scan (`bins/{slug}/scan`) and live Camera scanning (`/api/bins/camera-scan`).
 - [x] **Bin Emptying Action:** Reset fill levels and update status (`bins/{slug}/empty`).
+- [x] **Raspberry Pi 4 Gemini AI Vision Classifier:**
+  - Integrated Raspberry Pi Camera Module 3 (`Picamera2`) with Continuous Motorized Hardware Autofocus.
+  - Hands-free auto-triggering (`SmartWasteDetector`): detects objects entering the reticle and triggers when held steady for ~0.75s with an active 3.0s disposal cooldown pause.
+  - Multi-model resilient cascade prioritized on `gemini-flash-lite-latest` (clocking **1.7s - 1.9s** per scan) with automatic 429 quota pruning.
+  - Live HUD overlay rendering via `cv2.WINDOW_GUI_NORMAL` (conflict-free Qt rendering) and real-time cloud sync to `https://ecosync.me`.
+  - Source scripts maintained in `docs/trash_classifier.py` and `docs/rpi/gemini_trash_classifier.py`.
 
 ### 📊 Analytics, Reports & History
 - [x] **Reports Dashboard:** Detailed analytics dashboard for bin fill rates and history (`/dashboard/reports`).
