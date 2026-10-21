@@ -25,6 +25,7 @@ for p in ["/usr/lib/python3/dist-packages", "/usr/local/lib/python3/dist-package
         sys.path.append(p)
 
 from google import genai
+from google.genai import types
 
 # ── 1. CONFIGURATION ──────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyC-CsPBpthyvuLKGt7gKkmU06QUuGB2c74")
@@ -182,7 +183,7 @@ class GeminiClassifier:
                     model=self.model_name,
                     contents=[
                         prompt,
-                        self.client.types.Part.from_bytes(
+                        types.Part.from_bytes(
                             data=img_bytes,
                             mime_type="image/jpeg",
                         )
