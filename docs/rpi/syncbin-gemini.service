@@ -1,0 +1,19 @@
+[Unit]
+Description=SyncBin Gemini AI Hands-Free Trash Classifier
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=raspberrypi4
+WorkingDirectory=/home/raspberrypi4/pi-offline-ai/GEMINI-AI
+EnvironmentFile=-/home/raspberrypi4/pi-offline-ai/GEMINI-AI/.env
+Environment=PYTHONUNBUFFERED=1
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/raspberrypi4/.Xauthority
+ExecStart=/home/raspberrypi4/pi-offline-ai/venv/bin/python3 /home/raspberrypi4/pi-offline-ai/GEMINI-AI/trash_classifier.py
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

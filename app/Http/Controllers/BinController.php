@@ -985,6 +985,12 @@ class BinController extends Controller
 
             if ($response->successful()) {
                 $body = $response->json();
+                if (($body['status'] ?? '') === 'error' || empty($body['image'])) {
+                    return response()->json([
+                        'status'  => 'error',
+                        'message' => $body['message'] ?? 'Camera server responded without image data.',
+                    ], 502);
+                }
 
                 return response()->json([
                     'status'    => 'ok',
@@ -998,7 +1004,7 @@ class BinController extends Controller
 
             return response()->json([
                 'status'  => 'error',
-                'message' => 'Snapshot server returned HTTP ' . $response->status(),
+                'message' => 'Snapshot server error: ' . ($response->json('message') ?? ('HTTP ' . $response->status())),
             ], 502);
 
         } catch (\Exception $e) {
