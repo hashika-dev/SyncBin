@@ -461,10 +461,10 @@
             <!-- Instant Test Alert Button -->
             <div class="pt-2">
                 <button type="button" @click="testAlertEmail()" :disabled="loadingAction !== null"
-                        title="Dispatch a live test 85% capacity alert email to verify Gmail delivery"
+                        title="Dispatch a live test 80% capacity alert email to verify Gmail delivery"
                         class="w-full py-2 px-3 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-400/40 rounded-2xl text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
                     <svg x-show="loadingAction === 'test-alert'" class="animate-spin h-3 w-3 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                    <span>⚡ Test 85% Alert Email to Gmail</span>
+                    <span>⚡ Test 80% Alert Email to Gmail</span>
                 </button>
             </div>
         </div>

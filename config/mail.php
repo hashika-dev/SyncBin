@@ -121,7 +121,7 @@ return [
     |--------------------------------------------------------------------------
     |
     | Destination email address (Gmail) to receive real-time critical alerts
-    | whenever any bin in the live monitor crosses the 85% capacity threshold.
+    | whenever any bin in the live monitor crosses the 80% capacity threshold.
     |
     */
 

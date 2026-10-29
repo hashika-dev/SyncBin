@@ -4,6 +4,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Critical Alert Capacity Threshold (%)
+    |--------------------------------------------------------------------------
+    |
+    | Percentage threshold (default 80%) where a bin enters Critical state
+    | and automatically triggers an emergency email/SMS dispatch.
+    |
+    */
+    'critical_threshold' => (int) env('ALERT_CAPACITY_THRESHOLD', 80),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Bin Depth / Height (cm)
     |--------------------------------------------------------------------------
     |

@@ -160,7 +160,7 @@ class BrevoMailService
     }
 
     /**
-     * Send critical capacity alert email (85%+ threshold) via Brevo HTTPS API (Port 443).
+     * Send critical capacity alert email (80%+ threshold) via Brevo HTTPS API (Port 443).
      */
     public static function sendCriticalAlert(string $toEmail, \App\Models\Bin $bin): array
     {

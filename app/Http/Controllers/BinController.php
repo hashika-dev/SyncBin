@@ -103,15 +103,16 @@ class BinController extends Controller
         if ($bin->level === 0) $bin->status = 'Empty';
         elseif ($bin->level < 30) $bin->status = 'Low';
         elseif ($bin->level < 60) $bin->status = 'Stable';
-        elseif ($bin->level < 85) $bin->status = 'High';
+        elseif ($bin->level < 80) $bin->status = 'High';
         else $bin->status = 'Critical';
 
         $previousLevel = $bin->getOriginal('level') ?? 0;
         $bin->save();
 
-        // Dispatch alert only when the bin crosses the 85% critical capacity threshold
-        $shouldAlert = $bin->level >= 85 && (
-            $previousLevel < 85 ||
+        // Dispatch alert only when the bin crosses the 80% critical capacity threshold
+        $threshold = (int) config('bins.critical_threshold', 80);
+        $shouldAlert = $bin->level >= $threshold && (
+            $previousLevel < $threshold ||
             $bin->alert_triggered_at === null ||
             $bin->alert_triggered_at->diffInMinutes(now()) >= 30
         );
@@ -265,14 +266,15 @@ class BinController extends Controller
         if ($bin->level === 0) $bin->status = 'Empty';
         elseif ($bin->level < 30) $bin->status = 'Low';
         elseif ($bin->level < 60) $bin->status = 'Stable';
-        elseif ($bin->level < 85) $bin->status = 'High';
+        elseif ($bin->level < 80) $bin->status = 'High';
         else $bin->status = 'Critical';
 
         $bin->save();
 
-        // Alert dispatch if crossing 85%
-        $shouldAlert = $bin->level >= 85 && (
-            $previousLevel < 85 ||
+        // Alert dispatch if crossing 80%
+        $threshold = (int) config('bins.critical_threshold', 80);
+        $shouldAlert = $bin->level >= $threshold && (
+            $previousLevel < $threshold ||
             $bin->alert_triggered_at === null ||
             $bin->alert_triggered_at->diffInMinutes(now()) >= 30
         );
@@ -615,7 +617,7 @@ class BinController extends Controller
             if ($bin->level === 0) $bin->status = 'Empty';
             elseif ($bin->level < 30) $bin->status = 'Low';
             elseif ($bin->level < 60) $bin->status = 'Stable';
-            elseif ($bin->level < 85) $bin->status = 'High';
+            elseif ($bin->level < 80) $bin->status = 'High';
             else $bin->status = 'Critical';
             
             $bin->save();
@@ -1163,13 +1165,14 @@ class BinController extends Controller
 
                 if ($bin->level < 30)      $bin->status = 'Low';
                 elseif ($bin->level < 60)  $bin->status = 'Stable';
-                elseif ($bin->level < 85)  $bin->status = 'High';
+                elseif ($bin->level < 80)  $bin->status = 'High';
                 else                       $bin->status = 'Critical';
             }
 
-            // Trigger critical alert when crossing 85% threshold
-            $shouldAlert = $bin->level >= 85 && (
-                $previousLevel < 85 ||
+            // Trigger critical alert when crossing 80% threshold
+            $threshold = (int) config('bins.critical_threshold', 80);
+            $shouldAlert = $bin->level >= $threshold && (
+                $previousLevel < $threshold ||
                 $bin->alert_triggered_at === null ||
                 $bin->alert_triggered_at->diffInMinutes(now()) >= 30
             );
@@ -1177,7 +1180,7 @@ class BinController extends Controller
             if ($shouldAlert) {
                 $bin->alert_triggered_at = now();
                 $this->dispatchCriticalAlert($bin);
-            } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
+            } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
                 $bin->alert_triggered_at = null;
             }
 
@@ -1283,13 +1286,14 @@ class BinController extends Controller
 
                 if ($bin->level < 30)      $bin->status = 'Low';
                 elseif ($bin->level < 60)  $bin->status = 'Stable';
-                elseif ($bin->level < 85)  $bin->status = 'High';
+                elseif ($bin->level < 80)  $bin->status = 'High';
                 else                       $bin->status = 'Critical';
             }
 
-            // Trigger critical alert if crossing 85% threshold
-            $shouldAlert = $bin->level >= 85 && (
-                $previousLevel < 85 ||
+            // Trigger critical alert if crossing 80% threshold
+            $threshold = (int) config('bins.critical_threshold', 80);
+            $shouldAlert = $bin->level >= $threshold && (
+                $previousLevel < $threshold ||
                 $bin->alert_triggered_at === null ||
                 $bin->alert_triggered_at->diffInMinutes(now()) >= 30
             );
@@ -1297,7 +1301,7 @@ class BinController extends Controller
             if ($shouldAlert) {
                 $bin->alert_triggered_at = now();
                 $this->dispatchCriticalAlert($bin);
-            } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
+            } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
                 $bin->alert_triggered_at = null;
             }
 
@@ -1398,16 +1402,17 @@ class BinController extends Controller
                 $bin->status = 'Low';
             } elseif ($bin->level < 60) {
                 $bin->status = 'Stable';
-            } elseif ($bin->level < 85) {
+            } elseif ($bin->level < 80) {
                 $bin->status = 'High';
             } else {
                 $bin->status = 'Critical';
             }
         }
 
-        // Trigger critical threshold alert if crossing 85%
-        $shouldAlert = $bin->level >= 85 && (
-            $previousLevel < 85 ||
+        // Trigger critical threshold alert if crossing 80%
+        $threshold = (int) config('bins.critical_threshold', 80);
+        $shouldAlert = $bin->level >= $threshold && (
+            $previousLevel < $threshold ||
             $bin->alert_triggered_at === null ||
             $bin->alert_triggered_at->diffInMinutes(now()) >= 30
         );
@@ -1415,7 +1420,7 @@ class BinController extends Controller
         if ($shouldAlert) {
             $bin->alert_triggered_at = now();
             $this->dispatchCriticalAlert($bin);
-        } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
+        } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
             $bin->alert_triggered_at = null;
         }
 
@@ -1510,7 +1515,7 @@ class BinController extends Controller
     }
 
     /**
-     * Dispatch email and SMS alerts when a bin reaches critical capacity (85%+).
+     * Dispatch email and SMS alerts when a bin reaches critical capacity (80%+).
      */
     public function dispatchCriticalAlert(Bin $bin): array
     {
@@ -1591,14 +1596,14 @@ class BinController extends Controller
      */
     public function sendTestAlertEmail()
     {
-        $bin = Bin::where('level', '>=', 85)->first() ?? Bin::first();
+        $bin = Bin::where('level', '>=', 80)->first() ?? Bin::first();
         if (!$bin) {
             return response()->json(['success' => false, 'message' => 'No bins registered in system.'], 404);
         }
 
         $testBin = clone $bin;
-        if ($testBin->level < 85) {
-            $testBin->level = 88;
+        if ($testBin->level < 80) {
+            $testBin->level = 82;
             $testBin->status = 'Critical';
         }
 
