@@ -115,4 +115,16 @@ return [
         'name' => env('MAIL_FROM_NAME', env('APP_NAME', 'Laravel')),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Critical Capacity Alert Recipient
+    |--------------------------------------------------------------------------
+    |
+    | Destination email address (Gmail) to receive real-time critical alerts
+    | whenever any bin in the live monitor crosses the 85% capacity threshold.
+    |
+    */
+
+    'alert_recipient' => env('ALERT_RECIPIENT_EMAIL', 'kurtumali06@gmail.com'),
+
 ];

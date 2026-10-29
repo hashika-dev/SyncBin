@@ -55,4 +55,8 @@ return [
         'camera_url' => env('RPI_CAMERA_URL', 'https://camera.ecosync.me/snapshot'),
     ],
 
+    'brevo' => [
+        'key' => env('BREVO_API_KEY'),
+    ],
+
 ];

@@ -457,6 +457,16 @@
                     <span x-text="loadingAction === 'modal-empty' ? 'Emptying...' : 'Empty Bin (Override)'"></span>
                 </button>
             </div>
+
+            <!-- Instant Test Alert Button -->
+            <div class="pt-2">
+                <button type="button" @click="testAlertEmail()" :disabled="loadingAction !== null"
+                        title="Dispatch a live test 85% capacity alert email to verify Gmail delivery"
+                        class="w-full py-2 px-3 bg-amber-500/15 hover:bg-amber-500/25 text-amber-800 dark:text-amber-300 border border-amber-400/40 rounded-2xl text-[11px] font-semibold transition-all flex items-center justify-center gap-1.5 active:scale-95 shadow-sm">
+                    <svg x-show="loadingAction === 'test-alert'" class="animate-spin h-3 w-3 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
+                    <span>⚡ Test 85% Alert Email to Gmail</span>
+                </button>
+            </div>
         </div>
     </div>
 
@@ -638,9 +648,40 @@
                         this.bins[this.activeKey].items = updatedBin.items || [];
                         this.bins[this.activeKey].status = updatedBin.status;
                         this.activeBin = this.bins[this.activeKey];
-                        this.showToast(`Logged item into ${this.activeBin.name}`);
+
+                        if (updatedBin.alert_dispatched) {
+                            if (updatedBin.alert_feedback && updatedBin.alert_feedback.delivered) {
+                                const via = (updatedBin.alert_feedback.channels || []).join(' & ') || 'Email';
+                                this.showToast(`⚠️ ${this.activeBin.name} reached ${updatedBin.level}%! Alert sent to ${updatedBin.alert_feedback.recipient} (${via})`, 'success');
+                            } else {
+                                const err = updatedBin.alert_feedback?.brevo?.error || updatedBin.alert_feedback?.mailer?.error || 'Check Brevo/Mail config in Railway';
+                                this.showToast(`⚠️ ${this.activeBin.name} at ${updatedBin.level}%! Alert failed: ${err}`, 'error');
+                            }
+                        } else {
+                            this.showToast(`Logged item into ${this.activeBin.name} (${updatedBin.level}%)`);
+                        }
                     } catch (error) {
                         this.showToast('Simulation failed', 'error');
+                    } finally {
+                        this.loadingAction = null;
+                    }
+                },
+                async testAlertEmail() {
+                    if (this.loadingAction) return;
+                    this.loadingAction = 'test-alert';
+                    try {
+                        const response = await axios.post('/api/bins/test-alert-email');
+                        const data = response.data;
+                        if (data.success) {
+                            const channels = (data.channels || []).join(' & ') || 'Email';
+                            this.showToast(`✅ Critical alert test sent to ${data.recipient} via ${channels}!`, 'success');
+                        } else {
+                            const error = data.details?.brevo?.error || data.details?.mailer?.error || 'Check Brevo/Mail config in Railway';
+                            this.showToast(`❌ Test alert failed: ${error}`, 'error');
+                        }
+                    } catch (error) {
+                        const msg = error.response?.data?.message || error.response?.data?.error || error.message;
+                        this.showToast(`❌ Test alert error: ${msg}`, 'error');
                     } finally {
                         this.loadingAction = null;
                     }

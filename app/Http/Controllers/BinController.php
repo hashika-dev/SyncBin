@@ -109,13 +109,28 @@ class BinController extends Controller
         $previousLevel = $bin->getOriginal('level') ?? 0;
         $bin->save();
 
-        // Dispatch alert only when the bin first crosses the 85% critical capacity threshold
-        if ($bin->level >= 85 && $previousLevel < 85) {
+        // Dispatch alert only when the bin crosses the 85% critical capacity threshold
+        $shouldAlert = $bin->level >= 85 && (
+            $previousLevel < 85 ||
+            $bin->alert_triggered_at === null ||
+            $bin->alert_triggered_at->diffInMinutes(now()) >= 30
+        );
+
+        $alertDispatched = false;
+        $alertFeedback = null;
+
+        if ($shouldAlert) {
             $bin->alert_triggered_at = now();
-            $this->dispatchCriticalAlert($bin);
+            $bin->save();
+            $alertFeedback = $this->dispatchCriticalAlert($bin);
+            $alertDispatched = true;
         }
 
-        return response()->json($bin->load(['items' => function($q) { $q->latest(); }]));
+        $responseData = $bin->load(['items' => function($q) { $q->latest(); }])->toArray();
+        $responseData['alert_dispatched'] = $alertDispatched;
+        $responseData['alert_feedback'] = $alertFeedback;
+
+        return response()->json($responseData);
     }
 
     /**
@@ -256,7 +271,13 @@ class BinController extends Controller
         $bin->save();
 
         // Alert dispatch if crossing 85%
-        if ($bin->level >= 85 && $previousLevel < 85) {
+        $shouldAlert = $bin->level >= 85 && (
+            $previousLevel < 85 ||
+            $bin->alert_triggered_at === null ||
+            $bin->alert_triggered_at->diffInMinutes(now()) >= 30
+        );
+
+        if ($shouldAlert) {
             $bin->alert_triggered_at = now();
             $bin->save();
             $this->dispatchCriticalAlert($bin);
@@ -1147,7 +1168,13 @@ class BinController extends Controller
             }
 
             // Trigger critical alert when crossing 85% threshold
-            if ($bin->level >= 85 && $previousLevel < 85) {
+            $shouldAlert = $bin->level >= 85 && (
+                $previousLevel < 85 ||
+                $bin->alert_triggered_at === null ||
+                $bin->alert_triggered_at->diffInMinutes(now()) >= 30
+            );
+
+            if ($shouldAlert) {
                 $bin->alert_triggered_at = now();
                 $this->dispatchCriticalAlert($bin);
             } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
@@ -1261,7 +1288,13 @@ class BinController extends Controller
             }
 
             // Trigger critical alert if crossing 85% threshold
-            if ($bin->level >= 85 && $previousLevel < 85) {
+            $shouldAlert = $bin->level >= 85 && (
+                $previousLevel < 85 ||
+                $bin->alert_triggered_at === null ||
+                $bin->alert_triggered_at->diffInMinutes(now()) >= 30
+            );
+
+            if ($shouldAlert) {
                 $bin->alert_triggered_at = now();
                 $this->dispatchCriticalAlert($bin);
             } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
@@ -1373,7 +1406,13 @@ class BinController extends Controller
         }
 
         // Trigger critical threshold alert if crossing 85%
-        if ($bin->level >= 85 && $previousLevel < 85) {
+        $shouldAlert = $bin->level >= 85 && (
+            $previousLevel < 85 ||
+            $bin->alert_triggered_at === null ||
+            $bin->alert_triggered_at->diffInMinutes(now()) >= 30
+        );
+
+        if ($shouldAlert) {
             $bin->alert_triggered_at = now();
             $this->dispatchCriticalAlert($bin);
         } elseif ($bin->level < 85 && $bin->level > 0 && $bin->alert_triggered_at) {
@@ -1471,22 +1510,54 @@ class BinController extends Controller
     }
 
     /**
-     * Dispatch email and SMS alerts when a bin reaches critical capacity.
+     * Dispatch email and SMS alerts when a bin reaches critical capacity (85%+).
      */
-    protected function dispatchCriticalAlert(Bin $bin): void
+    public function dispatchCriticalAlert(Bin $bin): array
     {
-        try {
-            $recipient = 'kurtumali06@gmail.com';
-            \Illuminate\Support\Facades\Mail::send('emails.critical-alert', ['bin' => $bin], function ($message) use ($bin, $recipient) {
-                $message->to($recipient)
-                    ->subject("⚠️ CRITICAL ALERT: {$bin->name} has reached {$bin->level}% capacity!");
-            });
-            \Illuminate\Support\Facades\Log::info("ALERT: Email successfully queued and sent to {$recipient} for Bin {$bin->name} at {$bin->level}% capacity.");
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Mail delivery failed: " . $e->getMessage());
+        $recipient = config('mail.alert_recipient') ?: env('ALERT_RECIPIENT_EMAIL', 'kurtumali06@gmail.com');
+        $report = [
+            'recipient' => $recipient,
+            'bin'       => $bin->name,
+            'level'     => $bin->level,
+            'brevo'     => null,
+            'mailer'    => null,
+            'sms'       => null,
+            'delivered' => false,
+            'channels'  => [],
+        ];
+
+        // 1. Deliver via Brevo HTTPS API (Port 443) if API key is present
+        $brevoApiKey = config('services.brevo.key') ?: env('BREVO_API_KEY');
+        if (!empty($brevoApiKey)) {
+            $brevoRes = \App\Services\BrevoMailService::sendCriticalAlert($recipient, $bin);
+            $report['brevo'] = $brevoRes;
+            if ($brevoRes['success']) {
+                $report['delivered'] = true;
+                $report['channels'][] = 'Brevo HTTPS API';
+                \Illuminate\Support\Facades\Log::info("ALERT: Critical alert email successfully dispatched via Brevo HTTPS API to {$recipient} for Bin {$bin->name} at {$bin->level}% capacity.");
+            } else {
+                \Illuminate\Support\Facades\Log::warning("Brevo alert dispatch failed: {$brevoRes['error']}. Attempting standard Mailer fallback.");
+            }
         }
 
-        // Semaphore SMS Alert
+        // 2. Deliver via standard Laravel Mailer (e.g. Gmail SMTP / default mailer) if Brevo was not used or failed
+        if (!$report['delivered']) {
+            try {
+                \Illuminate\Support\Facades\Mail::send('emails.critical-alert', ['bin' => $bin], function ($message) use ($bin, $recipient) {
+                    $message->to($recipient)
+                        ->subject("⚠️ CRITICAL ALERT: {$bin->name} has reached {$bin->level}% capacity!");
+                });
+                $report['mailer'] = ['success' => true, 'message' => 'Dispatched via Laravel Mailer (' . config('mail.default') . ')'];
+                $report['delivered'] = true;
+                $report['channels'][] = 'Laravel Mailer (' . config('mail.default') . ')';
+                \Illuminate\Support\Facades\Log::info("ALERT: Critical alert email successfully dispatched via Mailer to {$recipient} for Bin {$bin->name} at {$bin->level}% capacity.");
+            } catch (\Exception $e) {
+                $report['mailer'] = ['success' => false, 'error' => $e->getMessage()];
+                \Illuminate\Support\Facades\Log::error("Standard Mail delivery failed: " . $e->getMessage());
+            }
+        }
+
+        // 3. Semaphore SMS Alert
         $semaphoreApiKey = config('services.semaphore.key');
         $alertPhoneNumber = config('services.semaphore.number');
 
@@ -1499,13 +1570,45 @@ class BinController extends Controller
                 ]);
 
                 if ($smsResponse->successful()) {
+                    $report['sms'] = ['success' => true];
+                    $report['channels'][] = 'Semaphore SMS';
                     \Illuminate\Support\Facades\Log::info("Semaphore SMS alert sent successfully to {$alertPhoneNumber} for Bin {$bin->name}.");
                 } else {
+                    $report['sms'] = ['success' => false, 'error' => $smsResponse->json()];
                     \Illuminate\Support\Facades\Log::warning("Semaphore SMS delivery failed: " . json_encode($smsResponse->json()));
                 }
             } catch (\Exception $e) {
+                $report['sms'] = ['success' => false, 'error' => $e->getMessage()];
                 \Illuminate\Support\Facades\Log::error("Semaphore SMS error: " . $e->getMessage());
             }
         }
+
+        return $report;
+    }
+
+    /**
+     * Test endpoint for sending a live critical alert email immediately.
+     */
+    public function sendTestAlertEmail()
+    {
+        $bin = Bin::where('level', '>=', 85)->first() ?? Bin::first();
+        if (!$bin) {
+            return response()->json(['success' => false, 'message' => 'No bins registered in system.'], 404);
+        }
+
+        $testBin = clone $bin;
+        if ($testBin->level < 85) {
+            $testBin->level = 88;
+            $testBin->status = 'Critical';
+        }
+
+        $report = $this->dispatchCriticalAlert($testBin);
+
+        return response()->json([
+            'success'   => $report['delivered'],
+            'recipient' => $report['recipient'],
+            'channels'  => $report['channels'],
+            'details'   => $report,
+        ]);
     }
 }
