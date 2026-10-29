@@ -157,7 +157,6 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Host & Microcontroller Diagnostics</h2>
                     </div>
-                    <span class="px-3 py-1 bg-white/70 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md shadow-sm">Online</span>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
