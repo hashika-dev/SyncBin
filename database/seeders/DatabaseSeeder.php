@@ -56,15 +56,15 @@ class DatabaseSeeder extends Seeder
         ];
 
         foreach ($bins as $binData) {
-            $bin = \App\Models\Bin::updateOrCreate(
+            // The seeder runs on every deploy: only create a bin that is missing,
+            // never overwrite the level or items of an existing (live) bin.
+            $bin = \App\Models\Bin::firstOrCreate(
                 ['slug' => $binData['slug']],
-                \Illuminate\Support\Arr::except($binData, ['last_emptied_at']) + [
-                    'last_emptied_at' => $binData['last_emptied_at']
-                ]
+                \Illuminate\Support\Arr::except($binData, ['slug'])
             );
 
-            // Seed some mock items for demonstration if the bin has 0 items
-            if ($bin->items()->count() === 0) {
+            // Seed some mock items for demonstration on a brand-new bin only
+            if ($bin->wasRecentlyCreated) {
                 if ($bin->slug === 'hazardous') {
                     $bin->items()->createMany([
                         ['name' => 'Used Battery', 'icon' => '🔋'],

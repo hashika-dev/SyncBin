@@ -118,6 +118,31 @@ class LoginHardeningTest extends TestCase
         $this->assertDatabaseMissing('users', ['email' => 'superadmin@wastesync.com']);
     }
 
+    public function test_seeder_does_not_refill_an_emptied_bin(): void
+    {
+        $this->app->make(DatabaseSeeder::class)->run();
+
+        $bin = \App\Models\Bin::where('slug', 'recyclable')->first();
+        $bin->items()->delete();
+        $bin->update(['level' => 0, 'status' => 'Empty']);
+
+        // Next deploy runs the seeder again.
+        $this->app->make(DatabaseSeeder::class)->run();
+
+        $bin->refresh();
+        $this->assertSame(0, $bin->level);
+        $this->assertSame('Empty', $bin->status);
+        $this->assertSame(0, $bin->items()->count());
+    }
+
+    public function test_seeder_creates_missing_bins_with_demo_items(): void
+    {
+        $this->app->make(DatabaseSeeder::class)->run();
+
+        $this->assertSame(4, \App\Models\Bin::count());
+        $this->assertSame(3, \App\Models\Bin::where('slug', 'hazardous')->first()->items()->count());
+    }
+
     public function test_production_seeder_skips_accounts_when_passwords_are_not_set(): void
     {
         $this->app['env'] = 'production';
