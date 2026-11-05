@@ -123,4 +123,19 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Seeded Account Passwords (production)
+    |--------------------------------------------------------------------------
+    |
+    | In production the DatabaseSeeder never uses the default "password" for
+    | the built-in Admin and SuperAdmin accounts. Set these in Railway.
+    |
+    */
+
+    'seed_passwords' => [
+        'admin' => env('SEED_ADMIN_PASSWORD'),
+        'superadmin' => env('SEED_SUPERADMIN_PASSWORD'),
+    ],
+
 ];
