@@ -63,6 +63,7 @@ class LoginRequest extends FormRequest
                     }
                 } catch (\Throwable $e) {
                     \Illuminate\Support\Facades\Log::error('reCAPTCHA error: ' . $e->getMessage());
+                    $fail('Could not verify reCAPTCHA. Please try again.');
                 }
             }];
         } else {

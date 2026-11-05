@@ -61,5 +61,5 @@ Route::middleware('auth')->group(function () {
     Route::post('password/resend-otp', [PasswordController::class, 'resendOtp'])->middleware('throttle:3,1')->name('password.resend-otp');
 });
 
-Route::match(['get', 'post'], 'logout', [AuthenticatedSessionController::class, 'destroy'])
+Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
     ->name('logout');

@@ -12,9 +12,21 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+        // Log out a user's other sessions when their password changes.
+        $middleware->web(append: [
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
+        ]);
+        // Only the device endpoints (ESP32, Raspberry Pi) skip CSRF; they have no
+        // browser session. Dashboard actions under /api/* must send a CSRF token.
         $middleware->validateCsrfTokens(except: [
-            'logout',
-            'api/*',
+            'api/sensor/levels',
+            'api/update_bins',
+            'api/bins/camera-scan',
+            'api/bins/telemetry',
+            'api/hardware/telemetry',
+            'api/hardware/rpi-telemetry',
+            'api/hardware/esp32-telemetry',
         ]);
         $middleware->alias([
             '2fa' => \Laragear\TwoFactor\Http\Middleware\ConfirmTwoFactorCode::class,
