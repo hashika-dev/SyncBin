@@ -13,47 +13,7 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Create Admin Users (both EcoSync and WasteSync domains supported)
-        User::updateOrCreate(
-            ['email' => 'admin@ecosync.com'],
-            [
-                'name' => 'EcoSync Admin',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
-                'email_verified_at' => now(),
-            ]
-        );
-
-        User::updateOrCreate(
-            ['email' => 'admin@wastesync.com'],
-            [
-                'name' => 'Admin',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
-                'email_verified_at' => now(),
-            ]
-        );
-
-        // Create SuperAdmin Users
-        User::updateOrCreate(
-            ['email' => 'superadmin@ecosync.com'],
-            [
-                'name' => 'EcoSync SuperAdmin',
-                'password' => Hash::make('password'),
-                'role' => 'superadmin',
-                'email_verified_at' => now(),
-            ]
-        );
-
-        User::updateOrCreate(
-            ['email' => 'superadmin@wastesync.com'],
-            [
-                'name' => 'SuperAdmin',
-                'password' => Hash::make('password'),
-                'role' => 'superadmin',
-                'email_verified_at' => now(),
-            ]
-        );
+        $this->seedAccounts();
 
         // Create default Bins
         $bins = [
@@ -133,6 +93,65 @@ class DatabaseSeeder extends Seeder
             }
         }
 
-        $this->command->info('Admin, SuperAdmin accounts, and default Bins seeded successfully!');
+        $this->command?->info('Admin, SuperAdmin accounts, and default Bins seeded successfully!');
+    }
+
+    /**
+     * Create the built-in Admin and SuperAdmin accounts.
+     *
+     * Locally they use "password". In production the passwords come from
+     * SEED_ADMIN_PASSWORD / SEED_SUPERADMIN_PASSWORD, and an existing account
+     * keeps whatever password its owner set, unless it is still "password".
+     */
+    private function seedAccounts(): void
+    {
+        $production = app()->isProduction();
+
+        $passwords = $production
+            ? config('app.seed_passwords')
+            : ['admin' => 'password', 'superadmin' => 'password'];
+
+        $accounts = [
+            ['email' => 'admin@ecosync.com', 'name' => 'EcoSync Admin', 'role' => 'admin'],
+            ['email' => 'admin@wastesync.com', 'name' => 'Admin', 'role' => 'admin'],
+            ['email' => 'superadmin@ecosync.com', 'name' => 'EcoSync SuperAdmin', 'role' => 'superadmin'],
+            ['email' => 'superadmin@wastesync.com', 'name' => 'SuperAdmin', 'role' => 'superadmin'],
+        ];
+
+        $placeholderEmails = array_column($accounts, 'email');
+
+        foreach ($accounts as $account) {
+            // Placeholders exist so the team can log in on a fresh deploy. Once a
+            // role has a real account (an owner changed the email), stop
+            // recreating that role's missing placeholders.
+            $hasRealAccount = User::where('role', $account['role'])
+                ->whereNotIn('email', $placeholderEmails)
+                ->exists();
+
+            if ($hasRealAccount && ! User::where('email', $account['email'])->exists()) {
+                continue;
+            }
+
+            $password = $passwords[$account['role']] ?? null;
+
+            if (blank($password)) {
+                $this->command?->warn("Skipping {$account['email']}: SEED_" . strtoupper($account['role']) . '_PASSWORD is not set.');
+
+                continue;
+            }
+
+            $user = User::firstOrNew(['email' => $account['email']]);
+            $user->name = $account['name'];
+            $user->role = $account['role'];
+            $user->email_verified_at ??= now();
+
+            $usesDefault = $user->exists && Hash::check('password', $user->password);
+
+            if (! $user->exists || ! $production || $usesDefault) {
+                $user->password = Hash::make($password);
+            }
+
+            $user->save();
+        }
     }
 }
