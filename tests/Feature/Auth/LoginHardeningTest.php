@@ -93,6 +93,31 @@ class LoginHardeningTest extends TestCase
         $this->assertTrue(Hash::check('Owner-Chosen-Pass-789', $user->password));
     }
 
+    public function test_placeholder_is_not_recreated_once_a_real_account_exists(): void
+    {
+        // Owner changed superadmin@wastesync.com to their real email.
+        User::factory()->create(['email' => 'owner@example.com', 'role' => 'superadmin']);
+
+        $this->app->make(DatabaseSeeder::class)->run();
+
+        $this->assertDatabaseMissing('users', ['email' => 'superadmin@wastesync.com']);
+        $this->assertDatabaseMissing('users', ['email' => 'superadmin@ecosync.com']);
+        // Admin has no real account yet, so its placeholders are still created.
+        $this->assertDatabaseHas('users', ['email' => 'admin@wastesync.com']);
+        $this->assertDatabaseHas('users', ['email' => 'admin@ecosync.com']);
+    }
+
+    public function test_existing_placeholder_is_kept_when_a_real_account_exists(): void
+    {
+        User::factory()->create(['email' => 'superadmin@ecosync.com', 'role' => 'superadmin']);
+        User::factory()->create(['email' => 'owner@example.com', 'role' => 'superadmin']);
+
+        $this->app->make(DatabaseSeeder::class)->run();
+
+        $this->assertDatabaseHas('users', ['email' => 'superadmin@ecosync.com']);
+        $this->assertDatabaseMissing('users', ['email' => 'superadmin@wastesync.com']);
+    }
+
     public function test_production_seeder_skips_accounts_when_passwords_are_not_set(): void
     {
         $this->app['env'] = 'production';

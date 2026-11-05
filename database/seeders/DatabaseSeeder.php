@@ -118,7 +118,20 @@ class DatabaseSeeder extends Seeder
             ['email' => 'superadmin@wastesync.com', 'name' => 'SuperAdmin', 'role' => 'superadmin'],
         ];
 
+        $placeholderEmails = array_column($accounts, 'email');
+
         foreach ($accounts as $account) {
+            // Placeholders exist so the team can log in on a fresh deploy. Once a
+            // role has a real account (an owner changed the email), stop
+            // recreating that role's missing placeholders.
+            $hasRealAccount = User::where('role', $account['role'])
+                ->whereNotIn('email', $placeholderEmails)
+                ->exists();
+
+            if ($hasRealAccount && ! User::where('email', $account['email'])->exists()) {
+                continue;
+            }
+
             $password = $passwords[$account['role']] ?? null;
 
             if (blank($password)) {
