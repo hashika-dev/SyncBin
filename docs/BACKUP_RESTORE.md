@@ -58,6 +58,9 @@ Drive, in a private folder).
 
    Type `yes` to confirm. The command first saves the current database as a
    "Before restore" backup, so the restore itself can be undone the same way.
+   Afterwards it runs `php artisan migrate --force`, so an older backup is
+   brought up to the current database structure (for example, backups made
+   before 2026-11-06 store times in UTC and are moved to Philippine time).
 4. Open https://ecosync.me and check that the data is back. Users who were
    logged in may need to log in again.
 

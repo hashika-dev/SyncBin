@@ -66,6 +66,9 @@ Artisan::command('db:restore {file : Backup file name, see db:backups} {--force 
     $this->info("Restored from {$file}.");
     $this->line("Safety backup of the previous data: {$safety}");
 
+    // An older backup may predate recent migrations (e.g. the UTC to PHT shift).
+    $this->call('migrate', ['--force' => true]);
+
     return 0;
 })->purpose('Restore the SQLite database from a backup');
 
