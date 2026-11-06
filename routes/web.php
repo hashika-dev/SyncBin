@@ -59,6 +59,17 @@ Route::middleware('auth')->group(function () {
         Route::post('/api/system/seed-mock-data', [\App\Http\Controllers\BinController::class, 'seedMockData'])->name('system.seed');
         Route::post('/api/hardware/crypto-demo', [\App\Http\Controllers\BinController::class, 'cryptoDemo'])->name('hardware.crypto-demo');
         Route::delete('/dashboard/history/clear', [\App\Http\Controllers\BinController::class, 'clearHistory'])->name('dashboard.history.clear');
+
+        // Database backups (F: backup and recovery)
+        Route::get('/dashboard/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('dashboard.backups');
+        Route::post('/dashboard/backups', [\App\Http\Controllers\BackupController::class, 'store'])
+            ->middleware('throttle:5,1')
+            ->name('dashboard.backups.store');
+        // The file holds every account's password hash, so ask for the password again.
+        Route::get('/dashboard/backups/{file}/download', [\App\Http\Controllers\BackupController::class, 'download'])
+            ->middleware('password.confirm')
+            ->where('file', '[A-Za-z0-9_.\-]+')
+            ->name('dashboard.backups.download');
     });
 });
 

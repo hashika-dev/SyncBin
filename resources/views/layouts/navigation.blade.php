@@ -45,6 +45,10 @@
                        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 {{ request()->routeIs('dashboard.hardware') ? 'bg-white/90 text-emerald-800 border border-emerald-400/40 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5' }}">
                         Hardware Monitor
                     </a>
+                    <a href="{{ route('dashboard.backups') }}" 
+                       class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-150 {{ request()->routeIs('dashboard.backups') ? 'bg-white/90 text-emerald-800 border border-emerald-400/40 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-white/5' }}">
+                        Backups
+                    </a>
                     @endif
 
                     <a href="{{ route('profile.edit') }}" 
@@ -154,6 +158,13 @@
            class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('dashboard.hardware') ? 'bg-white/90 text-emerald-800 border border-emerald-400/40 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5' }}">
             <span>Hardware Monitor</span>
             @if(request()->routeIs('dashboard.hardware'))
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
+            @endif
+        </a>
+        <a href="{{ route('dashboard.backups') }}" @click="open = false" 
+           class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all {{ request()->routeIs('dashboard.backups') ? 'bg-white/90 text-emerald-800 border border-emerald-400/40 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-white/50 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5' }}">
+            <span>Backups</span>
+            @if(request()->routeIs('dashboard.backups'))
                 <span class="w-1.5 h-1.5 rounded-full bg-cyan-500"></span>
             @endif
         </a>
