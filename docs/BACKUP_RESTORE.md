@@ -86,4 +86,4 @@ Run this once per term and save screenshots of each step.
 
 | Date | Backup restored | Before | After change | After restore | Done by |
 | --- | --- | --- | --- | --- | --- |
-| | | | | | |
+| 2026-11-07 00:45 PHT | `ecosync-2026-11-07_004314-manual.sqlite` | 7 scans, 12 clearances, hazardous 49%, non-bio 28% | 6 scans, 15 clearances, hazardous 0%, non-bio 0%, bio 35%, recyclable 31% | 7 scans, 12 clearances, hazardous 49%, non-bio 28% (matches before); safety copy `ecosync-2026-11-07_004540-prerestore.sqlite` | SuperAdmin team, via `railway ssh` |
