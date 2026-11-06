@@ -49,19 +49,24 @@
             @endif
 
             <!-- Policy summary -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 @php
                     $latest = $backups[0] ?? null;
+                    $schedulerAlive = $schedulerLastRun && $schedulerLastRun->gt(now()->subMinutes(3));
                     $cards = [
-                        ['label' => 'Latest backup', 'value' => $latest ? $latest['created_at']->diffForHumans() : 'None yet'],
-                        ['label' => 'Schedule', 'value' => "Daily at {$dailyAt} ({$timezone})"],
-                        ['label' => 'Retention', 'value' => "{$keepDays} days, newest {$keepMin} always kept"],
+                        ['label' => 'Latest backup', 'value' => $latest ? $latest['created_at']->diffForHumans() : 'None yet', 'class' => ''],
+                        ['label' => 'Scheduler', 'value' => $schedulerAlive
+                            ? 'Running (checked '.$schedulerLastRun->diffForHumans().')'
+                            : ($schedulerLastRun ? 'NOT running since '.$schedulerLastRun->diffForHumans() : 'NOT running'),
+                            'class' => $schedulerAlive ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'],
+                        ['label' => 'Schedule', 'value' => "Daily at {$dailyAt} ({$timezone})", 'class' => ''],
+                        ['label' => 'Retention', 'value' => "{$keepDays} days, newest {$keepMin} always kept", 'class' => ''],
                     ];
                 @endphp
                 @foreach ($cards as $card)
                     <div class="rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl">
                         <span class="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{{ $card['label'] }}</span>
-                        <span class="block mt-1 text-sm font-bold text-slate-900 dark:text-white">{{ $card['value'] }}</span>
+                        <span class="block mt-1 text-sm font-bold {{ $card['class'] ?: 'text-slate-900 dark:text-white' }}">{{ $card['value'] }}</span>
                     </div>
                 @endforeach
             </div>
@@ -79,7 +84,7 @@
                             <tr class="bg-white/60 dark:bg-white/[0.04] border-b border-white/60 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                                 <th class="py-3.5 px-4 font-semibold">File</th>
                                 <th class="py-3.5 px-4 font-semibold">Type</th>
-                                <th class="py-3.5 px-4 font-semibold">Created</th>
+                                <th class="py-3.5 px-4 font-semibold">Created ({{ $timezone }})</th>
                                 <th class="py-3.5 px-4 font-semibold text-right">Size</th>
                                 <th class="py-3.5 px-4 font-semibold text-right">Action</th>
                             </tr>
@@ -102,7 +107,7 @@
                                 <tr class="hover:bg-white/40 dark:hover:bg-white/[0.03]">
                                     <td class="py-3 px-4 font-mono text-slate-800 dark:text-slate-200 whitespace-nowrap">{{ $backup['name'] }}</td>
                                     <td class="py-3 px-4"><span class="px-2 py-0.5 rounded-full text-[10px] font-semibold {{ $badge }}">{{ $label }}</span></td>
-                                    <td class="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-400">{{ $backup['created_at']->format('M d, Y H:i:s') }}</td>
+                                    <td class="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-slate-400">{{ $backup['created_at']->copy()->setTimezone($timezone)->format('M d, Y h:i:s A') }}</td>
                                     <td class="py-3 px-4 text-right font-mono text-slate-600 dark:text-slate-400">{{ number_format($backup['size'] / 1024, 1) }} KB</td>
                                     <td class="py-3 px-4 text-right">
                                         <a href="{{ route('dashboard.backups.download', $backup['name']) }}"

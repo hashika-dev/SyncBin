@@ -163,4 +163,17 @@ class DatabaseBackupTest extends TestCase
             ->get(route('dashboard.backups.download', 'ecosync-2020-01-01_000000-daily.sqlite'))
             ->assertNotFound();
     }
+
+    public function test_page_shows_whether_the_scheduler_is_running(): void
+    {
+        $user = $this->superadmin();
+
+        $this->actingAs($user)->get(route('dashboard.backups'))->assertSee('NOT running');
+
+        $this->artisan('schedule:run')->assertSuccessful();
+
+        $this->actingAs($user)->get(route('dashboard.backups'))
+            ->assertSee('Running (checked')
+            ->assertDontSee('NOT running');
+    }
 }

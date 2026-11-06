@@ -3,6 +3,7 @@
 use App\Services\DatabaseBackupService;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Schedule;
 
 Artisan::command('inspire', function () {
@@ -72,3 +73,8 @@ Schedule::command('db:backup --reason=daily')
     ->dailyAt(config('backup.daily_at'))
     ->timezone(config('backup.timezone'))
     ->withoutOverlapping();
+
+// Heartbeat so the Backups page can show whether the scheduler is alive.
+Schedule::call(fn () => Cache::forever('scheduler:last_run', now()->timestamp))
+    ->everyMinute()
+    ->name('scheduler-heartbeat');
