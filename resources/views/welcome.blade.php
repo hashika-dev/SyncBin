@@ -53,12 +53,12 @@
     <aside class="hidden lg:flex lg:w-1/2 xl:w-5/12 bg-slate-950 border-r border-slate-800/80 flex-col justify-between p-10 xl:p-14 text-white relative overflow-hidden select-none">
         
         <!-- Hardware Station Background Image -->
-        <img src="{{ asset('images/ecosync_hardware_bin.jpg') }}" 
-             alt="EcoSync Automated Waste Station Hardware" 
-             class="absolute inset-0 w-full h-full object-cover object-center opacity-60 filter brightness-95 contrast-105 pointer-events-none scale-105 transition-transform duration-1000 ease-out">
+        <img src="{{ asset('images/login-recycle-grass.jpg') }}"
+             alt="Recycling symbol made of grass"
+             class="absolute inset-0 w-full h-full object-cover object-center opacity-90 filter brightness-95 contrast-105 pointer-events-none">
         
         <!-- Vignette & Surface Gradients -->
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/40 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-emerald-950/70 to-emerald-950/45 pointer-events-none"></div>
         <div class="absolute inset-0 bg-radial-gradient from-transparent via-slate-950/20 to-slate-950/80 pointer-events-none"></div>
 
         <!-- Top Brand Lockup -->
