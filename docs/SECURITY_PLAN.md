@@ -92,5 +92,5 @@ Test: DevTools > Network > response headers; securityheaders.com screenshot.
 - [ ] `php artisan test` output with access-control tests passing
 - [ ] Login audit page showing a failed login
 - [ ] `curl` without token getting 401 from a device URL and from `/snapshot`
-- [ ] Backup restore with before/after row counts
+- [ ] Backup restore with before/after row counts (steps in `docs/BACKUP_RESTORE.md`)
 - [ ] OWASP ZAP report before and after

@@ -26,3 +26,5 @@ Thumbs.db
 skills-lock.json
 __pycache__/
 *.pyc
+/database/backups
+/storage/app/backups
