@@ -53,12 +53,12 @@
     <aside class="hidden lg:flex lg:w-1/2 xl:w-5/12 bg-slate-950 border-r border-slate-800/80 flex-col justify-between p-10 xl:p-14 text-white relative overflow-hidden select-none">
         
         <!-- Hardware Station Background Image -->
-        <img src="{{ asset('images/login-recycling-bins.jpg') }}"
-             alt="Four separated waste bins in a tree-lined park"
-             class="absolute inset-0 w-full h-full object-cover object-center opacity-70 filter brightness-95 contrast-105 pointer-events-none">
+        <img src="{{ asset('images/login-recycle-grass.jpg') }}"
+             alt="Recycling symbol made of grass"
+             class="absolute inset-0 w-full h-full object-cover object-center opacity-90 filter brightness-95 contrast-105 pointer-events-none">
         
         <!-- Vignette & Surface Gradients -->
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/40 pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-emerald-950/70 to-emerald-950/45 pointer-events-none"></div>
         <div class="absolute inset-0 bg-radial-gradient from-transparent via-slate-950/20 to-slate-950/80 pointer-events-none"></div>
 
         <!-- Top Brand Lockup -->
@@ -156,11 +156,6 @@
             <span>EcoSync AI Station Node</span>
             <span class="text-slate-500">v4.2.1</span>
         </div>
-        <!-- Photo credit (required by the CC BY-SA 3.0 license) -->
-        <a href="https://commons.wikimedia.org/wiki/File:Singapore_Recycling-bins-01.jpg" target="_blank" rel="noopener"
-           class="relative z-10 mt-2 text-[10px] text-slate-500 hover:text-slate-300 font-mono">
-            Photo: CEphoto, Uwe Aranas / CC BY-SA 3.0
-        </a>
     </aside>
 
     <!-- Right Column: Sign-In Authentication with Frosted Glassmorphism -->
