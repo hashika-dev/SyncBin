@@ -63,30 +63,16 @@
                 </div>
             </div>
 
-            <!-- 2. Top Summary Cards: live, from the Pi and ESP32 telemetry (polls every 5s) -->
+            <!-- 2. Top Summary Cards: live, fed by the Pi and ESP32 cards below (one poll each, every 5s) -->
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
                  x-data="{
                     rpi: { status: 'loading', data: null },
                     esp: { status: 'loading', data: null },
-                    async poll(url) {
-                        try {
-                            const res = await fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
-                            const json = await res.json();
-                            return { status: json.status, data: json.data ?? null };
-                        } catch (e) {
-                            return { status: 'offline', data: null };
-                        }
-                    },
-                    async refresh() {
-                        [this.rpi, this.esp] = await Promise.all([
-                            this.poll('{{ route('rpi.telemetry.get', [], false) }}'),
-                            this.poll('{{ route('esp32.telemetry.get', [], false) }}'),
-                        ]);
-                    },
                     get online() { return [this.rpi, this.esp].filter(d => d.status === 'live').length; },
                     tone(status) { return status === 'live' ? 'text-emerald-600 dark:text-emerald-400' : (status === 'stale' ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'); },
-                    init() { this.refresh(); setInterval(() => this.refresh(), 5000); }
-                 }">
+                 }"
+                 @rpi-telemetry.window="rpi = $event.detail"
+                 @esp32-telemetry.window="esp = $event.detail">
 
                 <!-- Card 1: Fleet Status (4 controllers; Pi + ESP32 report to the server, the Unos report through the Pi) -->
                 <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] transition-all flex items-center justify-between overflow-hidden group">
@@ -203,7 +189,9 @@
                                     this.rpiLastSeen = json.data?.last_seen ?? '—';
                                 } catch (e) {
                                     this.rpiStatus = 'offline';
+                                    this.rpi = null;
                                 }
+                                window.dispatchEvent(new CustomEvent('rpi-telemetry', { detail: { status: this.rpiStatus, data: this.rpi } }));
                             },
                             init() {
                                 this.fetchRpiTelemetry();
@@ -307,7 +295,9 @@
                                     this.esp32LastSeen = json.data?.last_seen ?? '—';
                                 } catch (e) {
                                     this.esp32Status = 'offline';
+                                    this.esp32 = null;
                                 }
+                                window.dispatchEvent(new CustomEvent('esp32-telemetry', { detail: { status: this.esp32Status, data: this.esp32 } }));
                             },
                             init() {
                                 this.fetchEsp32Telemetry();
@@ -368,8 +358,22 @@
                 </div>
             </div>
 
-            <!-- SECTION 2: Telemetry Array (Frosted Glass Container) -->
-            <div x-show="activeTab === 'all' || activeTab === 'sensors'" 
+            <!-- SECTION 2: Telemetry Array. Sensor status follows the ESP32 that reads them. -->
+            <div x-show="activeTab === 'all' || activeTab === 'sensors'"
+                 x-data="{
+                    espStatus: 'loading',
+                    sensorLabel() {
+                        return { live: 'ONLINE', stale: 'STALE', offline: 'OFFLINE', loading: 'CHECKING' }[this.espStatus] ?? 'OFFLINE';
+                    },
+                    sensorClass() {
+                        return {
+                            live: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-400/30',
+                            stale: 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-400/30',
+                            loading: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-400/30',
+                        }[this.espStatus] ?? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-400/30';
+                    }
+                 }"
+                 @esp32-telemetry.window="espStatus = $event.detail.status" 
                  class="relative rounded-3xl p-6 sm:p-7 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_12px_36px_-6px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7)] space-y-5 transition-all overflow-hidden">
                 <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
 
@@ -378,7 +382,8 @@
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                         <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Sensor Telemetry & Diagnostic Matrix</h2>
                     </div>
-                    <span class="px-3 py-1 bg-white/70 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md shadow-sm">4 / 4 Online</span>
+                    <span class="px-3 py-1 border rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md shadow-sm" :class="sensorClass()"
+                          x-text="espStatus === 'live' ? '4 / 4 Online' : (espStatus === 'loading' ? 'Checking…' : '0 / 4 Online · ESP32 ' + espStatus)">Checking…</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
@@ -424,7 +429,7 @@
                                     <span class="w-2 h-2 rounded-full bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]"></span>
                                     <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #1 &bull; HC-SR04</span>
                                 </div>
-                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
+                                <span class="px-2 py-0.5 border rounded-lg text-[9px] font-mono font-bold" :class="sensorClass()" x-text="sensorLabel()">CHECKING</span>
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 block">Hazardous Chamber</span>
@@ -435,7 +440,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('hazardous') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'hazardous')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
@@ -487,7 +492,7 @@
                                     <span class="w-2 h-2 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.6)]"></span>
                                     <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #2 &bull; HC-SR04</span>
                                 </div>
-                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
+                                <span class="px-2 py-0.5 border rounded-lg text-[9px] font-mono font-bold" :class="sensorClass()" x-text="sensorLabel()">CHECKING</span>
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-sky-600 dark:text-sky-400 block">Recyclable Chamber</span>
@@ -498,7 +503,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('recyclable') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'recyclable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
@@ -550,7 +555,7 @@
                                     <span class="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"></span>
                                     <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #3 &bull; HC-SR04</span>
                                 </div>
-                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
+                                <span class="px-2 py-0.5 border rounded-lg text-[9px] font-mono font-bold" :class="sensorClass()" x-text="sensorLabel()">CHECKING</span>
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block">Non-Biodegradable Chamber</span>
@@ -561,7 +566,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('non-bio') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'non-bio')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
@@ -613,7 +618,7 @@
                                     <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
                                     <span class="text-xs font-bold text-slate-900 dark:text-white">Sensor #4 &bull; HC-SR04</span>
                                 </div>
-                                <span class="px-2 py-0.5 bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-400/30 rounded-lg text-[9px] font-mono font-bold">ONLINE</span>
+                                <span class="px-2 py-0.5 border rounded-lg text-[9px] font-mono font-bold" :class="sensorClass()" x-text="sensorLabel()">CHECKING</span>
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block">Biodegradable Chamber</span>
@@ -624,7 +629,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('biodegradable') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'biodegradable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
