@@ -23,16 +23,9 @@
                         <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
                             Analytics & Reports
                         </h1>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/70 dark:bg-emerald-500/15 border border-white/80 dark:border-emerald-400/30 text-emerald-800 dark:text-emerald-300 shadow-[0_4px_16px_rgba(16,185,129,0.15)] backdrop-blur-xl">
-                            <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            Telemetry Intelligence
-                        </span>
                     </div>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                        Classification volume, throughput metrics, and bin capacity trends across containment nodes
+                        Items sorted per day, how full each bin is, and how quickly full bins get emptied
                     </p>
                 </div>
                 
@@ -58,7 +51,7 @@
                     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Total Items Segregated</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Items in bins now</span>
                         <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
@@ -67,16 +60,16 @@
                     </div>
                     <div class="mt-3">
                         <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight block">{{ number_format($totalItemsCount ?? 0) }}</span>
-                        <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-1">Telemetry verified items</span>
+                        <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-1">Cleared when a bin is emptied</span>
                     </div>
                 </div>
 
-                <!-- Metric 2: Diversion & Recycling Rate -->
+                <!-- Metric 2: Recyclable share -->
                 <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] hover:border-sky-400/50 transition-all flex flex-col justify-between overflow-hidden group">
                     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-sky-400/40 to-transparent pointer-events-none"></div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Diversion & Recycling</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Recyclable share</span>
                         <div class="w-8 h-8 rounded-xl bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-[0_0_12px_rgba(56,189,248,0.2)]">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M7 19H4.815a1.83 1.83 0 0 1-1.57-.881 1.785 1.785 0 0 1-.004-1.784L7.196 9.5"/>
@@ -87,7 +80,7 @@
                     </div>
                     <div class="mt-3">
                         <span class="text-2xl sm:text-3xl font-extrabold font-mono text-emerald-600 dark:text-emerald-400 tracking-tight block">{{ $recyclingRate ?? 0 }}%</span>
-                        <span class="text-[11px] text-sky-600 dark:text-sky-400 font-semibold block mt-1">Diverted from landfill</span>
+                        <span class="text-[11px] text-sky-600 dark:text-sky-400 font-semibold block mt-1">Of the items in bins now</span>
                     </div>
                 </div>
 
@@ -96,7 +89,7 @@
                     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-amber-400/40 to-transparent pointer-events-none"></div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Avg Fleet Capacity</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Average bin level</span>
                         <div class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-400/40 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-[0_0_12px_rgba(251,191,36,0.2)]">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
@@ -120,7 +113,7 @@
                     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
 
                     <div class="flex items-center justify-between">
-                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Avg Evacuation Speed</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold">Avg time to empty</span>
                         <div class="w-8 h-8 rounded-xl bg-emerald-500/15 border border-emerald-400/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-[0_0_12px_rgba(16,185,129,0.2)]">
                             <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -129,9 +122,13 @@
                     </div>
                     <div class="mt-3">
                         <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight block">
-                            {{ $avgResponseTimeMinutes > 0 ? $avgResponseTimeMinutes : '< 1' }} <span class="text-sm font-normal text-slate-500">min</span>
+                            @if ($avgResponseTimeMinutes !== null)
+                                {{ $avgResponseTimeMinutes }} <span class="text-sm font-normal text-slate-500">min</span>
+                            @else
+                                &mdash;
+                            @endif
                         </span>
-                        <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold block mt-1">Prompt fleet response</span>
+                        <span class="text-[11px] text-slate-600 dark:text-slate-400 font-semibold block mt-1">{{ $avgResponseTimeMinutes !== null ? 'From the 80% alert to emptied' : 'No full bin has been emptied yet' }}</span>
                     </div>
                 </div>
 
@@ -181,7 +178,7 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                             <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Items Classified — Past 7 Days</h2>
                         </div>
-                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Throughput volume, peak intake patterns, and daily classification load</p>
+                        <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Items the camera classified each day</p>
                     </div>
 
                     <!-- Micro Metric Pills -->
@@ -287,8 +284,8 @@
                             ↑
                         </div>
                         <div>
-                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block font-medium">Peak Processing</span>
-                            <span class="font-bold text-slate-900 dark:text-white">{{ $peakDay['day'] }} ({{ $peakDay['count'] }} units)</span>
+                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block font-medium">Busiest day</span>
+                            <span class="font-bold text-slate-900 dark:text-white">{{ $peakDay['count'] > 0 ? $peakDay['day'] . ' (' . $peakDay['count'] . ' ' . \Illuminate\Support\Str::plural('item', $peakDay['count']) . ')' : 'No items this week' }}</span>
                         </div>
                     </div>
 
@@ -297,8 +294,8 @@
                             ✓
                         </div>
                         <div>
-                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block font-medium">Intake Cadence</span>
-                            <span class="font-bold text-emerald-700 dark:text-emerald-400 font-semibold">Stable (+12% throughput)</span>
+                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 uppercase tracking-wider block font-medium">Daily average</span>
+                            <span class="font-bold text-slate-900 dark:text-white">{{ round($totalWeekly / 7, 1) }} items per day</span>
                         </div>
                     </div>
                 </div>
@@ -312,20 +309,20 @@
                 <div class="flex items-center justify-between mb-5 pb-4 border-b border-white/50 dark:border-white/10">
                     <div class="flex items-center gap-2.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Containment Stream Status Summary</h2>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Bin status</h2>
                     </div>
-                    <span class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">4 Monitored Nodes</span>
+                    <span class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">4 bins</span>
                 </div>
 
                 <div class="overflow-x-auto rounded-2xl border border-white/70 dark:border-white/10 bg-white/40 dark:bg-black/30 backdrop-blur-md">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="bg-white/60 dark:bg-white/[0.04] border-b border-white/60 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                <th class="py-3.5 px-4 font-semibold">Node Code</th>
-                                <th class="py-3.5 px-4 font-semibold">Category Stream</th>
-                                <th class="py-3.5 px-4 font-semibold">Containment Fill Level</th>
-                                <th class="py-3.5 px-4 font-semibold">Status Badge</th>
-                                <th class="py-3.5 px-4 text-right font-semibold">Classified Items</th>
+                                <th class="py-3.5 px-4 font-semibold">Node</th>
+                                <th class="py-3.5 px-4 font-semibold">Bin</th>
+                                <th class="py-3.5 px-4 font-semibold">Bin level</th>
+                                <th class="py-3.5 px-4 font-semibold">Status</th>
+                                <th class="py-3.5 px-4 text-right font-semibold">Items</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/50 dark:divide-white/10">
@@ -389,7 +386,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="py-8 text-center text-xs text-slate-400 dark:text-slate-500">No containment bin telemetry records available.</td>
+                                    <td colspan="5" class="py-8 text-center text-xs text-slate-400 dark:text-slate-500">No bins found.</td>
                                 </tr>
                             @endforelse
                         </tbody>

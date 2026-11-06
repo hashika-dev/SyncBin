@@ -46,7 +46,7 @@
                         </span>
                     </div>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                        Live ESP32 & Raspberry Pi telemetry, multi-sensor calibration array, and cryptographic bus diagnostics
+                        Live status of the Raspberry Pi, the ESP32, the bin sensors and the sorter boards
                     </p>
                 </div>
 
@@ -216,7 +216,7 @@
                             </span>
                             <span x-show="rpiStatus === 'offline' || rpiStatus === 'loading'"
                                   class="px-2.5 py-0.5 bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm"
-                                  x-text="rpiStatus === 'loading' ? 'POLLING…' : 'OFFLINE'">
+                                  x-text="rpiStatus === 'loading' ? 'CHECKING…' : 'OFFLINE'">
                             </span>
                         </div>
 
@@ -325,7 +325,7 @@
                                     </span>
                                     <span x-show="esp32Status === 'offline' || esp32Status === 'loading'"
                                           class="px-2.5 py-0.5 bg-rose-100 dark:bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-400/30 rounded-xl text-[10px] font-mono font-bold uppercase shadow-sm"
-                                          x-text="esp32Status === 'loading' ? 'POLLING…' : 'OFFLINE'">
+                                          x-text="esp32Status === 'loading' ? 'CHECKING…' : 'OFFLINE'">
                                     </span>
                                 </div>
                             </div>
@@ -333,11 +333,11 @@
                             <div class="grid grid-cols-2 gap-3 text-xs">
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                     <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">MAC ADDRESS</span>
-                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.mac_address ?? 'F4:65:0B:47:17:70'">F4:65:0B:47:17:70</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.mac_address ?? '—'">—</span>
                                 </div>
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                     <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">FIRMWARE</span>
-                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.firmware ?? 'EcoSync-v2.1.4'">EcoSync-v2.1.4</span>
+                                    <span class="text-slate-900 dark:text-slate-200 font-mono font-bold block mt-0.5" x-text="esp32?.firmware ?? '—'">—</span>
                                 </div>
                                 <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
                                     <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 block font-semibold">IP ADDRESS</span>
@@ -440,7 +440,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('hazardous') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'hazardous')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
@@ -503,7 +503,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('recyclable') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'recyclable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
@@ -566,7 +566,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('non-bio') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'non-bio')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
@@ -629,7 +629,7 @@
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'CHAMBER PING' : 'LAST READING'">CHAMBER PING</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('biodegradable') + ' cm'">
                                         {{ round(max(0, ($bins->firstWhere('slug', 'biodegradable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
