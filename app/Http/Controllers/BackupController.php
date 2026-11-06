@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Services\DatabaseBackupService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use InvalidArgumentException;
@@ -23,6 +25,7 @@ class BackupController extends Controller
             'keepMin' => config('backup.keep_min'),
             'dailyAt' => config('backup.daily_at'),
             'timezone' => config('backup.timezone'),
+            'schedulerLastRun' => $this->schedulerLastRun(),
         ]);
     }
 
@@ -59,5 +62,12 @@ class BackupController extends Controller
         return response()->download($path, $file, [
             'Content-Type' => 'application/vnd.sqlite3',
         ]);
+    }
+
+    private function schedulerLastRun(): ?Carbon
+    {
+        $timestamp = Cache::get('scheduler:last_run');
+
+        return $timestamp ? Carbon::createFromTimestamp($timestamp) : null;
     }
 }
