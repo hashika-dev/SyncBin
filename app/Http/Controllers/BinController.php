@@ -708,81 +708,55 @@ class BinController extends Controller
         $bins = Bin::all();
         $cryptoDiagnostic = $crypto->getDiagnosticInfo();
 
-        // Hardware component diagnostic statuses
-        $components = [
+        // Real EcoSync hardware: 4 controllers and the parts wired to each.
+        // Only the Raspberry Pi and ESP32 talk to this server; the two Unos
+        // are driven by the Pi over USB serial (sorter_link.py).
+        $inventory = [
             [
-                'name' => 'ESP32 Wi-Fi Microcontroller',
-                'category' => 'Core Controller',
-                'status' => 'Online',
-                'health' => '100%',
-                'signal' => '-58 dBm (Excellent)',
-                'ip' => '192.168.1.105',
-                'icon' => '⚡',
-                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+                'controller' => 'Raspberry Pi 4B',
+                'role' => 'Vision AI + sorter coordinator',
+                'link' => 'Reports to server (telemetry)',
+                'key' => 'rpi',
+                'parts' => [
+                    ['name' => 'Pi Camera Module 3', 'detail' => 'CSI ribbon, motion-triggered scans'],
+                ],
             ],
             [
-                'name' => 'HC-SR04 Ultrasonic Sensors (x4)',
-                'category' => 'Fill Level Sensors',
-                'status' => 'Calibrated',
-                'health' => '100%',
-                'signal' => '40kHz Ultrasound',
-                'ip' => 'Trig: 12, 27, 25, 32 | Echo: 13, 26, 33, 35',
-                'icon' => '📡',
-                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
+                'controller' => 'Arduino Uno (Arm)',
+                'role' => 'Pick and drop',
+                'link' => 'USB serial to the Pi (ID:ARM)',
+                'key' => 'via-pi',
+                'parts' => [
+                    ['name' => 'PCA9685 servo driver', 'detail' => '16-channel PWM over I2C'],
+                    ['name' => '6-DOF robotic arm', 'detail' => '6 x MG996R servos'],
+                ],
             ],
             [
-                'name' => 'OV2640 Camera AI Module',
-                'category' => 'Vision Classifier',
-                'status' => 'Online',
-                'health' => '99%',
-                'signal' => '30 FPS / 1600x1200',
-                'ip' => 'I2C / SPI Bus',
-                'icon' => '📷',
-                'badge' => 'bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900/40',
+                'controller' => 'Arduino Uno (Gantry)',
+                'role' => 'Moves the arm to bins 1-4',
+                'link' => 'USB serial to the Pi (ID:GANTRY)',
+                'key' => 'via-pi',
+                'parts' => [
+                    ['name' => 'TB6600 stepper driver', 'detail' => '3200 pulses/rev, PUL- D12, DIR- D9'],
+                    ['name' => 'NEMA 17 stepper motor', 'detail' => 'Linear gantry, 80 steps/mm'],
+                ],
             ],
             [
-                'name' => 'Crypto Security Engine (ECDSA / AES-256)',
-                'category' => 'Payload Verification',
-                'status' => $cryptoDiagnostic['status'],
-                'health' => '100%',
-                'signal' => 'secp256r1 & GCM',
-                'ip' => 'OpenSSL Security Module',
-                'icon' => '🔒',
-                'badge' => 'bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900/40',
+                'controller' => 'ESP32 DevKitC',
+                'role' => 'Bin fill-level sensing',
+                'link' => 'Reports to server (Wi-Fi)',
+                'key' => 'esp32',
+                'parts' => [
+                    ['name' => 'HC-SR04 ultrasonic sensor x4', 'detail' => 'One per bin'],
+                ],
             ],
-            [
-                'name' => 'Biodegradable Bin Servo Lid Actuator',
-                'category' => 'Odor Seal Mechanism',
-                'status' => 'Standby',
-                'health' => '100%',
-                'signal' => 'PWM 50Hz (GPIO 18)',
-                'ip' => 'Single Lid Actuator',
-                'icon' => '🔒',
-                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
-            ],
-            [
-                'name' => 'Organic Waste Grinder / Shredder Motor',
-                'category' => 'Compost Pre-Processor',
-                'status' => 'Standby',
-                'health' => '100%',
-                'signal' => 'High-Torque 12V (Relay #3)',
-                'ip' => 'Bio Chute Entrance',
-                'icon' => '⚙️',
-                'badge' => 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-900/40',
-            ],
-            [
-                'name' => '12V 5A Regulated Power Supply',
-                'category' => 'Power Unit',
-                'status' => 'Stable',
-                'health' => '100%',
-                'signal' => '11.95 V Output',
-                'ip' => 'DC Jack Input',
-                'icon' => '🔌',
-                'badge' => 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/40',
-            ]
         ];
 
-        return view('dashboards.hardware', compact('bins', 'components', 'cryptoDiagnostic'));
+        $partCount = count($inventory) + collect($inventory)->sum(
+            fn ($c) => collect($c['parts'])->sum(fn ($p) => str_contains($p['name'], 'x4') ? 4 : 1)
+        );
+
+        return view('dashboards.hardware', compact('bins', 'inventory', 'partCount', 'cryptoDiagnostic'));
     }
 
     /**
