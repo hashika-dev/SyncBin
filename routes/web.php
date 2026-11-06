@@ -22,7 +22,15 @@ Route::get('/dashboard', function () {
     return view('dashboard', compact('bins'));
 })->middleware(['auth', 'verified', '2fa'])->name('dashboard');
 
+// Entering the 2FA code: only needs a login, otherwise nobody could reach it.
 Route::middleware('auth')->group(function () {
+    Route::get('/2fa/confirm', [TwoFactorController::class, 'showConfirm'])->name('2fa.confirm');
+    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
+});
+
+// Everything else after login also needs the 2FA code (when the account has 2FA on).
+// Before, only /dashboard checked it, so a password alone could open the other pages.
+Route::middleware(['auth', '2fa'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -34,8 +42,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/2fa/enable', [TwoFactorController::class, 'enable'])->name('2fa.enable');
     Route::post('/2fa/disable', [TwoFactorController::class, 'disable'])->name('2fa.disable');
     Route::post('/2fa/reset', [TwoFactorController::class, 'resetSetup'])->name('2fa.reset');
-    Route::get('/2fa/confirm', [TwoFactorController::class, 'showConfirm'])->name('2fa.confirm');
-    Route::post('/2fa/confirm', [TwoFactorController::class, 'confirm']);
 
     // Common Operational Routes (Admin & SuperAdmin) with Rate Limiting (max 60 req/min)
     Route::middleware('throttle:60,1')->group(function () {
@@ -91,13 +97,13 @@ Route::middleware(['throttle:120,1', 'hardware.crypto'])->group(function () {
 
 // Raspberry Pi Telemetry — POST: Pi pushes stats (public), GET: dashboard polls latest (auth)
 Route::middleware('throttle:120,1')->post('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'updateRpiTelemetry'])->name('rpi.telemetry.update');
-Route::middleware(['auth', 'throttle:120,1'])->get('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'getRpiTelemetry'])->name('rpi.telemetry.get');
+Route::middleware(['auth', '2fa', 'throttle:120,1'])->get('/api/hardware/rpi-telemetry', [\App\Http\Controllers\BinController::class, 'getRpiTelemetry'])->name('rpi.telemetry.get');
 
 // ESP32 Telemetry — POST: ESP32 pushes stats (public), GET: dashboard polls latest (auth)
 Route::middleware('throttle:120,1')->post('/api/hardware/esp32-telemetry', [\App\Http\Controllers\BinController::class, 'updateEsp32Telemetry'])->name('esp32.telemetry.update');
-Route::middleware(['auth', 'throttle:120,1'])->get('/api/hardware/esp32-telemetry', [\App\Http\Controllers\BinController::class, 'getEsp32Telemetry'])->name('esp32.telemetry.get');
+Route::middleware(['auth', '2fa', 'throttle:120,1'])->get('/api/hardware/esp32-telemetry', [\App\Http\Controllers\BinController::class, 'getEsp32Telemetry'])->name('esp32.telemetry.get');
 
 // Raspberry Pi Camera Snapshot — superadmin triggers a single-frame capture (on-demand, no stream)
-Route::middleware(['auth', 'role:superadmin', 'throttle:30,1'])->post('/api/hardware/rpi-snapshot', [\App\Http\Controllers\BinController::class, 'rpiSnapshot'])->name('rpi.snapshot');
+Route::middleware(['auth', '2fa', 'role:superadmin', 'throttle:30,1'])->post('/api/hardware/rpi-snapshot', [\App\Http\Controllers\BinController::class, 'rpiSnapshot'])->name('rpi.snapshot');
 
 require __DIR__.'/auth.php';
