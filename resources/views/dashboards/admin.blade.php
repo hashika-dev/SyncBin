@@ -213,87 +213,6 @@
 
         </div>
 
-        <!-- Sorting station strip: replays each newly detected sort (camera -> arm -> bin) -->
-        <section aria-labelledby="station-strip-title"
-                 class="relative rounded-3xl p-5 sm:p-6 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] overflow-hidden">
-            <div class="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 mb-2">
-                <h2 id="station-strip-title" class="text-sm font-bold text-slate-900 dark:text-white">Sorting station</h2>
-                <p class="text-xs text-slate-600 dark:text-slate-400 min-w-0" aria-live="polite">
-                    <span x-show="station.phase !== 'idle'" x-cloak>
-                        Sorting <strong class="font-semibold text-slate-900 dark:text-white" x-text="station.item"></strong>
-                        into <span class="font-semibold" x-text="station.key ? bins[station.key].name : ''"></span>
-                    </span>
-                    <span x-show="station.phase === 'idle' && recentActivity.length > 0">
-                        Last sorted: <strong class="font-semibold text-slate-900 dark:text-white" x-text="recentActivity[0]?.name"></strong>
-                        into <span class="font-semibold" x-text="recentActivity[0]?.binName"></span>,
-                        <span x-text="recentActivity[0] ? formatTimeAgo(recentActivity[0].created_at).toLowerCase() : ''"></span>
-                    </span>
-                    <span x-show="station.phase === 'idle' && recentActivity.length === 0" x-cloak>Waiting for the first scan</span>
-                </p>
-            </div>
-
-            @php
-                // Station geometry (SVG user units, viewBox 600 x 150). Labels are HTML placed by
-                // percentage so they stay readable at phone widths.
-                $stationHome = 50;
-                $stationBins = [];
-                foreach (array_keys($definitions) as $i => $slug) {
-                    $stationBins[$slug] = [
-                        'cx' => 165 + $i * 125,
-                        'hex' => ['emerald' => '#10b981', 'sky' => '#0ea5e9', 'amber' => '#f59e0b', 'rose' => '#f43f5e'][$definitions[$slug]['color']],
-                        'short' => ['biodegradable' => 'Bio', 'recyclable' => 'Recycle', 'non-bio' => 'Non-bio', 'hazardous' => 'Hazard'][$slug],
-                    ];
-                }
-            @endphp
-            <div class="mx-auto max-w-3xl">
-                <div class="relative">
-                    <svg viewBox="0 0 600 150" class="w-full h-auto block" role="img"
-                         aria-label="Sorting station: camera at the scan point, arm carriage on the gantry rail, and the four bins with their fill levels">
-                        <!-- Gantry rail -->
-                        <rect x="20" y="20" width="560" height="8" rx="4" class="fill-slate-200 dark:fill-slate-800 stroke-slate-300 dark:stroke-slate-600"></rect>
-
-                        <!-- Scan point: camera over the intake platform -->
-                        <rect x="{{ $stationHome - 22 }}" y="128" width="44" height="6" rx="3" class="fill-slate-300 dark:fill-slate-700"></rect>
-                        <rect x="{{ $stationHome - 16 }}" y="96" width="32" height="20" rx="4" class="fill-white dark:fill-slate-900 stroke-slate-400 dark:stroke-slate-500"></rect>
-                        <circle cx="{{ $stationHome }}" cy="106" r="5.5" class="fill-slate-100 dark:fill-slate-950" stroke="#10b981" stroke-width="2"></circle>
-
-                        <!-- Four bins with live fill levels -->
-                        @foreach ($stationBins as $slug => $b)
-                            <rect x="{{ $b['cx'] - 56 }}" y="78" width="112" height="62" rx="6" class="fill-white/80 dark:fill-slate-950/70"
-                                  stroke="{{ $b['hex'] }}" :stroke-width="station.at === '{{ $slug }}' && ['drop', 'release'].includes(station.phase) ? 3 : 1.5"></rect>
-                            <rect x="{{ $b['cx'] - 51 }}" y="83" width="102" height="52" rx="3" fill="{{ $b['hex'] }}" fill-opacity="0.3" class="es-fill"
-                                  :style="'transform: scaleY(' + (levelOf('{{ $slug }}') / 100) + ')'"></rect>
-                        @endforeach
-
-                        <!-- Carriage + arm: rides the rail to the target bin -->
-                        <g class="es-carriage" :style="'transform: translateX(' + stationX + 'px)'">
-                            <rect x="-24" y="14" width="48" height="20" rx="4" class="fill-slate-700 dark:fill-slate-300 stroke-slate-800 dark:stroke-slate-100"></rect>
-                            <g class="es-arm" :style="'transform: translateY(' + (['pick', 'drop'].includes(station.phase) ? 22 : 0) + 'px)'">
-                                <line x1="0" y1="34" x2="0" y2="52" stroke-width="4" stroke-linecap="round" class="stroke-slate-500 dark:stroke-slate-400"></line>
-                                <path d="M-9 52 H9 M-9 52 V62 M9 52 V62" fill="none" stroke-width="3" stroke-linecap="round" class="stroke-slate-500 dark:stroke-slate-400"></path>
-                                <rect x="-6" y="56" width="12" height="15" rx="2" class="es-item"
-                                      :fill="streamHex[station.key] || '#94a3b8'"
-                                      :style="'opacity:' + (['lift', 'travel', 'drop'].includes(station.phase) ? 1 : 0)"></rect>
-                            </g>
-                        </g>
-                    </svg>
-                    <!-- Fill % over each bin -->
-                    @foreach ($stationBins as $slug => $b)
-                        <span class="absolute -translate-x-1/2 -translate-y-1/2 text-sm sm:text-lg font-bold tabular-nums text-slate-900 dark:text-white pointer-events-none"
-                              style="left: {{ round($b['cx'] / 6, 3) }}%; top: 72.7%;"
-                              x-text="Math.round(shown['{{ $slug }}'] ?? levelOf('{{ $slug }}')) + '%'"></span>
-                    @endforeach
-                </div>
-                <!-- Names under the drawing -->
-                <div class="relative h-5 mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300">
-                    <span class="absolute -translate-x-1/2 text-slate-500 dark:text-slate-400" style="left: {{ round($stationHome / 6, 3) }}%;">Scan</span>
-                    @foreach ($stationBins as $slug => $b)
-                        <span class="absolute -translate-x-1/2 whitespace-nowrap" style="left: {{ round($b['cx'] / 6, 3) }}%;">{{ $b['short'] }}</span>
-                    @endforeach
-                </div>
-            </div>
-        </section>
-
         <!-- 3. MAIN SECTION: 4 SMART BINS (Left 8 Cols) + RECENT ACTIVITY LEDGER (Right 4 Cols) -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             
@@ -617,10 +536,6 @@
         /* Motion for the Live Monitor. Every movement is tied to a real event
            (new scan, level change, empty, refresh) and is removed for reduced motion. */
         .es-bar { transition: width 700ms cubic-bezier(.16, 1, .3, 1); }
-        .es-fill { transform-box: fill-box; transform-origin: 50% 100%; transition: transform 700ms cubic-bezier(.16, 1, .3, 1); }
-        .es-carriage { transition: transform 900ms cubic-bezier(.65, 0, .35, 1); }
-        .es-arm { transition: transform 380ms cubic-bezier(.16, 1, .3, 1); }
-        .es-item { transition: opacity 200ms ease-out; }
 
         .es-poll { stroke-dashoffset: 0; animation-duration: 4s; animation-timing-function: linear; animation-fill-mode: forwards; }
         @keyframes es-poll-a { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 37.7; } }
@@ -645,7 +560,7 @@
         @keyframes es-cross { 0% { box-shadow: 0 0 0 0 rgba(244, 63, 94, .55); } 100% { box-shadow: 0 0 0 14px rgba(244, 63, 94, 0); } }
 
         @media (prefers-reduced-motion: reduce) {
-            .es-bar, .es-fill, .es-carriage, .es-arm { transition-duration: 1ms; }
+            .es-bar { transition-duration: 1ms; }
             .es-row-new, .es-bump, .es-cross { animation: none; }
             .es-row-new::after { animation-duration: 1600ms; } /* keep the color cue, drop the movement */
             .es-poll { animation: none !important; }
@@ -686,7 +601,6 @@
                 // ---- Motion state (every animation below reacts to a real event) ----
                 reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
                 streamHex: { biodegradable: '#10b981', recyclable: '#0ea5e9', 'non-bio': '#f59e0b', hazardous: '#f43f5e' },
-                binX: { biodegradable: 165, recyclable: 290, 'non-bio': 415, hazardous: 540 }, // must match $stationBins
                 shown: {},          // displayed % per bin, eased toward the real level
                 fresh: {},          // item ids that just arrived (row flash)
                 bumped: {},         // bins whose item count just went up
@@ -696,16 +610,11 @@
                 syncError: false,
                 pendingEmpty: null, // { key, remaining, run, interval }
                 emptyRuns: 0,
-                station: { phase: 'idle', at: null, item: '', key: null },
-                sortQueue: [],
                 tweening: false,
 
                 levelOf(key) {
                     if (this.pendingEmpty && this.pendingEmpty.key === key) return 0;
                     return this.bins[key] ? (this.bins[key].level || 0) : 0;
-                },
-                get stationX() {
-                    return this.station.at ? this.binX[this.station.at] : 50;
                 },
                 flag(map, id, ms) {
                     map[id] = true;
@@ -745,7 +654,7 @@
 
                     if (this.knownIds) {
                         const arrivals = items.filter(i => !this.knownIds.has(i.id));
-                        arrivals.forEach(i => { this.flag(this.fresh, i.id, 1700); this.queueSort(key, i.name); });
+                        arrivals.forEach(i => this.flag(this.fresh, i.id, 1700));
                         if (arrivals.length) this.flag(this.bumped, key, 500);
                     }
                     items.forEach(i => this.knownIds && this.knownIds.add(i.id));
@@ -754,27 +663,6 @@
                     bin.status = data.status;
                     bin.items = items;
                 },
-                // Station strip: replay one sort at a time (queue capped so it never lags far behind).
-                queueSort(key, name) {
-                    this.sortQueue.push({ key, name });
-                    if (this.sortQueue.length > 3) this.sortQueue.splice(0, this.sortQueue.length - 3);
-                    if (this.station.phase === 'idle') this.playNextSort();
-                },
-                async playNextSort() {
-                    const job = this.sortQueue.shift();
-                    if (!job) return;
-                    const wait = ms => new Promise(r => setTimeout(r, this.reducedMotion ? Math.min(ms, 300) : ms));
-                    Object.assign(this.station, { phase: 'pick', at: null, item: job.name, key: job.key });
-                    await wait(450);
-                    this.station.phase = 'lift';    await wait(350);
-                    this.station.phase = 'travel';  this.station.at = job.key; await wait(950);
-                    this.station.phase = 'drop';    await wait(450);
-                    this.station.phase = 'release'; await wait(350);
-                    this.station.phase = 'return';  this.station.at = null; await wait(950);
-                    Object.assign(this.station, { phase: 'idle', key: null });
-                    this.playNextSort();
-                },
-
                 // Overall station health from real heartbeats (Pi and ESP32 both report every few seconds).
                 get stationHealth() {
                     if (this.piStatus === 'loading' || this.sensorStatus === 'loading') {
