@@ -103,5 +103,5 @@ point for the Data Privacy Act (RA 10173) section in rubric G.
 | 4 | Device input checks are loose (e.g. `image_url` accepted as given) | S1, S2 | D | Strict validation on all device endpoints |
 | 5 | Scan photos and the app log live in the container, not on the volume, so a redeploy deletes them | S6, S7 | F | Move to `/data` or accept and document |
 | 6 | Backups are on the same volume as the database | S3 | F | Weekly download to a private off-site folder ([BACKUP_RESTORE.md](BACKUP_RESTORE.md)) |
-| 7 | `APP_URL` is still `syncbin.up.railway.app`, so links the app generates (password reset, e-mail verification) use the Railway address instead of `ecosync.me` | S9 | E | Set `APP_URL=https://ecosync.me` in Railway Variables |
+| 7 | ~~`APP_URL` is still `syncbin.up.railway.app`, so links the app generates (password reset, e-mail verification) use the Railway address instead of `ecosync.me`~~ **Fixed 2026-11-07:** `APP_URL=https://ecosync.me` set in Railway Variables (verified with `php artisan about`) | S9 | E | Done |
 | 8 | AI keys on the Pi are readable by anyone with the SD card or a shell on the Pi | S5 | A (accepted) | Physical security of the bin; rotate keys if the Pi is lost |
