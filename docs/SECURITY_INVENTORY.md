@@ -98,7 +98,7 @@ point for the Data Privacy Act (RA 10173) section in rubric G.
 | # | Gap | Assets | Area | Plan |
 | --- | --- | --- | --- | --- |
 | 1 | Device endpoints accept data from anyone (no device key); a stranger can post fake scans or fill levels | S1, S2, H1, H4 | B, D | Device token on every hardware endpoint, Pi and ESP32 updated |
-| 2 | 2FA code is only checked on `/dashboard`; with a password alone, other pages (e.g. `/dashboard/reports`, `/dashboard/backups`) open directly | S1, S2, S3 | B | Apply the `2fa` check to every logged-in page and action |
+| 2 | ~~2FA code is only checked on `/dashboard`; with a password alone, other pages (e.g. `/dashboard/reports`, `/dashboard/backups`) open directly~~ **Fixed 2026-11-07:** every logged-in page and action now requires the code (`tests/Feature/Auth/TwoFactorEverywhereTest.php`) | S1, S2, S3 | B | Done |
 | 3 | Pi `camera_server.py` `/snapshot` has no authentication | H1 | B | Token between the web app and the Pi |
 | 4 | Device input checks are loose (e.g. `image_url` accepted as given) | S1, S2 | D | Strict validation on all device endpoints |
 | 5 | Scan photos and the app log live in the container, not on the volume, so a redeploy deletes them | S6, S7 | F | Move to `/data` or accept and document |
