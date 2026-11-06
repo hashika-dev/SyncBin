@@ -52,14 +52,10 @@
     <!-- Left Column: Hardware Showcase Panel -->
     <aside class="hidden lg:flex lg:w-1/2 xl:w-5/12 bg-slate-950 border-r border-slate-800/80 flex-col justify-between p-10 xl:p-14 text-white relative overflow-hidden select-none">
         
-        <!-- Hardware Station Background Image -->
-        <img src="{{ asset('images/ecosync_hardware_bin.jpg') }}" 
-             alt="EcoSync Automated Waste Station Hardware" 
-             class="absolute inset-0 w-full h-full object-cover object-center opacity-60 filter brightness-95 contrast-105 pointer-events-none scale-105 transition-transform duration-1000 ease-out">
-        
-        <!-- Vignette & Surface Gradients -->
-        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-slate-950/40 pointer-events-none"></div>
-        <div class="absolute inset-0 bg-radial-gradient from-transparent via-slate-950/20 to-slate-950/80 pointer-events-none"></div>
+        <!-- Blueprint grid + soft glow behind the station drawing -->
+        <div class="absolute inset-0 bg-[linear-gradient(rgba(148,163,184,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(148,163,184,0.06)_1px,transparent_1px)] [background-size:32px_32px] pointer-events-none"></div>
+        <div class="absolute -top-40 -left-40 w-[520px] h-[520px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none"></div>
+        <div class="absolute -bottom-40 -right-40 w-[480px] h-[480px] bg-teal-500/10 blur-[120px] rounded-full pointer-events-none"></div>
 
         <!-- Top Brand Lockup -->
         <div class="relative z-10">
@@ -76,6 +72,108 @@
 
         <!-- Middle: Mission & 4-Stream Indicator Cards -->
         <div class="relative z-10 my-auto max-w-md">
+            <!-- Station Schematic: camera, 6-DOF arm on the linear gantry, four bins -->
+            <style>
+                @keyframes es-gantry {
+                    0%, 14%   { transform: translateX(96px); }
+                    25%, 39%  { transform: translateX(192px); }
+                    50%, 64%  { transform: translateX(288px); }
+                    75%, 89%  { transform: translateX(384px); }
+                    100%      { transform: translateX(96px); }
+                }
+                .es-carriage { transform: translateX(192px); }
+                @media (prefers-reduced-motion: no-preference) {
+                    .es-carriage { animation: es-gantry 12s cubic-bezier(.65, 0, .35, 1) infinite; }
+                }
+            </style>
+            <svg class="w-full h-auto max-h-[32vh] mb-8" viewBox="0 0 480 290" fill="none" role="img"
+                 aria-label="Schematic of the EcoSync sorting station: camera, robotic arm on a linear gantry, and four waste bins">
+                <defs>
+                    <linearGradient id="es-body" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#1e293b"/>
+                        <stop offset="1" stop-color="#0f172a"/>
+                    </linearGradient>
+                    <linearGradient id="es-glass" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0" stop-color="#10b981" stop-opacity=".12"/>
+                        <stop offset="1" stop-color="#10b981" stop-opacity=".02"/>
+                    </linearGradient>
+                </defs>
+
+                <!-- Dimension line: gantry travel -->
+                <g stroke="#475569" stroke-width="1">
+                    <line x1="96" y1="22" x2="384" y2="22"/>
+                    <line x1="96" y1="17" x2="96" y2="27"/>
+                    <line x1="384" y1="17" x2="384" y2="27"/>
+                </g>
+                <text x="240" y="15" text-anchor="middle" font-family="ui-monospace, monospace" font-size="8" letter-spacing="1.5" fill="#64748b">LINEAR GANTRY · 4 STOPS</text>
+
+                <!-- Camera on mast -->
+                <line x1="430" y1="44" x2="430" y2="60" stroke="#64748b" stroke-width="2"/>
+                <rect x="414" y="32" width="32" height="14" rx="3" fill="#0f172a" stroke="#94a3b8"/>
+                <circle cx="430" cy="39" r="4" fill="#020617" stroke="#34d399"/>
+                <circle cx="430" cy="39" r="1.5" fill="#34d399"/>
+                <text x="452" y="42" font-family="ui-monospace, monospace" font-size="7" letter-spacing="1" fill="#64748b">CAM</text>
+
+                <!-- Floor -->
+                <line x1="10" y1="272" x2="470" y2="272" stroke="#334155" stroke-dasharray="2 4"/>
+
+                <!-- Cabinet -->
+                <rect x="40" y="60" width="400" height="200" rx="10" fill="url(#es-body)" stroke="#475569" stroke-width="1.5"/>
+                <rect x="60" y="260" width="24" height="8" rx="2" fill="#334155"/>
+                <rect x="396" y="260" width="24" height="8" rx="2" fill="#334155"/>
+
+                <!-- Glass chamber + LED strip -->
+                <rect x="54" y="72" width="372" height="110" rx="6" fill="url(#es-glass)" stroke="#10b981" stroke-opacity=".35"/>
+                <line x1="62" y1="77" x2="418" y2="77" stroke="#34d399" stroke-opacity=".6" stroke-width="1.5" stroke-linecap="round"/>
+
+                <!-- Gantry rail -->
+                <rect x="66" y="88" width="348" height="6" rx="3" fill="#334155" stroke="#64748b"/>
+
+                <!-- Drop slots above each bin -->
+                <g fill="#020617" stroke-opacity=".6">
+                    <rect x="76" y="179" width="40" height="5" rx="1.5" stroke="#10b981"/>
+                    <rect x="172" y="179" width="40" height="5" rx="1.5" stroke="#f59e0b"/>
+                    <rect x="268" y="179" width="40" height="5" rx="1.5" stroke="#0ea5e9"/>
+                    <rect x="364" y="179" width="40" height="5" rx="1.5" stroke="#f43f5e"/>
+                </g>
+
+                <!-- Carriage + 6-DOF arm (slides between bins) -->
+                <g class="es-carriage">
+                    <rect x="-18" y="85" width="36" height="12" rx="2" fill="#1e293b" stroke="#cbd5e1"/>
+                    <path d="M0 97 L0 116 L-14 130 L0 146" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <g fill="#0f172a" stroke="#34d399" stroke-width="1.5">
+                        <circle cx="0" cy="97" r="3.5"/>
+                        <circle cx="0" cy="116" r="4"/>
+                        <circle cx="-14" cy="130" r="3.5"/>
+                    </g>
+                    <path d="M-6 146 H6 M-6 146 V155 M6 146 V155" stroke="#cbd5e1" stroke-width="2" stroke-linecap="round"/>
+                    <rect x="-4" y="151" width="8" height="13" rx="2" fill="#e2e8f0" fill-opacity=".85"/>
+                </g>
+
+                <!-- Four bins with fill levels -->
+                <g font-family="ui-monospace, monospace" font-size="7.5" letter-spacing="1" text-anchor="middle" fill="#cbd5e1">
+                    <rect x="55" y="192" width="82" height="60" rx="4" fill="#0b1220" stroke="#10b981" stroke-opacity=".55"/>
+                    <rect x="55" y="192" width="82" height="4" rx="2" fill="#10b981"/>
+                    <rect x="61" y="224" width="70" height="22" rx="2" fill="#10b981" fill-opacity=".25"/>
+                    <text x="96" y="210">BIO</text>
+
+                    <rect x="151" y="192" width="82" height="60" rx="4" fill="#0b1220" stroke="#f59e0b" stroke-opacity=".55"/>
+                    <rect x="151" y="192" width="82" height="4" rx="2" fill="#f59e0b"/>
+                    <rect x="157" y="218" width="70" height="28" rx="2" fill="#f59e0b" fill-opacity=".25"/>
+                    <text x="192" y="210">NON-BIO</text>
+
+                    <rect x="247" y="192" width="82" height="60" rx="4" fill="#0b1220" stroke="#0ea5e9" stroke-opacity=".55"/>
+                    <rect x="247" y="192" width="82" height="4" rx="2" fill="#0ea5e9"/>
+                    <rect x="253" y="234" width="70" height="12" rx="2" fill="#0ea5e9" fill-opacity=".25"/>
+                    <text x="288" y="210">RECYCLE</text>
+
+                    <rect x="343" y="192" width="82" height="60" rx="4" fill="#0b1220" stroke="#f43f5e" stroke-opacity=".55"/>
+                    <rect x="343" y="192" width="82" height="4" rx="2" fill="#f43f5e"/>
+                    <rect x="349" y="238" width="70" height="8" rx="2" fill="#f43f5e" fill-opacity=".25"/>
+                    <text x="384" y="210">HAZARD</text>
+                </g>
+            </svg>
+
             <!-- Hardware Telemetry Beacon -->
             <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-6 backdrop-blur-md">
                 <span class="relative flex h-2 w-2">
