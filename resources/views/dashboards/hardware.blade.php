@@ -63,61 +63,86 @@
                 </div>
             </div>
 
-            <!-- 2. Top Summary Cards (True Frosted Glass) -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-                
-                <!-- Card 1: Fleet Status -->
-                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] hover:border-emerald-400/50 transition-all flex items-center justify-between overflow-hidden group">
-                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
+            <!-- 2. Top Summary Cards: live, from the Pi and ESP32 telemetry (polls every 5s) -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5"
+                 x-data="{
+                    rpi: { status: 'loading', data: null },
+                    esp: { status: 'loading', data: null },
+                    async poll(url) {
+                        try {
+                            const res = await fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+                            const json = await res.json();
+                            return { status: json.status, data: json.data ?? null };
+                        } catch (e) {
+                            return { status: 'offline', data: null };
+                        }
+                    },
+                    async refresh() {
+                        [this.rpi, this.esp] = await Promise.all([
+                            this.poll('{{ route('rpi.telemetry.get', [], false) }}'),
+                            this.poll('{{ route('esp32.telemetry.get', [], false) }}'),
+                        ]);
+                    },
+                    get online() { return [this.rpi, this.esp].filter(d => d.status === 'live').length; },
+                    tone(status) { return status === 'live' ? 'text-emerald-600 dark:text-emerald-400' : (status === 'stale' ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400'); },
+                    init() { this.refresh(); setInterval(() => this.refresh(), 5000); }
+                 }">
 
+                <!-- Card 1: Fleet Status (4 controllers; Pi + ESP32 report to the server, the Unos report through the Pi) -->
+                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] transition-all flex items-center justify-between overflow-hidden group">
+                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
                     <div>
                         <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold block">Fleet Status</span>
-                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block">10 Devices</span>
-                        <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold block mt-1">Online & Responding</span>
+                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block">4 Controllers</span>
+                        <span class="text-xs font-semibold block mt-1"
+                              :class="online === 2 ? 'text-emerald-600 dark:text-emerald-400' : (online === 1 ? 'text-amber-600 dark:text-amber-400' : 'text-rose-600 dark:text-rose-400')"
+                              x-text="rpi.status === 'loading' ? 'Checking…' : online + ' of 2 online · 2 Unos via Pi'">Checking…</span>
                     </div>
-                    <div class="w-10 h-10 bg-emerald-500/15 border border-emerald-400/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+                    <div class="w-10 h-10 bg-emerald-500/15 border border-emerald-400/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 7h10"/><path d="M7 12h10"/><path d="M7 17h10"/></svg>
                     </div>
                 </div>
 
-                <!-- Card 2: Host Processor -->
-                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] hover:border-sky-400/50 transition-all flex items-center justify-between overflow-hidden group">
-                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-sky-400/40 to-transparent pointer-events-none"></div>
-
+                <!-- Card 2: Host Processor (Raspberry Pi) -->
+                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] transition-all flex items-center justify-between overflow-hidden group">
+                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
                     <div>
                         <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold block">Host Processor</span>
-                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block">35% CPU</span>
-                        <span class="text-xs text-sky-600 dark:text-sky-400 font-semibold block mt-1">RPi 4B &bull; 42°C Nominal</span>
+                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block"
+                              x-text="rpi.data && rpi.status === 'live' ? Math.round(rpi.data.cpu_load) + '% CPU' : '—'">—</span>
+                        <span class="text-xs font-semibold block mt-1" :class="tone(rpi.status)"
+                              x-text="rpi.status === 'loading' ? 'Checking…' : (rpi.data && rpi.status === 'live' ? 'RPi 4B · ' + rpi.data.cpu_temp + '°C' : 'RPi 4B ' + rpi.status)">Checking…</span>
                     </div>
-                    <div class="w-10 h-10 bg-sky-500/15 border border-sky-400/40 text-sky-600 dark:text-sky-400 rounded-2xl flex items-center justify-center shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+                    <div class="w-10 h-10 bg-sky-500/15 border border-sky-400/40 text-sky-600 dark:text-sky-400 rounded-2xl flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v1"/><path d="M9 2v1"/><path d="M15 21v1"/><path d="M9 21v1"/></svg>
                     </div>
                 </div>
 
-                <!-- Card 3: Sensor Array -->
-                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] hover:border-emerald-400/50 transition-all flex items-center justify-between overflow-hidden group">
+                <!-- Card 3: Sensor Array (4 x HC-SR04 on the ESP32) -->
+                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] transition-all flex items-center justify-between overflow-hidden group">
                     <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
-
                     <div>
                         <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold block">Sensor Array</span>
-                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block">4 / 4 Active</span>
-                        <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold block mt-1">Calibrated & Nominal</span>
+                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block">4 × HC-SR04</span>
+                        <span class="text-xs font-semibold block mt-1" :class="tone(esp.status)"
+                              x-text="esp.status === 'loading' ? 'Checking…' : (esp.status === 'live' ? 'Reporting via ESP32' : 'Not reporting (ESP32 ' + esp.status + ')')">Checking…</span>
                     </div>
-                    <div class="w-10 h-10 bg-emerald-500/15 border border-emerald-400/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center shadow-[0_0_12px_rgba(16,185,129,0.2)]">
+                    <div class="w-10 h-10 bg-emerald-500/15 border border-emerald-400/40 text-emerald-600 dark:text-emerald-400 rounded-2xl flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h5"/><path d="M17 12h5"/><path d="M12 2v5"/><path d="M12 17v5"/><circle cx="12" cy="12" r="4"/></svg>
                     </div>
                 </div>
 
-                <!-- Card 4: Wireless Mesh -->
-                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] hover:border-cyan-400/50 transition-all flex items-center justify-between overflow-hidden group">
-                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-cyan-400/40 to-transparent pointer-events-none"></div>
-
+                <!-- Card 4: ESP32 Wi-Fi signal -->
+                <div class="relative rounded-3xl p-5 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_10px_30px_-5px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-10px_rgba(0,0,0,0.6)] transition-all flex items-center justify-between overflow-hidden group">
+                    <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
                     <div>
-                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold block">Wireless Mesh</span>
-                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block">-48 dBm</span>
-                        <span class="text-xs text-cyan-600 dark:text-cyan-400 font-semibold block mt-1">100% Link &bull; 8ms Ping</span>
+                        <span class="text-xs text-slate-600 dark:text-slate-400 font-semibold block">ESP32 Wi-Fi</span>
+                        <span class="text-2xl sm:text-3xl font-mono font-extrabold text-slate-900 dark:text-white tracking-tight mt-1.5 block"
+                              x-text="esp.data && esp.data.wifi_rssi !== null && esp.status === 'live' ? esp.data.wifi_rssi + ' dBm' : '—'">—</span>
+                        <span class="text-xs font-semibold block mt-1" :class="tone(esp.status)"
+                              x-text="esp.status === 'loading' ? 'Checking…' : (esp.data ? 'Last seen ' + esp.data.last_seen : 'No data yet')">Checking…</span>
                     </div>
-                    <div class="w-10 h-10 bg-cyan-500/15 border border-cyan-400/40 text-cyan-600 dark:text-cyan-400 rounded-2xl flex items-center justify-center shadow-[0_0_12px_rgba(6,182,212,0.2)]">
+                    <div class="w-10 h-10 bg-cyan-500/15 border border-cyan-400/40 text-cyan-600 dark:text-cyan-400 rounded-2xl flex items-center justify-center">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" x2="12.01" y1="20" y2="20"/></svg>
                     </div>
                 </div>
@@ -143,7 +168,7 @@
                 <button type="button" @click="activeTab = 'network'" 
                         :class="activeTab === 'network' ? 'bg-white text-emerald-800 border border-emerald-400/40 shadow-sm dark:bg-emerald-500/20 dark:text-emerald-300 dark:border-emerald-500/30' : 'text-slate-600 hover:text-slate-900 hover:bg-white/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'" 
                         class="px-4 py-2 rounded-2xl text-xs font-semibold transition-all shrink-0 cursor-pointer backdrop-blur-md">
-                    Network & Peripherals
+                    Camera & Inventory
                 </button>
             </div>
 
@@ -653,12 +678,12 @@
                 <div class="flex items-center justify-between pb-4 border-b border-white/50 dark:border-white/10">
                     <div class="flex items-center gap-2.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Peripheral Power & Wireless Telemetry</h2>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Vision Camera & Hardware Inventory</h2>
                     </div>
-                    <span class="px-3 py-1 bg-white/70 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md shadow-sm">Link 100%</span>
+                    <span class="px-3 py-1 bg-white/70 dark:bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-white/80 dark:border-emerald-400/30 rounded-full text-[10px] font-mono font-bold uppercase backdrop-blur-md shadow-sm">{{ $partCount }} Parts &bull; {{ count($inventory) }} Controllers</span>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <!-- Peripheral 1: Vision Camera — Snapshot on Demand -->
                     <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md"
                          x-data="{
@@ -831,48 +856,36 @@
                         </template>
                     </div>
 
-                    <!-- Peripheral 2: Main 5V DC Supply -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <span class="text-xs font-bold text-slate-900 dark:text-white block">Main 5V DC Supply</span>
-                        <div class="grid grid-cols-2 gap-2 text-center font-mono text-xs pt-2">
-                            <div class="p-2.5 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                <span class="text-[9px] uppercase text-slate-500 dark:text-slate-400 font-semibold block">VOLTAGE</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">5.03V</span>
-                            </div>
-                            <div class="p-2.5 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 shadow-sm">
-                                <span class="text-[9px] uppercase text-slate-500 dark:text-slate-400 font-semibold block">CURRENT</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">1.8A</span>
-                            </div>
+                    <!-- Hardware Inventory: real parts, grouped by the controller they are wired to -->
+                    <div class="lg:col-span-2 p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 shadow-sm backdrop-blur-md">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs font-bold text-slate-900 dark:text-white">Hardware Inventory</span>
+                            <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400">Controller &rarr; attached parts</span>
                         </div>
-                    </div>
-
-                    <!-- Peripheral 3: Wireless Mesh -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <span class="text-xs font-bold text-slate-900 dark:text-white block">Wireless Mesh</span>
-                        <div class="space-y-1.5 font-mono text-xs pt-2">
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Signal (RSSI)</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">-48 dBm</span>
-                            </div>
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>IP Node</span>
-                                <span class="text-slate-800 dark:text-slate-200 font-bold">192.168.1.104</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Peripheral 4: Cloud Gateway -->
-                    <div class="p-4 bg-white/60 dark:bg-white/[0.04] rounded-2xl border border-white/70 dark:border-white/10 space-y-3 shadow-sm backdrop-blur-md">
-                        <span class="text-xs font-bold text-slate-900 dark:text-white block">Cloud Gateway</span>
-                        <div class="space-y-1.5 font-mono text-xs pt-2">
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Latency</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">8 ms</span>
-                            </div>
-                            <div class="flex justify-between text-slate-600 dark:text-slate-400">
-                                <span>Packet Loss</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">0.0%</span>
-                            </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            @foreach ($inventory as $controller)
+                                <div class="p-3 bg-white/80 dark:bg-black/30 rounded-xl border border-white/80 dark:border-white/10">
+                                    <div class="flex items-start justify-between gap-2">
+                                        <div>
+                                            <span class="text-xs font-bold text-slate-900 dark:text-white block">{{ $controller['controller'] }}</span>
+                                            <span class="text-[11px] text-slate-500 dark:text-slate-400 block">{{ $controller['role'] }}</span>
+                                        </div>
+                                        <span class="shrink-0 px-2 py-0.5 rounded-lg text-[9px] font-mono font-bold uppercase {{ $controller['key'] === 'via-pi' ? 'bg-slate-100 text-slate-600 dark:bg-white/10 dark:text-slate-300' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300' }}">
+                                            {{ $controller['key'] === 'via-pi' ? 'Via Pi' : 'Reports' }}
+                                        </span>
+                                    </div>
+                                    <span class="text-[10px] font-mono text-slate-500 dark:text-slate-400 block mt-1">{{ $controller['link'] }}</span>
+                                    <ul class="mt-2 space-y-1">
+                                        @foreach ($controller['parts'] as $part)
+                                            <li class="flex items-baseline gap-1.5 text-[11px]">
+                                                <span class="text-slate-400">&#8627;</span>
+                                                <span class="font-semibold text-slate-700 dark:text-slate-200">{{ $part['name'] }}</span>
+                                                <span class="text-slate-500 dark:text-slate-400">&middot; {{ $part['detail'] }}</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endforeach
                         </div>
                     </div>
                 </div>
