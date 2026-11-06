@@ -171,7 +171,7 @@
 
     <!-- Security Footer -->
     <footer class="w-full text-center text-xs text-slate-500 dark:text-slate-400 font-mono py-4 relative z-10">
-        EcoSync Automated Telemetry &bull; High-Assurance Waste Infrastructure
+        &copy; {{ date('Y') }} EcoSync
     </footer>
 </body>
 </html>

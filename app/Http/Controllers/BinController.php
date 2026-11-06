@@ -482,7 +482,8 @@ class BinController extends Controller
         $logs = $query->latest()->paginate(10)->withQueryString();
         $bins = Bin::all();
         $clearanceLogs = \App\Models\BinClearanceLog::with('bin')->latest()->paginate(10, ['*'], 'clearance_page');
-        $avgResponseTimeMinutes = round(\App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes') ?? 0, 1);
+        $avgResponseAvg = \App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes');
+        $avgResponseTimeMinutes = $avgResponseAvg !== null ? round($avgResponseAvg, 1) : null;
 
         return view('dashboards.history', compact('logs', 'bins', 'clearanceLogs', 'avgResponseTimeMinutes'));
     }
@@ -523,7 +524,8 @@ class BinController extends Controller
         $chartData = $last7Days->values()->toArray();
 
         $clearanceLogs = \App\Models\BinClearanceLog::with('bin')->latest()->take(5)->get();
-        $avgResponseTimeMinutes = round(\App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes') ?? 0, 1);
+        $avgResponseAvg = \App\Models\BinClearanceLog::whereNotNull('response_time_minutes')->avg('response_time_minutes');
+        $avgResponseTimeMinutes = $avgResponseAvg !== null ? round($avgResponseAvg, 1) : null;
 
         return view('dashboards.reports', compact('bins', 'totalItemsCount', 'averageFill', 'recyclingRate', 'mostActiveBin', 'chartLabels', 'chartData', 'clearanceLogs', 'avgResponseTimeMinutes'));
     }
@@ -898,10 +900,10 @@ class BinController extends Controller
             'status' => $status,
             'data'   => [
                 'device_id'     => $telemetry->device_id,
-                'mac_address'   => $telemetry->mac_address ?? 'F4:65:0B:47:17:70',
-                'firmware'      => $telemetry->firmware ?? 'EcoSync-v2.1.4',
-                'protocol'      => $telemetry->protocol ?? 'Wi-Fi / HTTPS',
-                'bus_status'    => $telemetry->bus_status ?? 'Connected',
+                'mac_address'   => $telemetry->mac_address,
+                'firmware'      => $telemetry->firmware,
+                'protocol'      => $telemetry->protocol,
+                'bus_status'    => $telemetry->bus_status,
                 'ip_address'    => $telemetry->ip_address,
                 'wifi_rssi'     => $telemetry->wifi_rssi,
                 'free_heap_kb'  => $telemetry->free_heap_bytes ? round($telemetry->free_heap_bytes / 1024, 1) : null,

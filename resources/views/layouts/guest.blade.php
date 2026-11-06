@@ -94,7 +94,7 @@
 
         <!-- Footer -->
         <footer class="w-full text-center text-xs text-slate-500 dark:text-slate-400 font-mono py-6 relative z-10">
-            &copy; {{ date('Y') }} EcoSync Systems &bull; High-Assurance Waste Infrastructure
+            &copy; {{ date('Y') }} EcoSync
         </footer>
     </body>
 </html>

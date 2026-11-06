@@ -69,27 +69,18 @@
                 </div>
                 <div>
                     <span class="text-lg font-bold tracking-tight text-white block">EcoSync</span>
-                    <span class="text-[11px] font-mono tracking-wider uppercase text-emerald-400 font-semibold block">Waste Intelligence System</span>
+                    <span class="text-[11px] font-mono tracking-wider uppercase text-emerald-400 font-semibold block">Smart waste sorting</span>
                 </div>
             </div>
         </div>
 
         <!-- Middle: Mission & 4-Stream Indicator Cards -->
         <div class="relative z-10 my-auto max-w-md">
-            <!-- Hardware Telemetry Beacon -->
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-emerald-500/30 text-emerald-400 text-xs font-mono mb-6 backdrop-blur-md">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                Station Online &bull; Optical AI Active
-            </div>
-
             <h1 class="text-3xl xl:text-4xl font-extrabold tracking-tight text-white leading-tight mb-4">
                 Automated sorting across all four waste streams.
             </h1>
             <p class="text-sm text-slate-300 leading-relaxed mb-6 font-normal">
-                Continuous multispectral vision, sensor telemetry, and automated routing for municipal and campus facilities.
+                A camera with AI identifies each item, a robotic arm drops it into the right bin, and sensors report how full every bin is.
             </p>
 
             <!-- 4 System Stream Badges with Dedicated SVGs -->
@@ -153,8 +144,8 @@
 
         <!-- Bottom: Hardware Specs & System Version -->
         <div class="relative z-10 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-slate-400 font-mono">
-            <span>EcoSync AI Station Node</span>
-            <span class="text-slate-500">v4.2.1</span>
+            <span>EcoSync monitoring dashboard</span>
+            <span class="text-slate-500">Authorized staff only</span>
         </div>
     </aside>
 
@@ -220,7 +211,7 @@
                         Sign in to EcoSync
                     </h2>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
-                        Access facility monitoring, sensor telemetry, and operational reports.
+                        Check bin levels, sorting activity and reports.
                     </p>
                 </div>
 
@@ -354,7 +345,7 @@
 
         <!-- Footer Copyright & System ID -->
         <div class="w-full text-center text-xs text-slate-500 dark:text-slate-400 font-mono py-2 relative z-10">
-            &copy; 2026 EcoSync Systems &bull; High-Assurance Waste Infrastructure
+            &copy; {{ date('Y') }} EcoSync
         </div>
     </main>
 

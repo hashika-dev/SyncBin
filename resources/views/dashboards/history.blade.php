@@ -24,16 +24,9 @@
                         <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight drop-shadow-sm">
                             Activity History
                         </h1>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/70 dark:bg-emerald-500/15 border border-white/80 dark:border-emerald-400/30 text-emerald-800 dark:text-emerald-300 shadow-[0_4px_16px_rgba(16,185,129,0.15)] backdrop-blur-xl">
-                            <span class="relative flex h-2 w-2">
-                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-500 opacity-75"></span>
-                                <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                            </span>
-                            Audit Trail Console
-                        </span>
                     </div>
                     <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400 mt-1">
-                        Verified telemetry records, segregation event timeline, and fleet response log
+                        Every item the camera sorted, and every time a bin was emptied
                     </p>
                 </div>
 
@@ -64,7 +57,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <!-- Search Item -->
                         <div>
-                            <label for="search" class="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">SEARCH CLASSIFICATION</label>
+                            <label for="search" class="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Search items</label>
                             <input type="text" name="search" id="search" placeholder="Item name..." value="{{ request('search') }}"
                                    @keydown.enter="$el.form.submit()"
                                    class="w-full px-3.5 py-2 bg-white/70 dark:bg-black/40 border border-white/80 dark:border-white/15 rounded-2xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none text-xs text-slate-800 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 backdrop-blur-md transition-all shadow-sm">
@@ -72,7 +65,7 @@
 
                         <!-- Bin Category -->
                         <div>
-                            <label for="bin" class="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">STREAM CATEGORY</label>
+                            <label for="bin" class="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Bin</label>
                             <select name="bin" id="bin" @change="$el.form.submit()" 
                                     class="w-full px-3.5 py-2 bg-white/70 dark:bg-black/40 border border-white/80 dark:border-white/15 rounded-2xl focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 outline-none text-xs text-slate-800 dark:text-slate-100 backdrop-blur-md transition-all shadow-sm">
                                 <option value="" class="bg-white dark:bg-slate-900 text-slate-900 dark:text-white">All Categories</option>
@@ -147,18 +140,18 @@
                 <div class="mb-5 pb-4 border-b border-white/50 dark:border-white/10 flex items-center justify-between">
                     <div class="flex items-center gap-2.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Telemetry Ingestion Stream</h2>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Sorted items</h2>
                     </div>
-                    <span class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">{{ $logs->total() }} Logged Events</span>
+                    <span class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400 font-semibold">{{ $logs->total() }} {{ \Illuminate\Support\Str::plural('item', $logs->total()) }}</span>
                 </div>
 
                 <div class="overflow-x-auto rounded-2xl border border-white/70 dark:border-white/10 bg-white/40 dark:bg-black/30 backdrop-blur-md">
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="bg-white/60 dark:bg-white/[0.04] border-b border-white/60 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                <th class="py-3.5 px-4 font-semibold">Material Item</th>
-                                <th class="py-3.5 px-4 font-semibold">Assigned Category Stream</th>
-                                <th class="py-3.5 px-4 text-right font-semibold">Logged Timestamp</th>
+                                <th class="py-3.5 px-4 font-semibold">Item</th>
+                                <th class="py-3.5 px-4 font-semibold">Bin</th>
+                                <th class="py-3.5 px-4 text-right font-semibold">Time</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/50 dark:divide-white/10">
@@ -212,18 +205,18 @@
                 @endif
             </div>
 
-            <!-- 4. Card 3: Evacuation Audit Trail (Frosted Glass Container) -->
+            <!-- 4. Card 3: Bin emptying log -->
             <div class="relative rounded-3xl p-6 sm:p-7 bg-white/55 dark:bg-[#0B1713]/60 border border-white/80 dark:border-emerald-500/25 backdrop-blur-2xl shadow-[0_12px_36px_-6px_rgba(16,185,129,0.1)] dark:shadow-[0_16px_40px_-8px_rgba(0,0,0,0.7)] transition-all overflow-hidden">
                 <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
 
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-white/50 dark:border-white/10">
                     <div class="flex items-center gap-2.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Containment Evacuation Audit Trail</h2>
+                        <h2 class="text-base font-bold text-slate-900 dark:text-white tracking-tight">Bin emptying log</h2>
                     </div>
 
                     <span class="px-3.5 py-1.5 bg-white/70 dark:bg-emerald-500/15 border border-white/80 dark:border-emerald-400/30 text-emerald-800 dark:text-emerald-300 text-xs font-mono rounded-2xl w-fit backdrop-blur-md shadow-sm">
-                        Avg Fleet Response: <strong class="font-bold">{{ $avgResponseTimeMinutes > 0 ? $avgResponseTimeMinutes . ' mins' : 'Immediate' }}</strong>
+                        Avg time to empty after an alert: <strong class="font-bold">{{ $avgResponseTimeMinutes !== null ? $avgResponseTimeMinutes . ' min' : 'no data yet' }}</strong>
                     </span>
                 </div>
 
@@ -231,11 +224,11 @@
                     <table class="w-full text-left border-collapse text-xs">
                         <thead>
                             <tr class="bg-white/60 dark:bg-white/[0.04] border-b border-white/60 dark:border-white/10 text-[10px] font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                                <th class="py-3.5 px-4 font-semibold">Containment Node</th>
+                                <th class="py-3.5 px-4 font-semibold">Bin</th>
                                 <th class="py-3.5 px-4 font-semibold">Operator Email</th>
-                                <th class="py-3.5 px-4 font-semibold">Pre-Clear Capacity</th>
-                                <th class="py-3.5 px-4 font-semibold">Response Speed</th>
-                                <th class="py-3.5 px-4 text-right font-semibold">Evacuated At</th>
+                                <th class="py-3.5 px-4 font-semibold">Level before</th>
+                                <th class="py-3.5 px-4 font-semibold">Time to empty</th>
+                                <th class="py-3.5 px-4 text-right font-semibold">Emptied at</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-white/50 dark:divide-white/10">
@@ -249,7 +242,7 @@
                                 @endphp
                                 <tr class="hover:bg-white/60 dark:hover:bg-white/[0.04] transition-colors">
                                     <td class="py-4 px-4 font-bold text-slate-900 dark:text-white">
-                                        {{ $clearance->bin ? $clearance->bin->name : 'Waste Containment' }}
+                                        {{ $clearance->bin ? $clearance->bin->name : 'Deleted bin' }}
                                     </td>
                                     @php
                                         $isAuto = ($clearance->clearance_type ?? 'manual') === 'sensor_auto' || str_contains($clearance->cleared_by_email, 'System') || str_contains($clearance->cleared_by_email, 'IoT');
@@ -284,7 +277,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="py-8 text-center text-xs text-slate-400 dark:text-slate-500">No containment clearance records recorded.</td>
+                                    <td colspan="5" class="py-8 text-center text-xs text-slate-400 dark:text-slate-500">No bins have been emptied yet.</td>
                                 </tr>
                             @endforelse
                         </tbody>
