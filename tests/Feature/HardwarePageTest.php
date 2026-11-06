@@ -38,7 +38,24 @@ class HardwarePageTest extends TestCase
             ->assertDontSee('OV2640')
             ->assertDontSee('Shredder')
             ->assertDontSee('5.03V')
-            ->assertDontSee('Link 100%');
+            ->assertDontSee('Link 100%')
+            ->assertDontSee('>ONLINE</span>', false)
+            ->assertSee('@esp32-telemetry.window', false);
+    }
+
+    public function test_live_monitor_sensor_card_follows_the_esp32(): void
+    {
+        $user = User::factory()->create(['role' => 'admin']);
+
+        $this->actingAs($user)->get(route('dashboard'))
+            ->assertOk()
+            ->assertDontSee('All stream sensors calibrated')
+            ->assertSee('/api/hardware/esp32-telemetry', false);
+
+        // Admins can read the ESP32 status the card relies on.
+        $this->actingAs($user)->getJson('/api/hardware/esp32-telemetry')
+            ->assertOk()
+            ->assertJson(['status' => 'offline']);
     }
 
     public function test_admins_cannot_open_the_hardware_page(): void

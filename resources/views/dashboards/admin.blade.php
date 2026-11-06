@@ -145,8 +145,11 @@
                     </div>
                 </div>
                 <div class="mt-3">
-                    <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight block">4 / 4</span>
-                    <span class="text-[11px] text-sky-600 dark:text-sky-400 font-semibold block mt-1">All stream sensors calibrated</span>
+                    <span class="text-2xl sm:text-3xl font-extrabold font-mono text-slate-900 dark:text-white tracking-tight block"
+                          x-text="sensorStatus === 'live' ? '4 / 4' : (sensorStatus === 'loading' ? '…' : '0 / 4')">…</span>
+                    <span class="text-[11px] font-semibold block mt-1"
+                          :class="sensorStatus === 'live' ? 'text-sky-600 dark:text-sky-400' : (sensorStatus === 'stale' ? 'text-amber-600 dark:text-amber-400' : (sensorStatus === 'loading' ? 'text-slate-500' : 'text-rose-600 dark:text-rose-400'))"
+                          x-text="{ live: 'All bin sensors reporting', stale: 'Sensors late (ESP32 stale)', loading: 'Checking sensors…' }[sensorStatus] ?? 'Sensors offline (ESP32 not reporting)'">Checking sensors…</span>
                 </div>
             </div>
 
@@ -512,12 +515,24 @@
                     biodegradable: { name: 'Biodegradable', subtitle: 'Organic & food waste', color: 'emerald', level: 0, status: 'Empty', lastEmptied: 'Never', items: [] },
                     'non-bio': { name: 'Non-Biodegradable', subtitle: 'Residual waste', color: 'amber', level: 0, status: 'Empty', lastEmptied: 'Never', items: [] }
                 },
+                sensorStatus: 'loading',
+                async fetchSensorStatus() {
+                    // The 4 ultrasonic sensors are read by the ESP32; its telemetry tells us if they report.
+                    try {
+                        const response = await axios.get('/api/hardware/esp32-telemetry');
+                        this.sensorStatus = response.data.status;
+                    } catch (e) {
+                        this.sensorStatus = 'offline';
+                    }
+                },
                 init() {
                     if (!initialData) {
                         this.fetchBins();
                     }
+                    this.fetchSensorStatus();
                     setInterval(() => {
                         this.fetchBins();
+                        this.fetchSensorStatus();
                     }, 4000);
                 },
                 showToast(message, type = 'success') {
