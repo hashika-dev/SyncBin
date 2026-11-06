@@ -38,6 +38,8 @@ listed and tick it off.
 
 ### Step 2: asset and role inventory
 
+Done: see [`SECURITY_INVENTORY.md`](SECURITY_INVENTORY.md).
+
 A short document (e.g. `docs/SECURITY_INVENTORY.md`) with: roles and what each
 can do (Guest, Admin, SuperAdmin); protected resources and which role may use
 them (`/dashboard/hardware`, `/dashboard/history/clear`, `/api/system/seed-mock-data`
