@@ -136,6 +136,25 @@ class DatabaseBackupTest extends TestCase
         $this->assertSame('manual', $this->backups()->all()[0]['reason']);
     }
 
+    public function test_back_up_now_is_not_blocked_by_other_dashboard_requests(): void
+    {
+        $user = $this->superadmin();
+
+        // The live dashboard polls /api/bins; this must not use up the backup limit.
+        for ($i = 0; $i < 10; $i++) {
+            $this->actingAs($user)->getJson(route('bins.index'))->assertOk();
+        }
+
+        $this->actingAs($user)->post(route('dashboard.backups.store'))->assertRedirect(route('dashboard.backups'));
+
+        // Still limited on its own: 5 per minute.
+        for ($i = 0; $i < 4; $i++) {
+            sleep(1); // backup names are unique per second
+            $this->actingAs($user)->post(route('dashboard.backups.store'))->assertRedirect();
+        }
+        $this->actingAs($user)->post(route('dashboard.backups.store'))->assertStatus(429);
+    }
+
     public function test_download_requires_password_confirmation(): void
     {
         $backup = $this->backups()->create('manual');
