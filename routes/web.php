@@ -63,7 +63,8 @@ Route::middleware('auth')->group(function () {
         // Database backups (F: backup and recovery)
         Route::get('/dashboard/backups', [\App\Http\Controllers\BackupController::class, 'index'])->name('dashboard.backups');
         Route::post('/dashboard/backups', [\App\Http\Controllers\BackupController::class, 'store'])
-            ->middleware('throttle:5,1')
+            ->withoutMiddleware('throttle:60,1')
+            ->middleware('throttle:backups')
             ->name('dashboard.backups.store');
         // The file holds every account's password hash, so ask for the password again.
         Route::get('/dashboard/backups/{file}/download', [\App\Http\Controllers\BackupController::class, 'download'])
