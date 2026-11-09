@@ -193,7 +193,7 @@ class BrevoMailService
                         'name' => 'EcoSync Admin',
                     ]
                 ],
-                'subject' => "⚠️ CRITICAL ALERT: {$bin->name} has reached {$bin->level}% capacity!",
+                'subject' => "EcoSync alert: {$bin->name} bin is {$bin->level}% full",
                 'htmlContent' => $htmlContent,
             ]);
 

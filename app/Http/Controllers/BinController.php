@@ -1526,7 +1526,7 @@ class BinController extends Controller
             try {
                 \Illuminate\Support\Facades\Mail::send('emails.critical-alert', ['bin' => $bin], function ($message) use ($bin, $recipient) {
                     $message->to($recipient)
-                        ->subject("⚠️ CRITICAL ALERT: {$bin->name} has reached {$bin->level}% capacity!");
+                        ->subject("EcoSync alert: {$bin->name} bin is {$bin->level}% full");
                 });
                 $report['mailer'] = ['success' => true, 'message' => 'Dispatched via Laravel Mailer (' . config('mail.default') . ')'];
                 $report['delivered'] = true;

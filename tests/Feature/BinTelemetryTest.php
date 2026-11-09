@@ -149,7 +149,7 @@ class BinTelemetryTest extends TestCase
     {
         $bin = Bin::first();
         $html = view('emails.critical-alert', ['bin' => $bin])->render();
-        $this->assertStringContainsString('EcoSync Telemetry Alert', $html);
+        $this->assertStringContainsString("{$bin->name} bin is {$bin->level}% full", $html);
         $this->assertStringContainsString('Hazardous', $html);
     }
 }
