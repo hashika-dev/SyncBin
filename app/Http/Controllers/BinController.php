@@ -748,7 +748,7 @@ class BinController extends Controller
             'last_emptied_at' => now(),
         ]);
 
-        return redirect()->route('dashboard.history')->with('status', 'History logs cleared and bins evacuated successfully.');
+        return redirect()->route('dashboard.history')->with('status', 'History cleared. All bins are reset to empty.');
     }
 
     /**
@@ -1523,7 +1523,7 @@ class BinController extends Controller
                 $smsResponse = \Illuminate\Support\Facades\Http::post('https://api.semaphore.co/api/v4/messages', [
                     'apikey'  => $semaphoreApiKey,
                     'number'  => $alertPhoneNumber,
-                    'message' => "CRITICAL ALERT: EcoSync {$bin->name} has reached {$bin->level}% capacity! Please evacuate the bin.",
+                    'message' => "EcoSync alert: {$bin->name} bin is {$bin->level}% full. Please empty it soon, then press Empty on the dashboard.",
                 ]);
 
                 if ($smsResponse->successful()) {
