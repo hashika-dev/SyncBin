@@ -79,7 +79,7 @@ Test: DevTools > Network > response headers; securityheaders.com screenshot.
 - Step 6: `bootstrap/app.php` exempts `api/*` from CSRF, which also exempts
   session-authenticated dashboard actions (`/api/bins/{slug}/empty`,
   `/api/bins/{slug}/scan`, `/api/system/seed-mock-data`,
-  `/api/hardware/crypto-demo`, `/api/bins/test-alert-email`). Narrow the
+  `/api/hardware/crypto-demo`). Narrow the
   exemption to the device URLs only, and make sure the dashboard's fetch/axios
   calls send the CSRF token.
 - Step 7: listen to `Illuminate\Auth\Events\Login`, `Failed`, `Logout`,

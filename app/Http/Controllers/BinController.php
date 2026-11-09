@@ -1550,30 +1550,4 @@ class BinController extends Controller
 
         return $report;
     }
-
-    /**
-     * Test endpoint for sending a live critical alert email immediately.
-     */
-    public function sendTestAlertEmail()
-    {
-        $bin = Bin::where('level', '>=', 80)->first() ?? Bin::first();
-        if (!$bin) {
-            return response()->json(['success' => false, 'message' => 'No bins registered in system.'], 404);
-        }
-
-        $testBin = clone $bin;
-        if ($testBin->level < 80) {
-            $testBin->level = 82;
-            $testBin->status = 'Critical';
-        }
-
-        $report = $this->dispatchCriticalAlert($testBin);
-
-        return response()->json([
-            'success'   => $report['delivered'],
-            'recipient' => $report['recipient'],
-            'channels'  => $report['channels'],
-            'details'   => $report,
-        ]);
-    }
 }
