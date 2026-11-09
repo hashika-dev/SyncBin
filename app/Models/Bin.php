@@ -18,12 +18,14 @@ class Bin extends Model
         'zero_level_since',
         'pre_empty_level',
         'zero_reading_count',
+        'sensor_fault_since',
     ];
 
     protected $casts = [
         'last_emptied_at' => 'datetime',
         'alert_triggered_at' => 'datetime',
         'zero_level_since' => 'datetime',
+        'sensor_fault_since' => 'datetime',
     ];
 
     protected $appends = [

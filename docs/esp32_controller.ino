@@ -102,7 +102,10 @@ long getDistance(int trigPin, int echoPin) {
   delayMicroseconds(10);
   digitalWrite(trigPin, LOW);
   long duration = pulseIn(echoPin, HIGH, 30000); // 30ms timeout to prevent hanging if sensor is unplugged
-  if (duration == 0) return 0; // Return 0 if not connected/no echo
+  // 0 means "no echo" (sensor unplugged or loose wire). Keep sending it: the website
+  // treats 0 cm as "no reading", keeps the last real level and flags that bin's sensor.
+  // (A real HC-SR04 reading is never below ~2 cm.)
+  if (duration == 0) return 0;
   return duration * 0.034 / 2; // Distance in cm
 }
 
