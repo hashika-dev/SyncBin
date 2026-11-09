@@ -53,6 +53,7 @@
             'level' => $binModel ? (int)$binModel->level : 0,
             'status' => $binModel ? $binModel->status : 'Empty',
             'lastEmptied' => $binModel && $binModel->last_emptied_at ? $binModel->last_emptied_at->diffForHumans() : 'Never',
+            'pendingConfirm' => $binModel ? $binModel->pendingClearance() !== null : false,
             'items' => $binModel ? $binModel->items->take(20)->map(function($i) {
                 return [
                     'id' => $i->id,
@@ -319,6 +320,10 @@
                                 <span>Emptied <strong class="text-slate-800 dark:text-slate-200 font-semibold" x-text="bins['{{ $slug }}'].lastEmptied">Never</strong></span>
                             </div>
                         </div>
+                        <p x-show="bins['{{ $slug }}'].pendingConfirm" x-cloak
+                           class="mt-3 text-xs text-slate-700 dark:text-slate-300">
+                            The sensor saw this bin emptied. Confirm it so your name is on the record.
+                        </p>
                     </div>
 
                     <!-- Action Controls (Frosted Glass Buttons: Details & Empty) -->
@@ -335,12 +340,18 @@
                         <button @click="requestEmpty('{{ $slug }}')"
                                 :disabled="loadingAction !== null || pendingEmpty?.key === '{{ $slug }}'"
                                 type="button"
-                                title="Mark this bin as emptied (you can undo for 5 seconds)"
-                                class="py-2.5 px-3 text-xs font-semibold text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/40 dark:border-rose-500/35 rounded-2xl transition-all shadow-[0_2px_8px_rgba(244,63,94,0.08)] backdrop-blur-md flex items-center justify-center gap-1.5 active:scale-95"
-                                :class="loadingAction ? 'opacity-60 cursor-not-allowed' : ''">
+                                :title="bins['{{ $slug }}'].pendingConfirm ? 'Confirm the sensor reading: you emptied this bin' : 'Mark this bin as emptied (you can undo for 5 seconds)'"
+                                class="py-2.5 px-3 text-xs font-semibold rounded-2xl transition-all backdrop-blur-md flex items-center justify-center gap-1.5 active:scale-95 border"
+                                :class="[
+                                    loadingAction ? 'opacity-60 cursor-not-allowed' : '',
+                                    bins['{{ $slug }}'].pendingConfirm
+                                        ? 'text-emerald-800 dark:text-emerald-200 bg-emerald-500/15 hover:bg-emerald-500/25 border-emerald-400/50'
+                                        : 'text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 bg-rose-500/15 hover:bg-rose-500/25 border-rose-400/40 dark:border-rose-500/35'
+                                ]">
                             <svg x-show="loadingAction === '{{ $slug }}-empty'" class="animate-spin h-3.5 w-3.5 text-rose-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" x-cloak><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                            <svg x-show="loadingAction !== '{{ $slug }}-empty'" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                            <span x-text="loadingAction === '{{ $slug }}-empty' ? 'Emptying...' : 'Empty'">Empty</span>
+                            <svg x-show="loadingAction !== '{{ $slug }}-empty' && bins['{{ $slug }}'].pendingConfirm" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" x-cloak><polyline points="20 6 9 17 4 12"/></svg>
+                            <svg x-show="loadingAction !== '{{ $slug }}-empty' && !bins['{{ $slug }}'].pendingConfirm" class="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                            <span x-text="loadingAction === '{{ $slug }}-empty' ? 'Saving...' : (bins['{{ $slug }}'].pendingConfirm ? 'Confirm emptied' : 'Empty')">Empty</span>
                         </button>
                     </div>
 
@@ -369,18 +380,19 @@
                         <template x-for="item in recentActivity" :key="item.id">
                             <div class="relative overflow-hidden flex items-center justify-between text-xs py-2.5 px-3 rounded-2xl bg-white/60 dark:bg-white/[0.04] hover:bg-white/80 dark:hover:bg-white/[0.08] border border-white/70 dark:border-white/10 transition-colors shadow-sm backdrop-blur-md"
                                  :class="fresh[item.id] ? 'es-row-new' : ''"
-                                 :style="'--es-flash: ' + (streamHex[item.binKey] || '#94a3b8')">
+                                 :style="'--es-flash: ' + (streamHex[item.bin_slug] || '#94a3b8')">
                                 <div class="flex items-center gap-2.5 min-w-0 pr-2">
-                                    <span class="w-2 h-2 rounded-full shrink-0 shadow-sm"
-                                          :class="{
-                                              'bg-emerald-500 shadow-[0_0_8px_#10b981]': item.binName === 'Biodegradable',
-                                              'bg-sky-500 shadow-[0_0_8px_#38bdf8]': item.binName === 'Recyclable',
-                                              'bg-amber-500 shadow-[0_0_8px_#fbbf24]': item.binName === 'Non-Biodegradable',
-                                              'bg-rose-500 shadow-[0_0_8px_#f43f5e]': item.binName === 'Hazardous'
-                                          }"></span>
-                                    <span class="text-slate-800 dark:text-slate-100 font-semibold truncate" x-text="item.name"></span>
+                                    <span class="w-2 h-2 shrink-0"
+                                          :class="item.kind === 'emptied' ? 'rounded-sm border-2' : 'rounded-full'"
+                                          :style="item.kind === 'emptied'
+                                              ? 'border-color: ' + (streamHex[item.bin_slug] || '#94a3b8')
+                                              : 'background-color: ' + (streamHex[item.bin_slug] || '#94a3b8')"></span>
+                                    <span class="truncate">
+                                        <span class="text-slate-800 dark:text-slate-100 font-semibold" x-text="item.name"></span>
+                                        <span x-show="item.detail" class="text-slate-500 dark:text-slate-400" x-text="' · ' + item.detail"></span>
+                                    </span>
                                 </div>
-                                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0" x-text="formatTimeAgo(item.created_at)"></span>
+                                <span class="text-[11px] font-mono text-slate-500 dark:text-slate-400 shrink-0" x-text="formatTimeAgo(item.at)"></span>
                             </div>
                         </template>
 
@@ -388,7 +400,7 @@
                             <svg class="w-8 h-8 mx-auto text-slate-400 dark:text-slate-600 mb-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                                 <circle cx="12" cy="12" r="10"/><path d="M8 12h8"/>
                             </svg>
-                            <p>No recent sorting activity recorded</p>
+                            <p>No scans or emptyings yet</p>
                         </div>
                     </div>
                 </div>
@@ -609,6 +621,8 @@
                 pollTick: 0,
                 syncError: false,
                 pendingEmpty: null, // { key, remaining, run, interval }
+                activity: [],       // latest scans and emptyings from /api/bins/activity
+                knownActivity: null,
                 emptyRuns: 0,
                 tweening: false,
 
@@ -654,7 +668,6 @@
 
                     if (this.knownIds) {
                         const arrivals = items.filter(i => !this.knownIds.has(i.id));
-                        arrivals.forEach(i => this.flag(this.fresh, i.id, 1700));
                         if (arrivals.length) this.flag(this.bumped, key, 500);
                     }
                     items.forEach(i => this.knownIds && this.knownIds.add(i.id));
@@ -662,6 +675,7 @@
                     bin.level = data.level;
                     bin.status = data.status;
                     bin.items = items;
+                    bin.pendingConfirm = !!data.awaiting_confirmation;
                 },
                 // Overall station health from real heartbeats (Pi and ESP32 both report every few seconds).
                 get stationHealth() {
@@ -696,12 +710,14 @@
                     Object.keys(this.bins).forEach(k => { this.shown[k] = this.bins[k].level || 0; });
                     // The first refresh records what is already there; only later arrivals animate.
                     this.fetchBins();
+                    this.fetchActivity();
                     // Leaving the page during the undo window still empties the bin.
                     window.addEventListener('pagehide', () => this.flushPendingEmpty());
                     this.fetchSensorStatus();
                     this.fetchPiStatus();
                     setInterval(() => {
                         this.fetchBins();
+                        this.fetchActivity();
                         this.fetchSensorStatus();
                         this.fetchPiStatus();
                     }, 4000);
@@ -724,7 +740,7 @@
                         Object.keys(this.bins).forEach(key => {
                             if (data[key]) {
                                 if (this.bins[key].level > 0 && data[key].level === 0 && this.pendingEmpty?.key !== key) {
-                                    this.showToast(`${data[key].name} reads 0%: the sensor detected it was emptied`, 'success');
+                                    this.showToast(`${data[key].name} reads 0%: the sensor saw it emptied`, 'success');
                                 }
                                 this.ingest(key, firstLoad ? { ...data[key], items: [] } : data[key]);
                                 if (firstLoad) {
@@ -776,22 +792,22 @@
                     return Math.round(levels.reduce((a, b) => a + b, 0) / levels.length);
                 },
                 get recentActivity() {
-                    let allItems = [];
-                    Object.keys(this.bins).forEach(key => {
-                        const bin = this.bins[key];
-                        if (bin.items) {
-                            bin.items.forEach(item => {
-                                allItems.push({
-                                    id: item.id,
-                                    name: item.name,
-                                    created_at: item.created_at,
-                                    binName: bin.name,
-                                    binKey: key
-                                });
-                            });
+                    return this.activity;
+                },
+                async fetchActivity() {
+                    try {
+                        const response = await axios.get('/api/bins/activity');
+                        const rows = response.data || [];
+                        if (this.knownActivity) {
+                            rows.filter(r => !this.knownActivity.has(r.id)).forEach(r => this.flag(this.fresh, r.id, 1700));
+                        } else {
+                            this.knownActivity = new Set();
                         }
-                    });
-                    return allItems.sort((a, b) => new Date(b.created_at || b.id) - new Date(a.created_at || a.id)).slice(0, 10);
+                        rows.forEach(r => this.knownActivity.add(r.id));
+                        this.activity = rows;
+                    } catch (e) {
+                        // The bins poll already shows a sync error; keep the last list.
+                    }
                 },
                 openModal(binKey) {
                     this.activeKey = binKey;
@@ -799,9 +815,15 @@
                     this.isOpen = true;
                 },
                 // Empty with a 5-second undo window. The bar drains right away; the server
-                // only empties the bin (and deletes its items) when the window closes.
+                // only records the emptying when the window closes (scans stay in History).
                 requestEmpty(binKey) {
                     if (!binKey || this.loadingAction) return;
+                    const bin = this.bins[binKey];
+                    if (bin.pendingConfirm) return this.confirmEmptied(binKey);
+                    if (bin.level > 0 && !window.confirm(
+                        `The sensor still reads ${bin.level}% for ${bin.name}.\n\n` +
+                        `Mark it as emptied anyway? If there is still trash inside, the gauge will go back up on the next sensor reading.`
+                    )) return;
                     if (this.pendingEmpty) this.commitEmpty(); // a second Empty confirms the first
                     this.isOpen = false;
                     // Compare by run number: Alpine wraps pendingEmpty in a proxy, so object identity is unreliable.
@@ -813,6 +835,20 @@
                     }, 1000);
                     this.pendingEmpty = { key: binKey, remaining: 5, run, interval };
                     this.tweenLevels();
+                },
+                // The sensor already recorded the emptying; this only adds the admin's name.
+                async confirmEmptied(binKey) {
+                    this.loadingAction = `${binKey}-empty`;
+                    try {
+                        const response = await axios.post(`/api/bins/${binKey}/empty`);
+                        this.bins[binKey].pendingConfirm = !!response.data.awaiting_confirmation;
+                        this.showToast(`${this.bins[binKey].name} confirmed as emptied`);
+                        this.fetchActivity();
+                    } catch (error) {
+                        this.showToast(`Could not confirm ${this.bins[binKey].name}`, 'error');
+                    } finally {
+                        this.loadingAction = null;
+                    }
                 },
                 undoEmpty() {
                     if (!this.pendingEmpty || this.pendingEmpty.committing) return;
@@ -836,7 +872,9 @@
                         this.bins[binKey].items = updatedBin.items || [];
                         this.bins[binKey].status = updatedBin.status;
                         this.bins[binKey].lastEmptied = 'Just now';
+                        this.bins[binKey].pendingConfirm = !!updatedBin.awaiting_confirmation;
                         this.showToast(`${this.bins[binKey].name} emptied`);
+                        this.fetchActivity();
                     } catch (error) {
                         this.showToast(`Failed to empty ${this.bins[binKey].name}`, 'error');
                     } finally {
@@ -860,6 +898,7 @@
                         const response = await axios.post(`/api/bins/${this.activeKey}/scan`);
                         const updatedBin = response.data;
                         this.ingest(this.activeKey, updatedBin);
+                        this.fetchActivity();
                         this.activeBin = this.bins[this.activeKey];
                         this.tweenLevels();
 

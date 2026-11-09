@@ -46,6 +46,7 @@ Route::middleware(['auth', '2fa'])->group(function () {
     // Common Operational Routes (Admin & SuperAdmin) with Rate Limiting (max 60 req/min)
     Route::middleware('throttle:60,1')->group(function () {
         Route::get('/api/bins', [\App\Http\Controllers\BinController::class, 'index'])->name('bins.index');
+        Route::get('/api/bins/activity', [\App\Http\Controllers\BinController::class, 'activity'])->name('bins.activity');
         Route::post('/api/bins/{slug}/empty', [\App\Http\Controllers\BinController::class, 'emptyBin'])->name('bins.empty');
         Route::get('/dashboard/reports', [\App\Http\Controllers\BinController::class, 'reports'])->name('dashboard.reports');
         Route::get('/dashboard/export', [\App\Http\Controllers\BinController::class, 'exportPdf'])->name('dashboard.export');

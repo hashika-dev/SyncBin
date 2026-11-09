@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Bin;
+use App\Models\BinClearanceLog;
 use App\Models\WasteItem;
 use App\Models\RpiTelemetry;
 use App\Models\Esp32Telemetry;
@@ -30,9 +31,56 @@ class BinController extends Controller
             }
         }
 
-        return response()->json($bins->fresh(['items' => function($query) {
+        $bins = $bins->fresh(['items' => function($query) {
             $query->latest();
-        }])->keyBy('slug'));
+        }]);
+
+        return response()->json($bins->map(fn (Bin $bin) => $this->withConfirmationFlag($bin))->keyBy('slug'));
+    }
+
+    /**
+     * Mark whether the sensor emptied this bin and is waiting for an admin to confirm it.
+     */
+    private function withConfirmationFlag(Bin $bin): Bin
+    {
+        return $bin->setAttribute('awaiting_confirmation', $bin->pendingClearance() !== null);
+    }
+
+    /**
+     * Latest station events for the dashboard's Recent Activity: scans and emptyings.
+     * Scans stay listed after their bin is emptied.
+     */
+    public function activity()
+    {
+        $scans = WasteItem::with('bin:id,slug,name')->latest()->latest('id')->take(10)->get()
+            ->map(fn (WasteItem $item) => [
+                'id'       => 'scan-' . $item->id,
+                'kind'     => 'scan',
+                'name'     => $item->name,
+                'detail'   => null,
+                'bin_slug' => $item->bin?->slug,
+                'bin_name' => $item->bin?->name,
+                'at'       => $item->created_at?->toISOString(),
+            ]);
+
+        $emptied = BinClearanceLog::with('bin:id,slug,name')->latest('cleared_at')->latest('id')->take(10)->get()
+            ->map(fn (BinClearanceLog $log) => [
+                'id'       => 'emptied-' . $log->id . ($log->confirmed_at ? '-c' : ''),
+                'kind'     => 'emptied',
+                'name'     => ($log->bin?->name ?? 'A') . ' bin emptied',
+                'detail'   => match (true) {
+                    $log->clearance_type !== 'sensor_auto' => 'by admin',
+                    $log->user_id !== null                 => 'by sensor, confirmed',
+                    default                                => 'by sensor',
+                },
+                'bin_slug' => $log->bin?->slug,
+                'bin_name' => $log->bin?->name,
+                'at'       => $log->cleared_at?->toISOString(),
+            ]);
+
+        return response()->json(
+            $scans->concat($emptied)->sortByDesc('at')->take(10)->values()
+        );
     }
 
     /**
@@ -300,34 +348,58 @@ class BinController extends Controller
     {
         $bin = Bin::where('slug', $slug)->firstOrFail();
 
-        $levelBefore = $bin->level > 0 ? $bin->level : ($bin->pre_empty_level > 0 ? $bin->pre_empty_level : 0);
-        $responseTimeMinutes = $bin->alert_triggered_at ? (int) max(1, abs(now()->diffInMinutes($bin->alert_triggered_at))) : null;
+        if ($pending = $bin->pendingClearance()) {
+            // The sensor already recorded this emptying: put the admin's name on it.
+            $pending->update([
+                'user_id'          => auth()->id(),
+                'cleared_by_email' => auth()->user()?->email ?? $pending->cleared_by_email,
+                'confirmed_at'     => now(),
+            ]);
+        } else {
+            $levelBefore = $bin->level > 0 ? $bin->level : ($bin->pre_empty_level > 0 ? $bin->pre_empty_level : 0);
+            $this->clearBin($bin, 'manual', $levelBefore);
+        }
 
-        // Log clearance audit record
-        \App\Models\BinClearanceLog::create([
-            'bin_id' => $bin->id,
-            'user_id' => auth()->id(),
-            'cleared_by_email' => auth()->check() ? auth()->user()->email : 'admin@wastesync.com',
-            'clearance_type' => 'manual',
+        $bin = $bin->fresh()->load(['items' => function($q) { $q->latest(); }]);
+
+        return response()->json($this->withConfirmationFlag($bin));
+    }
+
+    /**
+     * Record an emptying and reset the bin. Scanned items are kept for History
+     * and Reports; they are only marked as emptied so the bin starts fresh.
+     */
+    private function clearBin(Bin $bin, string $type, int $levelBefore): void
+    {
+        $byAdmin = $type === 'manual';
+
+        BinClearanceLog::create([
+            'bin_id'                 => $bin->id,
+            'user_id'                => $byAdmin ? auth()->id() : null,
+            'cleared_by_email'       => $byAdmin
+                ? (auth()->user()?->email ?? 'admin@wastesync.com')
+                : 'System (IoT Sensor Auto-Detect)',
+            'clearance_type'         => $type,
             'level_before_clearance' => $levelBefore,
-            'alert_triggered_at' => $bin->alert_triggered_at,
-            'cleared_at' => now(),
-            'response_time_minutes' => $responseTimeMinutes,
+            'alert_triggered_at'     => $bin->alert_triggered_at,
+            'cleared_at'             => now(),
+            'confirmed_at'           => $byAdmin ? now() : null,
+            'response_time_minutes'  => $bin->alert_triggered_at
+                ? (int) max(1, abs(now()->diffInMinutes($bin->alert_triggered_at)))
+                : null,
         ]);
 
-        // Delete items
-        $bin->items()->delete();
+        $bin->items()->update(['emptied_at' => now()]);
 
-        // Reset levels and timestamps
         $bin->level = 0;
         $bin->status = 'Empty';
         $bin->alert_triggered_at = null;
         $bin->last_emptied_at = now();
-        $bin->zero_level_since = now();
+        if ($byAdmin) {
+            $bin->zero_level_since = now();
+        }
         $bin->pre_empty_level = 0;
         $bin->save();
-
-        return response()->json($bin->load(['items' => function($q) { $q->latest(); }]));
     }
 
     /**
@@ -335,7 +407,7 @@ class BinController extends Controller
      */
     public function exportPdf()
     {
-        $bins = Bin::with(['items' => function($query) {
+        $bins = Bin::with(['allItems' => function($query) {
             $query->latest();
         }])->get();
 
@@ -346,7 +418,7 @@ class BinController extends Controller
 
         // Most active bin
         $mostActiveBin = $bins->sortByDesc(function($bin) {
-            return $bin->items->count();
+            return $bin->allItems->count();
         })->first();
 
         // Render PDF view
@@ -493,7 +565,7 @@ class BinController extends Controller
      */
     public function reports()
     {
-        $bins = Bin::with('items')->get();
+        $bins = Bin::with('allItems')->get();
         $totalItemsCount = WasteItem::count();
         $averageFill = $bins->avg('level') ?? 0;
         
@@ -506,7 +578,7 @@ class BinController extends Controller
         
         // Most active bin
         $mostActiveBin = $bins->sortByDesc(function($bin) {
-            return $bin->items->count();
+            return $bin->allItems->count();
         })->first();
 
         // Calculate counts of items segregated per day for the last 7 days
@@ -642,6 +714,7 @@ class BinController extends Controller
                 'alert_triggered_at' => $triggeredAt,
                 'cleared_at' => $clearedAt,
                 'response_time_minutes' => $responseTime,
+                'confirmed_at' => $clearedAt,
                 'created_at' => $clearedAt,
                 'updated_at' => $clearedAt,
             ]);
@@ -1116,50 +1189,14 @@ class BinController extends Controller
             }
 
             $distanceCm  = max(0, (float) $request->input($field));
-            $previousLevel = $bin->level;
 
             // Convert distance → fill percentage
             // When distance = 0 cm (object right at sensor) → 100% full
             // When distance = binDepthCm (empty bin floor) → 0% full
             $binDepthCm  = $bin->chamber_height_cm ?? $defaultBinDepthCm;
             $fillPercent = (int) max(0, min(100, round((1 - $distanceCm / $binDepthCm) * 100)));
-            $bin->level  = $fillPercent;
 
-            // Recalculate status & zero-level debounce
-            if ($bin->level === 0) {
-                $bin->status = 'Empty';
-                if ($previousLevel > 0) {
-                    $bin->pre_empty_level = $previousLevel;
-                }
-                if ($bin->zero_level_since === null) {
-                    $bin->zero_level_since = now();
-                }
-                $this->checkAndProcessAutoClear($bin);
-            } else {
-                $bin->zero_level_since = null;
-                $bin->pre_empty_level  = $bin->level;
-
-                if ($bin->level < 30)      $bin->status = 'Low';
-                elseif ($bin->level < 60)  $bin->status = 'Stable';
-                elseif ($bin->level < 80)  $bin->status = 'High';
-                else                       $bin->status = 'Critical';
-            }
-
-            // Trigger critical alert when crossing 80% threshold
-            $threshold = (int) config('bins.critical_threshold', 80);
-            $shouldAlert = $bin->level >= $threshold && (
-                $previousLevel < $threshold ||
-                $bin->alert_triggered_at === null ||
-                $bin->alert_triggered_at->diffInMinutes(now()) >= 30
-            );
-
-            if ($shouldAlert) {
-                $bin->alert_triggered_at = now();
-                $this->dispatchCriticalAlert($bin);
-            } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
-                $bin->alert_triggered_at = null;
-            }
-
+            $this->applySensorLevel($bin, $fillPercent);
             $bin->save();
 
             $results[$field] = [
@@ -1241,46 +1278,7 @@ class BinController extends Controller
                 continue;
             }
 
-            $previousLevel = $bin->level;
-            $level = max(0, min(100, (int) round((float) $request->input($field))));
-
-            $bin->level = $level;
-
-            // Recalculate status & zero-level debounce
-            if ($bin->level === 0) {
-                $bin->status = 'Empty';
-                if ($previousLevel > 0) {
-                    $bin->pre_empty_level = $previousLevel;
-                }
-                if ($bin->zero_level_since === null) {
-                    $bin->zero_level_since = now();
-                }
-                $this->checkAndProcessAutoClear($bin);
-            } else {
-                $bin->zero_level_since = null;
-                $bin->pre_empty_level  = $bin->level;
-
-                if ($bin->level < 30)      $bin->status = 'Low';
-                elseif ($bin->level < 60)  $bin->status = 'Stable';
-                elseif ($bin->level < 80)  $bin->status = 'High';
-                else                       $bin->status = 'Critical';
-            }
-
-            // Trigger critical alert if crossing 80% threshold
-            $threshold = (int) config('bins.critical_threshold', 80);
-            $shouldAlert = $bin->level >= $threshold && (
-                $previousLevel < $threshold ||
-                $bin->alert_triggered_at === null ||
-                $bin->alert_triggered_at->diffInMinutes(now()) >= 30
-            );
-
-            if ($shouldAlert) {
-                $bin->alert_triggered_at = now();
-                $this->dispatchCriticalAlert($bin);
-            } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
-                $bin->alert_triggered_at = null;
-            }
-
+            $this->applySensorLevel($bin, (int) round((float) $request->input($field)));
             $bin->save();
 
             $results[$field] = [
@@ -1344,8 +1342,6 @@ class BinController extends Controller
             ], 404);
         }
 
-        $previousLevel = $bin->level;
-
         // Resolve fullness level
         if ($request->has('fullness_percent')) {
             $level = (int) round((float) $request->input('fullness_percent'));
@@ -1355,51 +1351,7 @@ class BinController extends Controller
             $level = $bin->level;
         }
 
-        // Clamp between 0% and 100%
-        $level = max(0, min(100, $level));
-        $bin->level = $level;
-
-        // Recalculate operational status & manage zero-level debounce
-        if ($bin->level === 0) {
-            $bin->status = 'Empty';
-            if ($previousLevel > 0) {
-                $bin->pre_empty_level = $previousLevel;
-            }
-            if ($bin->zero_level_since === null) {
-                $bin->zero_level_since = now();
-            }
-            $this->checkAndProcessAutoClear($bin);
-        } else {
-            // Level is > 0: reset zero duration debounce
-            $bin->zero_level_since = null;
-            $bin->pre_empty_level = $bin->level;
-
-            if ($bin->level < 30) {
-                $bin->status = 'Low';
-            } elseif ($bin->level < 60) {
-                $bin->status = 'Stable';
-            } elseif ($bin->level < 80) {
-                $bin->status = 'High';
-            } else {
-                $bin->status = 'Critical';
-            }
-        }
-
-        // Trigger critical threshold alert if crossing 80%
-        $threshold = (int) config('bins.critical_threshold', 80);
-        $shouldAlert = $bin->level >= $threshold && (
-            $previousLevel < $threshold ||
-            $bin->alert_triggered_at === null ||
-            $bin->alert_triggered_at->diffInMinutes(now()) >= 30
-        );
-
-        if ($shouldAlert) {
-            $bin->alert_triggered_at = now();
-            $this->dispatchCriticalAlert($bin);
-        } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
-            $bin->alert_triggered_at = null;
-        }
-
+        $this->applySensorLevel($bin, $level);
         $bin->save();
 
         try {
@@ -1435,6 +1387,64 @@ class BinController extends Controller
     }
 
     /**
+     * Apply one fill reading from the bin sensors (the caller saves the bin).
+     *
+     * A drop to 0% only counts after a few 0% readings in a row
+     * (bins.empty_confirm_readings), so one bad echo or a hand in the bin
+     * doesn't make the gauge fall to empty.
+     */
+    private function applySensorLevel(Bin $bin, int $level): void
+    {
+        $previousLevel = (int) $bin->level;
+        $level = max(0, min(100, $level));
+
+        if ($level === 0 && $previousLevel > 0) {
+            $bin->zero_reading_count = min(255, (int) $bin->zero_reading_count + 1);
+            if ($bin->zero_reading_count < max(1, (int) config('bins.empty_confirm_readings', 3))) {
+                return; // keep the last level until the empty reading repeats
+            }
+        } elseif ($level > 0) {
+            $bin->zero_reading_count = 0;
+        }
+
+        $bin->level = $level;
+
+        if ($level === 0) {
+            $bin->status = 'Empty';
+            if ($previousLevel > 0) {
+                $bin->pre_empty_level = $previousLevel;
+            }
+            if ($bin->zero_level_since === null) {
+                $bin->zero_level_since = now();
+            }
+            $this->checkAndProcessAutoClear($bin);
+        } else {
+            $bin->zero_level_since = null;
+            $bin->pre_empty_level = $level;
+
+            if ($level < 30)      $bin->status = 'Low';
+            elseif ($level < 60)  $bin->status = 'Stable';
+            elseif ($level < 80)  $bin->status = 'High';
+            else                  $bin->status = 'Critical';
+        }
+
+        // Alert when crossing the critical threshold (repeats every 30 minutes while full)
+        $threshold = (int) config('bins.critical_threshold', 80);
+        $shouldAlert = $bin->level >= $threshold && (
+            $previousLevel < $threshold ||
+            $bin->alert_triggered_at === null ||
+            $bin->alert_triggered_at->diffInMinutes(now()) >= 30
+        );
+
+        if ($shouldAlert) {
+            $bin->alert_triggered_at = now();
+            $this->dispatchCriticalAlert($bin);
+        } elseif ($bin->level < $threshold && $bin->level > 0 && $bin->alert_triggered_at) {
+            $bin->alert_triggered_at = null;
+        }
+    }
+
+    /**
      * Check if bin has sustained 0% level for required duration and process auto-clearance.
      */
     public function checkAndProcessAutoClear(Bin $bin): bool
@@ -1452,38 +1462,12 @@ class BinController extends Controller
             return false; // Still within stabilization window
         }
 
-        // Check if already auto-cleared for this zero-level cycle
-        if ($bin->last_emptied_at && $bin->last_emptied_at->gte($bin->zero_level_since) && $bin->items()->count() === 0) {
+        // Nothing to record: already emptied this cycle, or the bin never had anything in it
+        if ((int) $bin->pre_empty_level === 0 && $bin->items()->count() === 0) {
             return false;
         }
 
-        $levelBefore = $bin->pre_empty_level > 0 ? $bin->pre_empty_level : 100;
-        $responseTimeMinutes = $bin->alert_triggered_at 
-            ? (int) max(1, abs(now()->diffInMinutes($bin->alert_triggered_at))) 
-            : null;
-
-        // Log automated clearance audit record
-        \App\Models\BinClearanceLog::create([
-            'bin_id' => $bin->id,
-            'user_id' => null,
-            'cleared_by_email' => 'System (IoT Sensor Auto-Detect)',
-            'clearance_type' => 'sensor_auto',
-            'level_before_clearance' => $levelBefore,
-            'alert_triggered_at' => $bin->alert_triggered_at,
-            'cleared_at' => now(),
-            'response_time_minutes' => $responseTimeMinutes,
-        ]);
-
-        // Delete items
-        $bin->items()->delete();
-
-        // Reset levels and timestamps
-        $bin->level = 0;
-        $bin->status = 'Empty';
-        $bin->alert_triggered_at = null;
-        $bin->last_emptied_at = now();
-        $bin->pre_empty_level = 0;
-        $bin->save();
+        $this->clearBin($bin, 'sensor_auto', (int) $bin->pre_empty_level);
 
         \Illuminate\Support\Facades\Log::info("AUTO-CLEAR: Bin {$bin->name} sustained 0% for {$elapsedSeconds}s. Automatically cleared.");
 

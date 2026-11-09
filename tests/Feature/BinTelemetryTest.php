@@ -94,6 +94,8 @@ class BinTelemetryTest extends TestCase
 
     public function test_esp32_can_send_telemetry_by_slug(): void
     {
+        config(['bins.empty_confirm_readings' => 1]); // this test is about the slug lookup
+
         $payload = [
             'bin_id' => 'hazardous',
             'distance_mm' => 450,

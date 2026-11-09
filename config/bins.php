@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Readings Before a Bin Counts as Empty
+    |--------------------------------------------------------------------------
+    |
+    | How many 0% sensor readings in a row it takes before the gauge drops to
+    | empty. The ESP32 reports every ~15 s, so 3 readings is about 30-45 s.
+    | One bad echo or a hand in the bin then can't empty the gauge.
+    |
+    */
+    'empty_confirm_readings' => (int) env('SENSOR_EMPTY_READINGS', 3),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Bin Depth / Height (cm)
     |--------------------------------------------------------------------------
     |

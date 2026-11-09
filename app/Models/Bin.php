@@ -17,6 +17,7 @@ class Bin extends Model
         'alert_triggered_at',
         'zero_level_since',
         'pre_empty_level',
+        'zero_reading_count',
     ];
 
     protected $casts = [
@@ -62,11 +63,36 @@ class Bin extends Model
     }
 
     /**
-     * Get the waste items for this bin.
+     * Items in the bin right now (scanned since it was last emptied).
      */
     public function items()
     {
+        return $this->hasMany(WasteItem::class)->whereNull('emptied_at');
+    }
+
+    /**
+     * Every item ever sorted into this bin, including ones already emptied out.
+     */
+    public function allItems()
+    {
         return $this->hasMany(WasteItem::class);
+    }
+
+    /**
+     * The sensor-detected emptying an admin has not confirmed yet, while the bin
+     * still reads 0%. Once the bin fills again it stays unconfirmed in History.
+     */
+    public function pendingClearance(): ?BinClearanceLog
+    {
+        if ((int) $this->level !== 0) {
+            return null;
+        }
+
+        $latest = $this->clearanceLogs()->latest('cleared_at')->latest('id')->first();
+
+        return $latest && $latest->clearance_type === 'sensor_auto' && $latest->confirmed_at === null
+            ? $latest
+            : null;
     }
 
     /**

@@ -15,11 +15,13 @@ class BinClearanceLog extends Model
         'alert_triggered_at',
         'cleared_at',
         'response_time_minutes',
+        'confirmed_at',
     ];
 
     protected $casts = [
         'alert_triggered_at' => 'datetime',
         'cleared_at' => 'datetime',
+        'confirmed_at' => 'datetime',
     ];
 
     /**
