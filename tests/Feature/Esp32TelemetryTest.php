@@ -108,6 +108,38 @@ class Esp32TelemetryTest extends TestCase
             ]);
     }
 
+    public function test_no_echo_reading_keeps_the_last_level_and_flags_the_sensor(): void
+    {
+        // 0 cm = the sensor got no echo (unplugged); it must not read as 100% full
+        $this->post('/api/update_bins', ['hazardous' => 0])
+            ->assertStatus(200)
+            ->assertJsonPath('updated.hazardous.status', 'no_reading');
+
+        $bin = Bin::find(1);
+        $this->assertEquals(10, $bin->level);
+        $this->assertNotNull($bin->sensor_fault_since);
+        $this->assertNull($bin->alert_triggered_at);
+
+        // A real distance clears the flag (60 cm deep bin, 30 cm away = 50%)
+        $this->post('/api/update_bins', ['hazardous' => 30])->assertStatus(200);
+
+        $bin->refresh();
+        $this->assertEquals(50, $bin->level);
+        $this->assertNull($bin->sensor_fault_since);
+    }
+
+    public function test_camera_scan_logs_the_item_without_changing_the_level(): void
+    {
+        $this->postJson('/api/bins/camera-scan', [
+            'item_name' => 'Used Battery',
+            'bin_slug'  => 'hazardous',
+        ])->assertStatus(200);
+
+        $bin = Bin::find(1);
+        $this->assertEquals(10, $bin->level);
+        $this->assertEquals(1, $bin->items()->count());
+    }
+
     public function test_esp32_ultrasonic_sensor_endpoint_updates_heartbeat(): void
     {
         $response = $this->post('/api/update_bins', [

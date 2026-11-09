@@ -306,32 +306,8 @@ class BinController extends Controller
             'bounding_box' => $bBox,
         ]);
 
-        // Increase fill level
-        $increase = rand(5, 15);
-        $previousLevel = $bin->level;
-        $bin->level = min(100, $bin->level + $increase);
-
-        if ($bin->level === 0) $bin->status = 'Empty';
-        elseif ($bin->level < 30) $bin->status = 'Low';
-        elseif ($bin->level < 60) $bin->status = 'Stable';
-        elseif ($bin->level < 80) $bin->status = 'High';
-        else $bin->status = 'Critical';
-
-        $bin->save();
-
-        // Alert dispatch if crossing 80%
-        $threshold = (int) config('bins.critical_threshold', 80);
-        $shouldAlert = $bin->level >= $threshold && (
-            $previousLevel < $threshold ||
-            $bin->alert_triggered_at === null ||
-            $bin->alert_triggered_at->diffInMinutes(now()) >= 30
-        );
-
-        if ($shouldAlert) {
-            $bin->alert_triggered_at = now();
-            $bin->save();
-            $this->dispatchCriticalAlert($bin);
-        }
+        // The fill level is not touched here: only the bin's ultrasonic sensor
+        // measures how full it is (and sends the 80% alert). A scan just logs the item.
 
         return response()->json([
             'status' => 'success',
@@ -1190,8 +1166,24 @@ class BinController extends Controller
 
             $distanceCm  = max(0, (float) $request->input($field));
 
+            // The ESP32 sends 0 cm when its sensor gets no echo back (unplugged,
+            // loose wire). An ultrasonic sensor can't measure under ~2 cm, so 0 is
+            // never a real distance: keep the last level instead of showing 100%.
+            if ($distanceCm <= 0) {
+                $bin->sensor_fault_since ??= now();
+                $bin->save();
+
+                $results[$field] = [
+                    'status'  => 'no_reading',
+                    'bin'     => $bin->slug,
+                    'message' => 'Sensor returned no echo; level unchanged.',
+                ];
+                continue;
+            }
+            $bin->sensor_fault_since = null;
+
             // Convert distance → fill percentage
-            // When distance = 0 cm (object right at sensor) → 100% full
+            // When distance is tiny (trash right under the sensor) → 100% full
             // When distance = binDepthCm (empty bin floor) → 0% full
             $binDepthCm  = $bin->chamber_height_cm ?? $defaultBinDepthCm;
             $fillPercent = (int) max(0, min(100, round((1 - $distanceCm / $binDepthCm) * 100)));

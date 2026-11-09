@@ -54,6 +54,7 @@
             'status' => $binModel ? $binModel->status : 'Empty',
             'lastEmptied' => $binModel && $binModel->last_emptied_at ? $binModel->last_emptied_at->diffForHumans() : 'Never',
             'pendingConfirm' => $binModel ? $binModel->pendingClearance() !== null : false,
+            'sensorFault' => $binModel ? $binModel->sensor_fault_since !== null : false,
             'items' => $binModel ? $binModel->items->take(20)->map(function($i) {
                 return [
                     'id' => $i->id,
@@ -323,6 +324,11 @@
                         <p x-show="bins['{{ $slug }}'].pendingConfirm" x-cloak
                            class="mt-3 text-xs text-slate-700 dark:text-slate-300">
                             The sensor saw this bin emptied. Confirm it so your name is on the record.
+                        </p>
+                        <p x-show="bins['{{ $slug }}'].sensorFault" x-cloak
+                           class="mt-3 flex items-start gap-1.5 text-xs text-amber-700 dark:text-amber-400">
+                            <svg class="w-3.5 h-3.5 mt-px shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <span>No sensor reading. Check this bin's sensor wiring; the level shown is the last real reading.</span>
                         </p>
                     </div>
 
@@ -715,6 +721,7 @@
                     bin.status = data.status;
                     bin.items = items;
                     bin.pendingConfirm = !!data.awaiting_confirmation;
+                    bin.sensorFault = !!data.sensor_fault_since;
                 },
                 // Overall station health from real heartbeats (Pi and ESP32 both report every few seconds).
                 get stationHealth() {
