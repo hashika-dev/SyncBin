@@ -381,7 +381,7 @@
                                         </span>
                                     </td>
                                     <td class="py-4 px-4 font-mono text-slate-900 dark:text-white text-right font-bold">
-                                        {{ $bin->items->count() }} items
+                                        {{ $bin->allItems->count() }} items
                                     </td>
                                 </tr>
                             @empty

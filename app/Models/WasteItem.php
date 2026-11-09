@@ -14,6 +14,11 @@ class WasteItem extends Model
         'ai_confidence',
         'detection_label',
         'bounding_box',
+        'emptied_at',
+    ];
+
+    protected $casts = [
+        'emptied_at' => 'datetime',
     ];
 
     /**

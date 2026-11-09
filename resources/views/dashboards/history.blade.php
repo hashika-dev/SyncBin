@@ -260,7 +260,13 @@
                                                     Supervisor
                                                 </span>
                                             @endif
-                                            <span class="truncate max-w-[200px]" title="{{ $clearance->cleared_by_email }}">{{ $clearance->cleared_by_email }}</span>
+                                            @if($isAuto && $clearance->user_id)
+                                                <span class="truncate max-w-[200px]" title="{{ $clearance->cleared_by_email }}">Confirmed by {{ $clearance->cleared_by_email }}</span>
+                                            @elseif($isAuto && ! $clearance->confirmed_at)
+                                                <span class="text-amber-700 dark:text-amber-400">Not confirmed yet</span>
+                                            @else
+                                                <span class="truncate max-w-[200px]" title="{{ $clearance->cleared_by_email }}">{{ $clearance->cleared_by_email }}</span>
+                                            @endif
                                         </div>
                                     </td>
                                     <td class="py-4 px-4">
