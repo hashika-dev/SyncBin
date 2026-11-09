@@ -492,6 +492,53 @@
         </div>
     </div>
 
+    <!-- EMPTY WARNING: the sensor still sees trash in this bin -->
+    <div x-show="emptyWarning"
+         @keydown.escape.window="emptyWarning = null"
+         class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xl"
+         x-transition:enter="transition ease-out duration-150"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-100"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         x-cloak>
+        <div role="alertdialog" aria-modal="true" aria-labelledby="empty-warning-title" aria-describedby="empty-warning-body"
+             class="relative bg-white/90 dark:bg-[#0B1713]/90 border border-white/90 dark:border-emerald-500/35 rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 text-slate-800 dark:text-slate-100 backdrop-blur-2xl overflow-hidden"
+             @click.outside="emptyWarning = null">
+            <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white dark:via-emerald-400/40 to-transparent pointer-events-none"></div>
+
+            <div class="flex items-start gap-3">
+                <div class="w-10 h-10 shrink-0 rounded-2xl bg-amber-500/15 border border-amber-400/40 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                </div>
+                <div class="min-w-0">
+                    <h3 id="empty-warning-title" class="text-base font-bold text-slate-900 dark:text-white">
+                        <span x-text="emptyWarning?.name"></span> still has trash
+                    </h3>
+                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                        The sensor reads <strong class="font-mono text-slate-900 dark:text-white" x-text="(emptyWarning?.level ?? 0) + '%'"></strong> full.
+                    </p>
+                </div>
+            </div>
+
+            <p id="empty-warning-body" class="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                Mark it as emptied anyway? If there is still trash inside, the gauge will go back up on the next sensor reading.
+            </p>
+
+            <div class="grid grid-cols-2 gap-2.5 pt-1">
+                <button type="button" x-ref="emptyWarningCancel" @click="emptyWarning = null"
+                        class="py-2.5 px-3 text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white/70 dark:bg-white/10 hover:bg-white/90 dark:hover:bg-white/20 border border-white/80 dark:border-white/15 rounded-2xl transition-all shadow-sm active:scale-95">
+                    Cancel
+                </button>
+                <button type="button" @click="const key = emptyWarning.key; emptyWarning = null; startEmpty(key)"
+                        class="py-2.5 px-3 text-xs font-semibold text-rose-700 dark:text-rose-300 bg-rose-500/15 hover:bg-rose-500/25 border border-rose-400/40 dark:border-rose-500/35 rounded-2xl transition-all shadow-sm active:scale-95">
+                    Mark as emptied
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- FLOATING TOAST FEEDBACK -->
     <div x-show="toast.show"
          x-transition:enter="transition ease-out duration-200"
@@ -613,6 +660,7 @@
                 syncError: false,
                 pendingEmpty: null, // { key, remaining, run, interval }
                 activity: [],       // latest scans and emptyings from /api/bins/activity
+                emptyWarning: null, // { key, name, level } while asking before emptying a bin the sensor says has trash
                 knownActivity: null,
                 emptyRuns: 0,
                 tweening: false,
@@ -811,10 +859,17 @@
                     if (!binKey || this.loadingAction) return;
                     const bin = this.bins[binKey];
                     if (bin.pendingConfirm) return this.confirmEmptied(binKey);
-                    if (bin.level > 0 && !window.confirm(
-                        `The sensor still reads ${bin.level}% for ${bin.name}.\n\n` +
-                        `Mark it as emptied anyway? If there is still trash inside, the gauge will go back up on the next sensor reading.`
-                    )) return;
+                    if (bin.level > 0) {
+                        // Ask in the dashboard's own dialog before emptying a bin the sensor says has trash.
+                        this.isOpen = false;
+                        this.emptyWarning = { key: binKey, name: bin.name, level: bin.level };
+                        this.$nextTick(() => this.$refs.emptyWarningCancel?.focus());
+                        return;
+                    }
+                    this.startEmpty(binKey);
+                },
+                startEmpty(binKey) {
+                    if (!binKey || this.loadingAction) return;
                     if (this.pendingEmpty) this.commitEmpty(); // a second Empty confirms the first
                     this.isOpen = false;
                     // Compare by run number: Alpine wraps pendingEmpty in a proxy, so object identity is unreliable.
