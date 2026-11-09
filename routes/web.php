@@ -52,7 +52,6 @@ Route::middleware(['auth', '2fa'])->group(function () {
         Route::get('/dashboard/export', [\App\Http\Controllers\BinController::class, 'exportPdf'])->name('dashboard.export');
         Route::get('/dashboard/export/csv', [\App\Http\Controllers\BinController::class, 'exportCsv'])->name('dashboard.export.csv');
         Route::get('/dashboard/history', [\App\Http\Controllers\BinController::class, 'history'])->name('dashboard.history');
-        Route::post('/api/bins/test-alert-email', [\App\Http\Controllers\BinController::class, 'sendTestAlertEmail'])->name('bins.test-alert');
     });
 
     // Manual Dashboard Simulation Endpoint
