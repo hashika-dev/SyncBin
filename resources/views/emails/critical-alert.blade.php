@@ -1,94 +1,135 @@
+@php
+    // Email-safe version of each bin's dashboard color (solid hex, no gradients).
+    $binColors = [
+        'hazardous'     => '#dc2626',
+        'recyclable'    => '#0284c7',
+        'biodegradable' => '#059669',
+        'non-bio'       => '#ea580c',
+    ];
+    $accent    = $binColors[$bin->slug] ?? '#475569';
+    $level     = max(0, min(100, (int) $bin->level));
+    $threshold = (int) config('bins.critical_threshold', 80);
+    $readAt    = now()->format('M j, Y \a\t g:i A');
+    $headline  = "{$bin->name} bin is {$level}% full";
+@endphp
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EcoSync - Critical Capacity Alert</title>
+    <meta name="x-apple-disable-message-reformatting">
+    <title>EcoSync alert: {{ $headline }}</title>
 </head>
-<body style="margin: 0; padding: 40px 16px; background-color: #f1f5f9; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border-radius: 20px; border: 1px solid #e2e8f0; box-shadow: 0 16px 36px -4px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03); overflow: hidden;">
-        <!-- Header Banner with Brand Accent -->
+<body style="margin:0; padding:0; background-color:#f1f5f9;">
+    {{-- Preview text shown next to the subject in the inbox list --}}
+    <div style="display:none; max-height:0; overflow:hidden; mso-hide:all;">
+        Empty it soon, then press Empty on the dashboard.
+    </div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f1f5f9;">
         <tr>
-            <td style="padding: 32px 32px 24px 32px; background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); text-align: center; color: #ffffff;">
-                <div style="display: inline-block; width: 48px; height: 48px; background-color: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 14px; padding: 10px; margin-bottom: 12px;">
-                    <img src="{{ asset('favicon.svg') }}" alt="System Logo" style="width: 100%; height: 100%; object-fit: contain; display: block; filter: brightness(0) invert(1);">
-                </div>
-                <h1 style="margin: 0; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">EcoSync Telemetry Alert</h1>
-                <p style="margin: 6px 0 0 0; font-size: 13px; color: #a7f3d0; font-weight: 500;">Waste Infrastructure Capacity Monitor</p>
-            </td>
-        </tr>
+            <td align="center" style="padding:32px 16px;">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:520px; background-color:#ffffff; border:1px solid #e2e8f0; border-radius:8px; font-family:Arial, Helvetica, sans-serif;">
 
-        <!-- Alert Status Ribbon -->
-        <tr>
-            <td style="background-color: #fef2f2; border-bottom: 1px solid #fee2e2; padding: 12px 24px; text-align: center;">
-                <span style="display: inline-block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1.2px; color: #dc2626;">
-                    ⚠️ Attention Required &bull; Evacuation Threshold Crossed
-                </span>
-            </td>
-        </tr>
+                    {{-- Header: wordmark (text, so it never breaks) --}}
+                    <tr>
+                        <td style="padding:20px 28px; border-bottom:1px solid #e2e8f0;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="font-size:16px; font-weight:bold; color:#0f172a;">EcoSync</td>
+                                    <td align="right" style="font-size:12px; color:#64748b;">Bin alert</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-        <!-- Main Content Body -->
-        <tr>
-            <td style="padding: 32px; color: #334155; font-size: 14px; line-height: 1.6;">
-                <p style="margin: 0 0 14px 0; font-size: 15px; color: #0f172a;">Hello <strong>Administrator</strong>,</p>
-                <p style="margin: 0 0 20px 0; color: #475569;">
-                    The real-time sensor array has reported that a containment stream has crossed critical operating capacity and requires immediate clearance:
-                </p>
+                    {{-- Bin color strip --}}
+                    <tr>
+                        <td height="4" style="height:4px; line-height:4px; font-size:0; background-color:{{ $accent }};">&nbsp;</td>
+                    </tr>
 
-                <!-- Diagnostic Metric Card -->
-                <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; margin: 20px 0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                            <td style="padding: 8px 0; color: #64748b; font-size: 13px; font-weight: 600; width: 130px;">Containment Stream:</td>
-                            <td style="padding: 8px 0; color: #0f172a; font-size: 15px; font-weight: 700;">{{ $bin->name }}</td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 0; color: #64748b; font-size: 13px; font-weight: 600;">Fill Level:</td>
-                            <td style="padding: 8px 0;">
-                                <span style="font-size: 18px; font-weight: 800; color: #dc2626;">{{ $bin->level }}%</span>
-                                <span style="font-size: 12px; color: #64748b; font-weight: 500;">(Capacity Limit Reached)</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="padding: 8px 0; color: #64748b; font-size: 13px; font-weight: 600;">System Status:</td>
-                            <td style="padding: 8px 0;">
-                                <span style="display: inline-block; background-color: #dc2626; color: #ffffff; padding: 3px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    {{ $bin->status }}
-                                </span>
-                            </td>
-                        </tr>
-                    </table>
+                    {{-- Main message --}}
+                    <tr>
+                        <td style="padding:28px 28px 8px 28px;">
+                            <p style="margin:0 0 8px 0; font-size:12px; font-weight:bold; letter-spacing:1px; text-transform:uppercase; color:{{ $accent }};">
+                                {{ $bin->name }} bin
+                            </p>
+                            <h1 style="margin:0; font-size:24px; line-height:1.3; font-weight:bold; color:#0f172a;">
+                                {{ $headline }}
+                            </h1>
+                            <p style="margin:12px 0 0 0; font-size:15px; line-height:1.6; color:#475569;">
+                                It passed the {{ $threshold }}% alert level. Please empty it soon so the sorter has room for the next items.
+                            </p>
+                        </td>
+                    </tr>
 
-                    <!-- Capacity Progress Bar -->
-                    <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
-                        <div style="display: flex; justify-content: space-between; font-size: 11px; color: #64748b; margin-bottom: 6px; font-weight: 600;">
-                            <span>CONTAINMENT FILL</span>
-                            <span style="color: #dc2626; font-weight: 700;">{{ $bin->level }}%</span>
-                        </div>
-                        <div style="width: 100%; height: 10px; background-color: #e2e8f0; border-radius: 999px; overflow: hidden;">
-                            <div style="width: {{ min(100, (int)$bin->level) }}%; height: 100%; background: linear-gradient(90deg, #ea580c 0%, #dc2626 100%); border-radius: 999px;"></div>
-                        </div>
-                    </div>
-                </div>
+                    {{-- Fill bar (table cells, works in every email app) --}}
+                    <tr>
+                        <td style="padding:20px 28px 4px 28px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td style="font-size:12px; color:#64748b; padding-bottom:6px;">Fill level</td>
+                                    <td align="right" style="font-size:12px; font-weight:bold; color:#0f172a; padding-bottom:6px;">{{ $level }}%</td>
+                                </tr>
+                            </table>
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#e2e8f0;">
+                                <tr>
+                                    @if ($level > 0)
+                                        <td width="{{ $level }}%" height="10" style="height:10px; line-height:10px; font-size:0; background-color:{{ $accent }};">&nbsp;</td>
+                                    @endif
+                                    @if ($level < 100)
+                                        <td height="10" style="height:10px; line-height:10px; font-size:0;">&nbsp;</td>
+                                    @endif
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-                <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 18px 0 26px 0;">
-                    To reset this warning, please physically clear the bin and click <strong>"Empty Bin"</strong> on the EcoSync web control console.
-                </p>
+                    {{-- Details --}}
+                    <tr>
+                        <td style="padding:20px 28px 0 28px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-size:14px; color:#0f172a;">
+                                <tr>
+                                    <td style="padding:10px 0; border-top:1px solid #e2e8f0; color:#64748b;">Reading</td>
+                                    <td align="right" style="padding:10px 0; border-top:1px solid #e2e8f0;">{{ $level }}% full</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px 0; border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0; color:#64748b;">Sent</td>
+                                    <td align="right" style="padding:10px 0; border-top:1px solid #e2e8f0; border-bottom:1px solid #e2e8f0;">{{ $readAt }}</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
 
-                <!-- Call to Action Button -->
-                <div style="text-align: center; margin: 28px 0 8px 0;">
-                    <a href="{{ url('/dashboard') }}" style="display: inline-block; background-color: #059669; color: #ffffff; text-decoration: none; padding: 14px 32px; font-weight: 700; font-size: 14px; border-radius: 12px; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35); letter-spacing: 0.3px;">
-                        Open Control Panel &rarr;
-                    </a>
-                </div>
-            </td>
-        </tr>
+                    {{-- What to do --}}
+                    <tr>
+                        <td style="padding:20px 28px 0 28px; font-size:14px; line-height:1.6; color:#475569;">
+                            After emptying it, press <strong style="color:#0f172a;">Empty</strong> on the dashboard so the level resets to 0%. Until then, a reminder is sent every 30 minutes.
+                        </td>
+                    </tr>
 
-        <!-- Footer -->
-        <tr>
-            <td style="background-color: #f8fafc; padding: 20px 32px; text-align: center; font-size: 11px; color: #94a3b8; border-top: 1px solid #e2e8f0; line-height: 1.5;">
-                EcoSync Automated Telemetry &bull; Station Waste Management Node<br>
-                <span style="font-size: 10px; color: #cbd5e1;">This is a system generated notification. Please do not reply directly to this email.</span>
+                    {{-- Button --}}
+                    <tr>
+                        <td style="padding:24px 28px 28px 28px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                <tr>
+                                    <td bgcolor="#0f172a" style="border-radius:6px; background-color:#0f172a;">
+                                        <a href="{{ url('/dashboard') }}" style="display:inline-block; padding:12px 24px; font-size:14px; font-weight:bold; color:#ffffff; text-decoration:none; border-radius:6px;">
+                                            Open dashboard
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    {{-- Footer --}}
+                    <tr>
+                        <td style="padding:16px 28px; border-top:1px solid #e2e8f0; font-size:12px; line-height:1.5; color:#64748b;">
+                            Sent automatically by EcoSync when a bin passes {{ $threshold }}% full. Replies to this email are not read.
+                        </td>
+                    </tr>
+                </table>
             </td>
         </tr>
     </table>
