@@ -1139,8 +1139,8 @@ class BinController extends Controller
             'node_id'       => ['nullable', 'string', 'max:64'],
         ]);
 
-        // Configurable bin depth (cm) — set BIN_DEPTH_CM in .env (default: 30cm)
-        $defaultBinDepthCm = max(1, (float) (config('bins.default_depth_cm') ?? env('BIN_DEPTH_CM', 60)));
+        // Fallback depth (cm) when a bin has no measured depth in config/bins.php
+        $defaultBinDepthCm = max(1, (float) config('bins.default_depth_cm', 62.5));
 
         // Map POST field names → bin slugs
         $fieldToSlug = [
@@ -1181,11 +1181,12 @@ class BinController extends Controller
                 continue;
             }
             $bin->sensor_fault_since = null;
+            $bin->last_distance_cm = $distanceCm;
 
             // Convert distance → fill percentage
             // When distance is tiny (trash right under the sensor) → 100% full
-            // When distance = binDepthCm (empty bin floor) → 0% full
-            $binDepthCm  = $bin->chamber_height_cm ?? $defaultBinDepthCm;
+            // When distance = binDepthCm (sensor face to empty bin floor) → 0% full
+            $binDepthCm  = max(1, $bin->chamber_height_cm ?: $defaultBinDepthCm);
             $fillPercent = (int) max(0, min(100, round((1 - $distanceCm / $binDepthCm) * 100)));
 
             $this->applySensorLevel($bin, $fillPercent);

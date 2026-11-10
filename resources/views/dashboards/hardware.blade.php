@@ -390,10 +390,10 @@
                      x-data="{
                         bins: @js($bins->keyBy('slug')),
                         binDepths: {
-                            'hazardous': {{ (float) config('bins.dimensions.hazardous.height_cm', 60) }},
-                            'recyclable': {{ (float) config('bins.dimensions.recyclable.height_cm', 60) }},
-                            'non-bio': {{ (float) config('bins.dimensions.non-bio.height_cm', 60) }},
-                            'biodegradable': {{ (float) config('bins.dimensions.biodegradable.height_cm', 60) }},
+                            'hazardous': {{ (float) config('bins.dimensions.hazardous.height_cm', 62.5) }},
+                            'recyclable': {{ (float) config('bins.dimensions.recyclable.height_cm', 62.5) }},
+                            'non-bio': {{ (float) config('bins.dimensions.non-bio.height_cm', 62.5) }},
+                            'biodegradable': {{ (float) config('bins.dimensions.biodegradable.height_cm', 62.5) }},
                         },
                         async fetchBins() {
                             try {
@@ -412,8 +412,11 @@
                         },
                         calcDist(slug) {
                             const bin = this.bins[slug] ?? (slug === 'non-bio' ? this.bins['non_bio'] : null);
+                            if (bin?.last_distance_cm != null) {
+                                return Number(bin.last_distance_cm).toFixed(1);
+                            }
                             const lvl = bin?.level ?? 0;
-                            const depth = this.binDepths[slug] ?? (bin?.chamber_height_cm ?? 60);
+                            const depth = this.binDepths[slug] ?? (bin?.chamber_height_cm ?? 62.5);
                             return (Math.max(0, depth * (1 - lvl / 100))).toFixed(1);
                         },
                         getBin(slug) {
@@ -433,17 +436,17 @@
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-rose-600 dark:text-rose-400 block">Hazardous Chamber</span>
-                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-semibold">60H &times; 34L &times; 51W cm &bull; 104L</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 font-semibold">{{ rtrim(rtrim(number_format((float) config('bins.dimensions.hazardous.height_cm', 62.5), 1), '0'), '.') }} cm deep</span>
                             </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Sensor reading' : 'Last sensor reading'">Last sensor reading</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('hazardous') + ' cm'">
-                                        {{ round(max(0, ($bins->firstWhere('slug', 'hazardous')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
+                                        {{ $bins->firstWhere('slug', 'hazardous')?->last_distance_cm !== null ? number_format($bins->firstWhere('slug', 'hazardous')->last_distance_cm, 1) : round(max(0, ($bins->firstWhere('slug', 'hazardous')->chamber_height_cm ?? 62.5) * (1 - ($bins->firstWhere('slug', 'hazardous')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>
@@ -496,17 +499,17 @@
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-sky-600 dark:text-sky-400 block">Recyclable Chamber</span>
-                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold">60H &times; 34L &times; 51W cm &bull; 104L</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 font-semibold">{{ rtrim(rtrim(number_format((float) config('bins.dimensions.recyclable.height_cm', 62.5), 1), '0'), '.') }} cm deep</span>
                             </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Sensor reading' : 'Last sensor reading'">Last sensor reading</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('recyclable') + ' cm'">
-                                        {{ round(max(0, ($bins->firstWhere('slug', 'recyclable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
+                                        {{ $bins->firstWhere('slug', 'recyclable')?->last_distance_cm !== null ? number_format($bins->firstWhere('slug', 'recyclable')->last_distance_cm, 1) : round(max(0, ($bins->firstWhere('slug', 'recyclable')->chamber_height_cm ?? 62.5) * (1 - ($bins->firstWhere('slug', 'recyclable')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>
@@ -559,17 +562,17 @@
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-amber-600 dark:text-amber-400 block">Non-Biodegradable Chamber</span>
-                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">60H &times; 34L &times; 51W cm &bull; 104L</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-semibold">{{ rtrim(rtrim(number_format((float) config('bins.dimensions.non-bio.height_cm', 62.5), 1), '0'), '.') }} cm deep</span>
                             </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Sensor reading' : 'Last sensor reading'">Last sensor reading</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('non-bio') + ' cm'">
-                                        {{ round(max(0, ($bins->firstWhere('slug', 'non-bio')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
+                                        {{ $bins->firstWhere('slug', 'non-bio')?->last_distance_cm !== null ? number_format($bins->firstWhere('slug', 'non-bio')->last_distance_cm, 1) : round(max(0, ($bins->firstWhere('slug', 'non-bio')->chamber_height_cm ?? 62.5) * (1 - ($bins->firstWhere('slug', 'non-bio')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>
@@ -622,17 +625,17 @@
                             </div>
                             <div class="flex items-center justify-between mt-1">
                                 <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block">Biodegradable Chamber</span>
-                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">Custom Chamber (Pending)</span>
+                                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">{{ rtrim(rtrim(number_format((float) config('bins.dimensions.biodegradable.height_cm', 40), 1), '0'), '.') }} cm deep</span>
                             </div>
                         </div>
 
                         <!-- Main Ping Reading & Level -->
                         <div class="p-3 bg-white/80 dark:bg-black/40 rounded-xl border border-white/80 dark:border-white/10 space-y-2 shadow-sm">
                             <div class="flex items-baseline justify-between">
-                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Distance to waste' : 'Estimated from bin level'">Estimated from bin level</span>
+                                <span class="text-[9px] font-mono uppercase text-slate-500 dark:text-slate-400 font-semibold" x-text="espStatus === 'live' ? 'Sensor reading' : 'Last sensor reading'">Last sensor reading</span>
                                 <div class="text-right">
                                     <span class="text-base font-mono font-extrabold text-slate-900 dark:text-white" x-text="calcDist('biodegradable') + ' cm'">
-                                        {{ round(max(0, ($bins->firstWhere('slug', 'biodegradable')->chamber_height_cm ?? 60) * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
+                                        {{ $bins->firstWhere('slug', 'biodegradable')?->last_distance_cm !== null ? number_format($bins->firstWhere('slug', 'biodegradable')->last_distance_cm, 1) : round(max(0, ($bins->firstWhere('slug', 'biodegradable')->chamber_height_cm ?? 62.5) * (1 - ($bins->firstWhere('slug', 'biodegradable')->level ?? 0) / 100)), 1) }} cm
                                     </span>
                                 </div>
                             </div>

@@ -19,6 +19,7 @@ class Bin extends Model
         'pre_empty_level',
         'zero_reading_count',
         'sensor_fault_since',
+        'last_distance_cm',
     ];
 
     protected $casts = [
@@ -26,6 +27,7 @@ class Bin extends Model
         'alert_triggered_at' => 'datetime',
         'zero_level_since' => 'datetime',
         'sensor_fault_since' => 'datetime',
+        'last_distance_cm' => 'float',
     ];
 
     protected $appends = [
@@ -40,7 +42,7 @@ class Bin extends Model
     public function getDimensionsAttribute(): array
     {
         return config("bins.dimensions.{$this->slug}", [
-            'height_cm'     => (float) config('bins.default_depth_cm', 60.0),
+            'height_cm'     => (float) config('bins.default_depth_cm', 62.5),
             'length_cm'     => null,
             'width_cm'      => null,
             'volume_liters' => null,
@@ -53,7 +55,7 @@ class Bin extends Model
      */
     public function getChamberHeightCmAttribute(): float
     {
-        return (float) (config("bins.dimensions.{$this->slug}.height_cm") ?? config('bins.default_depth_cm', 60.0));
+        return (float) (config("bins.dimensions.{$this->slug}.height_cm") ?? config('bins.default_depth_cm', 62.5));
     }
 
     /**
