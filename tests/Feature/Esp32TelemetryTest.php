@@ -120,8 +120,8 @@ class Esp32TelemetryTest extends TestCase
         $this->assertNotNull($bin->sensor_fault_since);
         $this->assertNull($bin->alert_triggered_at);
 
-        // A real distance clears the flag (60 cm deep bin, 30 cm away = 50%)
-        $this->post('/api/update_bins', ['hazardous' => 30])->assertStatus(200);
+        // A real distance clears the flag (62.5 cm deep bin, 31.25 cm away = 50%)
+        $this->post('/api/update_bins', ['hazardous' => 31.25])->assertStatus(200);
 
         $bin->refresh();
         $this->assertEquals(50, $bin->level);
@@ -158,5 +158,30 @@ class Esp32TelemetryTest extends TestCase
             ->assertJson([
                 'status' => 'live',
             ]);
+    }
+
+    public function test_each_bin_uses_its_own_measured_depth_and_keeps_the_raw_reading(): void
+    {
+        Bin::create([
+            'slug'     => 'biodegradable',
+            'name'     => 'Biodegradable',
+            'subtitle' => 'Food & Garden',
+            'color'    => 'emerald',
+            'level'    => 0,
+            'status'   => 'Empty',
+        ]);
+
+        // Bio is a 40 cm bucket: 20 cm away = half full
+        $this->post('/api/update_bins', ['biodegradable' => 20, 'hazardous' => 62.5])
+            ->assertStatus(200)
+            ->assertJsonPath('updated.biodegradable.fill_pct', 50);
+
+        $this->assertEquals(50, Bin::where('slug', 'biodegradable')->first()->level);
+        $this->assertEquals(20.0, Bin::where('slug', 'biodegradable')->first()->last_distance_cm);
+        $this->assertEquals(62.5, Bin::find(1)->last_distance_cm);
+
+        // An echo longer than the bin (sound bouncing off a round wall) is just empty
+        $this->post('/api/update_bins', ['biodegradable' => 58])->assertStatus(200);
+        $this->assertEquals(58.0, Bin::where('slug', 'biodegradable')->first()->last_distance_cm);
     }
 }
