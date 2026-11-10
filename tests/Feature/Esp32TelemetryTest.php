@@ -184,4 +184,17 @@ class Esp32TelemetryTest extends TestCase
         $this->post('/api/update_bins', ['biodegradable' => 58])->assertStatus(200);
         $this->assertEquals(58.0, Bin::where('slug', 'biodegradable')->first()->last_distance_cm);
     }
+
+    public function test_a_reading_just_short_of_the_floor_counts_as_empty(): void
+    {
+        // 58 cm in a 62.5 cm bin = 7%: the sensor reading short, not trash
+        Bin::find(1)->update(['level' => 0, 'status' => 'Empty']);
+
+        $this->post('/api/update_bins', ['hazardous' => 58])->assertStatus(200);
+        $this->assertEquals(0, Bin::find(1)->level);
+
+        // 50 cm away = 20%: real trash still shows
+        $this->post('/api/update_bins', ['hazardous' => 50])->assertStatus(200);
+        $this->assertEquals(20, Bin::find(1)->level);
+    }
 }
