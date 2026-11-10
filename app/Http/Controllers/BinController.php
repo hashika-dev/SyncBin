@@ -1391,6 +1391,11 @@ class BinController extends Controller
         $previousLevel = (int) $bin->level;
         $level = max(0, min(100, $level));
 
+        // An empty bin reads a few % because the sensor reads a little short.
+        if ($level < (int) config('bins.empty_margin_pct', 10)) {
+            $level = 0;
+        }
+
         if ($level === 0 && $previousLevel > 0) {
             $bin->zero_reading_count = min(255, (int) $bin->zero_reading_count + 1);
             if ($bin->zero_reading_count < max(1, (int) config('bins.empty_confirm_readings', 3))) {

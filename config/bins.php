@@ -27,6 +27,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Empty Margin (%)
+    |--------------------------------------------------------------------------
+    |
+    | Ultrasonic sensors read a few cm short in an empty bin (the sound
+    | bounces off the walls), so an empty bin shows 4-9%. Any sensor reading
+    | below this % counts as empty (0%).
+    |
+    */
+    'empty_margin_pct' => (int) env('SENSOR_EMPTY_MARGIN_PCT', 10),
+
+    /*
+    |--------------------------------------------------------------------------
     | Default Bin Depth / Height (cm)
     |--------------------------------------------------------------------------
     |
